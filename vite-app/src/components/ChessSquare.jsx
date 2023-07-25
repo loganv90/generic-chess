@@ -1,15 +1,19 @@
-import { useState } from 'react'
 import PropTypes from 'prop-types'
+import ChessPiece from './ChessPiece'
 
-function ChessSquare({ square, clickSquare }) {
+function ChessSquare({ squareConfig, clickSquare }) {
     const getSquareColor = () => {
-        if (square.isSelected) {
+        if (squareConfig.isSelected) {
             return 'red'
-        } else if (square.isDark) {
+        } else if (squareConfig.isDark) {
             return 'darkGrey'
         } else {
             return 'lightGrey'
         }
+    }
+
+    const clickPiece = () => {
+        clickSquare(squareConfig.id)
     }
 
     return (
@@ -17,12 +21,11 @@ function ChessSquare({ square, clickSquare }) {
             style={{
                 ...squareStyle,
                 backgroundColor: getSquareColor(),
-                width: square.width,
-                height: square.height
+                width: squareConfig.width,
+                height: squareConfig.height
             }}
-            onClick={() => clickSquare(square.id)}
         >
-            {square.id}
+            {squareConfig.piece && <ChessPiece pieceConfig={squareConfig.piece} clickPiece={clickPiece} />}
         </div>
     )
 }
@@ -34,12 +37,12 @@ const squareStyle = {
 }
 
 ChessSquare.defaultProps = {
-    square: {},
+    squareConfig: {},
     clickSquare: () => {}
 }
 
 ChessSquare.propTypes = {
-    square: PropTypes.object,
+    squareConfig: PropTypes.object,
     clickSquare: PropTypes.func
 }
 

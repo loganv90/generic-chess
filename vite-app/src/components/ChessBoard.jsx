@@ -2,17 +2,18 @@ import { useState } from 'react'
 import PropTypes from 'prop-types'
 import ChessSquare from './ChessSquare'
 
-function ChessBoard({ xSquares, ySquares }) {
-    const createSquares = (numX, numY) => {
-        const s = []
+function ChessBoard({ boardConfig }) {
+    const createSquareConfigs = (numX, numY) => {
+        const squareConfigs = []
         const squareWidth = `${100 / numX}%`
         const squareHeight = `${100 / numY}%`
         for (let y = 0; y < numY; y++) {
             for (let x = 0; x < numX; x++) {
                 let id = `${x}${y}`
                 let isDark = (x + y) % 2 === 0
+                let piece = boardConfig.startingPieces[id] ? boardConfig.startingPieces[id] : null
 
-                s.push({
+                squareConfigs.push({
                     id: id,
                     x: x,
                     y: y,
@@ -20,13 +21,15 @@ function ChessBoard({ xSquares, ySquares }) {
                     width: squareWidth,
                     height: squareHeight,
                     isSelected: false,
+                    isDestination: false,
+                    piece: piece,
                 })
             }
         }
-        return s
+        return squareConfigs
     }
 
-    const [squares, setSquares] = useState(createSquares(xSquares, ySquares))
+    const [squareConfigs, setSquareConfigs] = useState(createSquareConfigs(boardConfig.xSquares, boardConfig.ySquares))
     const [selectedSquare, setSelectedSquare] = useState('')
 
     const clickSquare = (id) => {
@@ -41,18 +44,18 @@ function ChessBoard({ xSquares, ySquares }) {
             newSelectedSquare = ''
         }
 
-        const newSquares = squares.map((s) => {
+        const newSquares = squareConfigs.map((s) => {
             return {...s, isSelected: s.id === newSelectedSquare}
         })
 
         setSelectedSquare(newSelectedSquare)
-        setSquares(newSquares)
+        setSquareConfigs(newSquares)
     }
  
     return (
         <div style={{...boardStyle}}>
-            {squares.map((s) => (
-                <ChessSquare key={s.id} square={s} clickSquare={clickSquare} />
+            {squareConfigs.map((s) => (
+                <ChessSquare key={s.id} squareConfig={s} clickSquare={clickSquare} />
             ))}
         </div>
     )
@@ -66,13 +69,11 @@ const boardStyle = {
 }
 
 ChessBoard.defaultProps = {
-    xSquares: 8,
-    ySquares: 8,
+    boardConfig: {},
 }
 
 ChessBoard.propTypes = {
-    xSquares: PropTypes.number,
-    ySquares: PropTypes.number,
+    boardConfig: PropTypes.object,
 }
 
 export default ChessBoard
