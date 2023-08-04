@@ -97,6 +97,38 @@ class Piece {
     static getPieceMoves() {
         throw new Error('getPieceMoves() not implemented')
     }
+
+    static getMovesInDirection(squares, x, y, xDir, yDir, max = 8) {
+        const moves = []
+        const piece = squares[y][x].piece
+        const xMin = 0
+        const xMax = squares[0].length - 1
+        const yMin = 0
+        const yMax = squares.length - 1
+
+        let cx = x + xDir
+        let cy = y + yDir
+        let counter = 0
+        while (
+            cx >= xMin
+            && cx <= xMax
+            && cy >= yMin
+            && cy <= yMax
+            && squares[cy][cx].piece?.color != piece.color
+            && counter < max
+        ) {
+            moves.push({x: cx, y: cy})
+
+            if (squares[cy][cx].piece) {
+                break
+            }
+
+            cy += yDir
+            cx += xDir
+            counter++
+        }
+        return moves
+    }
 }
 
 class Pawn extends Piece {
@@ -170,11 +202,33 @@ class Knight extends Piece {
     constructor(color) {
         super(color, 'n')
     }
+
+    static getPieceMoves(squares, x, y) {
+        return [
+            {x: 1, y: 2},
+            {x: 1, y: -2},
+            {x: -1, y: 2},
+            {x: -1, y: -2},
+            {x: 2, y: 1},
+            {x: 2, y: -1},
+            {x: -2, y: 1},
+            {x: -2, y: -1},
+        ].flatMap(d => Piece.getMovesInDirection(squares, x, y, d.x, d.y, 1))
+    }
 }
 
 class Bishop extends Piece {
     constructor(color) {
         super(color, 'b')
+    }
+
+    static getPieceMoves(squares, x, y) {
+        return [
+            {x: 1, y: 1},
+            {x: 1, y: -1},
+            {x: -1, y: 1},
+            {x: -1, y: -1},
+        ].flatMap(d => Piece.getMovesInDirection(squares, x, y, d.x, d.y))
     }
 }
 
@@ -183,11 +237,33 @@ class Rook extends Piece {
         super(color, 'r')
         this.moved = moved
     }
+
+    static getPieceMoves(squares, x, y) {
+        return [
+            {x: 1, y: 0},
+            {x: -1, y: 0},
+            {x: 0, y: 1},
+            {x: 0, y: -1},
+        ].flatMap(d => Piece.getMovesInDirection(squares, x, y, d.x, d.y))
+    }
 }
 
 class Queen extends Piece {
     constructor(color) {
         super(color, 'q')
+    }
+
+    static getPieceMoves(squares, x, y) {
+        return [
+            {x: 1, y: 1},
+            {x: 1, y: -1},
+            {x: -1, y: 1},
+            {x: -1, y: -1},
+            {x: 1, y: 0},
+            {x: -1, y: 0},
+            {x: 0, y: 1},
+            {x: 0, y: -1},
+        ].flatMap(d => Piece.getMovesInDirection(squares, x, y, d.x, d.y))
     }
 }
 
@@ -197,6 +273,19 @@ class King extends Piece {
         this.moved = moved
         this.inCheck = inCheck
         this.inCheckmate = inCheckmate
+    }
+
+    static getPieceMoves(squares, x, y) {
+        return [
+            {x: 1, y: 1},
+            {x: 1, y: -1},
+            {x: -1, y: 1},
+            {x: -1, y: -1},
+            {x: 1, y: 0},
+            {x: -1, y: 0},
+            {x: 0, y: 1},
+            {x: 0, y: -1},
+        ].flatMap(d => Piece.getMovesInDirection(squares, x, y, d.x, d.y, 1))
     }
 }
 
