@@ -1,10 +1,9 @@
 import PropTypes from 'prop-types'
 
-function ChessPiece({ pieceConfig, clickPiece }) {
+function ChessPiece({ pieceConfig }) {
     return (
         <div
             style={{...pieceStyle, color: pieceConfig.color}}
-            onClick={() => clickPiece()}
         >
             {pieceConfig.name}
         </div>

@@ -39,175 +39,238 @@ describe('Board', () => {
         }).toThrow('Invalid FEN string')
     })
 
-    it('getPieceMoves() should return correct moves for unmoved pawn', () => {
-        const board = new Board()
-
-        const eMoves = [{x: 4, y: 5}, {x: 4, y: 4}]
-        const aMoves = board.getPieceMoves(4, 6)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
+    describe('getPieceMoves', () => {
+        it('should return correct moves for unmoved pawn', () => {
+            const board = new Board()
+    
+            const eMoves = [{x: 4, y: 5}, {x: 4, y: 4}]
+            const aMoves = board.getPieceMoves(4, 6)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for moved pawn', () => {
+            const board = new Board()
+            board.squares[6][4].piece.moved = true
+            
+            const eMoves = [{x: 4, y: 5}]
+            const aMoves = board.getPieceMoves(4, 6)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for pawn en passant', () => {
+            const board = new Board('white', 'rnbqkbnr/pppppppp/8/3pP3/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+            board.squares[3][4].piece.moved = true
+            board.squares[3][3].piece.moved = true
+            board.squares[3][3].piece.enPassant = {x: 3, y: 2}
+    
+            const eMoves = [{x:4, y:2}, {x:3, y:2}]
+            const aMoves = board.getPieceMoves(4, 3)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for pawn capture', () => {
+            const board = new Board('white', 'rnbqkbnr/pppppppp/3p4/4P3/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+            board.squares[3][4].piece.moved = true
+            board.squares[2][3].piece.moved = true
+            
+            const eMoves = [{x:4, y:2}, {x:3, y:2}]
+            const aMoves = board.getPieceMoves(4, 3)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for unmoved knight', () => {
+            const board = new Board()
+    
+            const eMoves = [{x: 0, y: 5}, {x: 2, y: 5}]
+            const aMoves = board.getPieceMoves(1, 7)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for moved knight', () => {
+            const board = new Board('white', 'rnbqkbnr/pppppppp/8/4N3/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    
+            const eMoves = [
+                {x: 3, y: 1}, {x: 5, y: 1}, {x: 2, y: 2}, {x: 6, y: 2},
+                {x: 2, y: 4}, {x: 6, y: 4}, {x: 3, y: 5}, {x: 5, y: 5}
+            ]
+            const aMoves = board.getPieceMoves(4, 3)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for unmoved bishop', () => {
+            const board = new Board()
+    
+            const eMoves = []
+            const aMoves = board.getPieceMoves(2, 7)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for moved bishop', () => {
+            const board = new Board('white', 'rnbqkbnr/pppppppp/8/6B1/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    
+            const eMoves = [
+                {x: 7, y: 4}, {x: 7, y: 2}, {x: 5, y: 2}, {x: 4, y: 1},
+                {x: 5, y: 4}, {x: 4, y: 5}
+            ]
+            const aMoves = board.getPieceMoves(6, 3)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for unmoved rook', () => {
+            const board = new Board()
+    
+            const eMoves = []
+            const aMoves = board.getPieceMoves(0, 7)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for moved rook', () => {
+            const board = new Board('white', 'rnbqkbnr/pppppppp/8/8/R7/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    
+            const eMoves = [
+                {x: 0, y: 5}, {x: 0, y: 3}, {x: 0, y: 2}, {x: 0, y: 1},
+                {x: 1, y: 4}, {x: 2, y: 4}, {x: 3, y: 4}, {x: 4, y: 4},
+                {x: 5, y: 4}, {x: 6, y: 4}, {x: 7, y: 4}
+            ]
+            const aMoves = board.getPieceMoves(0, 4)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for unmoved queen', () => {
+            const board = new Board()
+    
+            const eMoves = []
+            const aMoves = board.getPieceMoves(3, 7)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for moved queen', () => {
+            const board = new Board('white', 'rnbqkbnr/pppppppp/8/8/3Q4/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    
+            const eMoves = [
+                {x: 4, y: 5}, {x: 4, y: 3}, {x: 4, y: 4}, {x: 5, y: 4},
+                {x: 5, y: 2}, {x: 6, y: 1}, {x: 6, y: 4}, {x: 7, y: 4},
+                {x: 2, y: 5}, {x: 2, y: 3}, {x: 2, y: 4}, {x: 1, y: 4},
+                {x: 1, y: 2}, {x: 0, y: 1}, {x: 0, y: 4}, {x: 3, y: 5},
+                {x: 3, y: 3}, {x: 3, y: 2}, {x: 3, y: 1}
+            ]
+            const aMoves = board.getPieceMoves(3, 4)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for unmoved king', () => {
+            const board = new Board()
+    
+            const eMoves = []
+            const aMoves = board.getPieceMoves(4, 7)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
+    
+        it('should return correct moves for moved king', () => {
+            const board = new Board('white', 'rnbqkbnr/pppppppp/8/8/4K3/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    
+            const eMoves = [
+                {x: 5, y: 5}, {x: 5, y: 4},
+                {x: 5, y: 3}, {x: 3, y: 4},
+                {x: 3, y: 5}, {x: 4, y: 5},
+                {x: 3, y: 3}, {x: 4, y: 3}
+            ]
+            const aMoves = board.getPieceMoves(4, 4)
+    
+            expect(aMoves).toEqual(expect.arrayContaining(eMoves))
+            expect(aMoves.length).toBe(eMoves.length)
+        })
     })
 
-    it('getPieceMoves() should return correct moves for moved pawn', () => {
-        const board = new Board()
-        board.squares[6][4].piece.moved = true
-        
-        const eMoves = [{x: 4, y: 5}]
-        const aMoves = board.getPieceMoves(4, 6)
+    describe('movePiece', () => {
+        it('should move piece when player turn', () => {
+            const board = new Board()
 
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
+            const fromX = 4
+            const fromY = 6
+            const toX = 4
+            const toY = 4
+            const piece = board.squares[fromY][fromX].piece
+            const res = board.movePiece(fromX, fromY, toX, toY)
 
-    it('getPieceMoves() should return correct moves for pawn en passant', () => {
-        const board = new Board('white', 'rnbqkbnr/pppppppp/8/3pP3/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-        board.squares[3][4].piece.moved = true
-        board.squares[3][3].piece.moved = true
-        board.squares[3][3].piece.enPassant = {x: 3, y: 2}
+            expect(res).toBe(true)
+            expect(board.squares[fromY][fromX].piece).toBe(null)
+            expect(board.squares[toY][toX].piece).toBe(piece)
+            expect(board.currentPlayer).toBe(1)
+        })
+    
+        it('should not move piece when not player turn', () => {
+            const board = new Board()
 
-        const eMoves = [{x:4, y:2}, {x:3, y:2}]
-        const aMoves = board.getPieceMoves(4, 3)
+            const fromX = 4
+            const fromY = 1
+            const toX = 4
+            const toY = 3
+            const piece = board.squares[fromY][fromX].piece
+            const res = board.movePiece(fromX, fromY, toX, toY)
 
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
+            expect(res).toBe(false)
+            expect(board.squares[fromY][fromX].piece).toBe(piece)
+            expect(board.squares[toY][toX].piece).toBe(null)
+            expect(board.currentPlayer).toBe(0)
+        })
+    
+        it('should not move piece when invalid from', () => {
+            const board = new Board()
 
-    it('getPieceMoves() should return correct moves for pawn capture', () => {
-        const board = new Board('white', 'rnbqkbnr/pppppppp/3p4/4P3/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-        board.squares[3][4].piece.moved = true
-        board.squares[2][3].piece.moved = true
-        
-        const eMoves = [{x:4, y:2}, {x:3, y:2}]
-        const aMoves = board.getPieceMoves(4, 3)
+            const fromX = 4
+            const fromY = 5
+            const toX = 4
+            const toY = 4
+            const piece = board.squares[fromY][fromX].piece
+            const res = board.movePiece(fromX, fromY, toX, toY)
 
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
+            expect(res).toBe(false)
+            expect(board.squares[fromY][fromX].piece).toBe(piece)
+            expect(board.squares[toY][toX].piece).toBe(null)
+            expect(board.currentPlayer).toBe(0)
+        })
+    
+        it('should not move piece when invalid to', () => {
+            const board = new Board()
 
-    it('getPieceMoves() should return correct moves for unmoved knight', () => {
-        const board = new Board()
+            const fromX = 4
+            const fromY = 6
+            const toX = 4
+            const toY = 3
+            const piece = board.squares[fromY][fromX].piece
+            const res = board.movePiece(fromX, fromY, toX, toY)
 
-        const eMoves = [{x: 0, y: 5}, {x: 2, y: 5}]
-        const aMoves = board.getPieceMoves(1, 7)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for moved knight', () => {
-        const board = new Board('white', 'rnbqkbnr/pppppppp/8/4N3/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-
-        const eMoves = [
-            {x: 3, y: 1}, {x: 5, y: 1}, {x: 2, y: 2}, {x: 6, y: 2},
-            {x: 2, y: 4}, {x: 6, y: 4}, {x: 3, y: 5}, {x: 5, y: 5}
-        ]
-        const aMoves = board.getPieceMoves(4, 3)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for unmoved bishop', () => {
-        const board = new Board()
-
-        const eMoves = []
-        const aMoves = board.getPieceMoves(2, 7)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for moved bishop', () => {
-        const board = new Board('white', 'rnbqkbnr/pppppppp/8/6B1/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-
-        const eMoves = [
-            {x: 7, y: 4}, {x: 7, y: 2}, {x: 5, y: 2}, {x: 4, y: 1},
-            {x: 5, y: 4}, {x: 4, y: 5}
-        ]
-        const aMoves = board.getPieceMoves(6, 3)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for unmoved rook', () => {
-        const board = new Board()
-
-        const eMoves = []
-        const aMoves = board.getPieceMoves(0, 7)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for moved rook', () => {
-        const board = new Board('white', 'rnbqkbnr/pppppppp/8/8/R7/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-
-        const eMoves = [
-            {x: 0, y: 5}, {x: 0, y: 3}, {x: 0, y: 2}, {x: 0, y: 1},
-            {x: 1, y: 4}, {x: 2, y: 4}, {x: 3, y: 4}, {x: 4, y: 4},
-            {x: 5, y: 4}, {x: 6, y: 4}, {x: 7, y: 4}
-        ]
-        const aMoves = board.getPieceMoves(0, 4)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for unmoved queen', () => {
-        const board = new Board()
-
-        const eMoves = []
-        const aMoves = board.getPieceMoves(3, 7)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for moved queen', () => {
-        const board = new Board('white', 'rnbqkbnr/pppppppp/8/8/3Q4/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-
-        const eMoves = [
-            {x: 4, y: 5}, {x: 4, y: 3}, {x: 4, y: 4}, {x: 5, y: 4},
-            {x: 5, y: 2}, {x: 6, y: 1}, {x: 6, y: 4}, {x: 7, y: 4},
-            {x: 2, y: 5}, {x: 2, y: 3}, {x: 2, y: 4}, {x: 1, y: 4},
-            {x: 1, y: 2}, {x: 0, y: 1}, {x: 0, y: 4}, {x: 3, y: 5},
-            {x: 3, y: 3}, {x: 3, y: 2}, {x: 3, y: 1}
-        ]
-        const aMoves = board.getPieceMoves(3, 4)
-
-        console.log(aMoves)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for unmoved king', () => {
-        const board = new Board()
-
-        const eMoves = []
-        const aMoves = board.getPieceMoves(4, 7)
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
-    })
-
-    it('getPieceMoves() should return correct moves for moved king', () => {
-        const board = new Board('white', 'rnbqkbnr/pppppppp/8/8/4K3/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-
-        const eMoves = [
-            {x: 5, y: 5}, {x: 5, y: 4},
-            {x: 5, y: 3}, {x: 3, y: 4},
-            {x: 3, y: 5}, {x: 4, y: 5},
-            {x: 3, y: 3}, {x: 4, y: 3}
-        ]
-        const aMoves = board.getPieceMoves(4, 4)
-
-        console.log(aMoves)
-
-
-        expect(aMoves).toEqual(expect.arrayContaining(eMoves))
-        expect(aMoves.length).toBe(eMoves.length)
+            expect(res).toBe(false)
+            expect(board.squares[fromY][fromX].piece).toBe(piece)
+            expect(board.squares[toY][toX].piece).toBe(null)
+            expect(board.currentPlayer).toBe(0)
+        })
     })
 })

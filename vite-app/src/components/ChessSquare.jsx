@@ -1,19 +1,17 @@
 import PropTypes from 'prop-types'
 import ChessPiece from './ChessPiece'
 
-function ChessSquare({ squareConfig, clickSquare }) {
+function ChessSquare({ square, isSelected, isDestination, clickSquare,  }) {
     const getSquareColor = () => {
-        if (squareConfig.isSelected) {
+        if (isSelected) {
             return 'red'
-        } else if (squareConfig.isDark) {
-            return 'darkGrey'
-        } else {
+        } else if (isDestination) {
+            return 'blue'
+        } else if (square.isLight) {
             return 'lightGrey'
+        } else {
+            return 'darkGrey'
         }
-    }
-
-    const clickPiece = () => {
-        clickSquare(squareConfig.id)
     }
 
     return (
@@ -21,11 +19,10 @@ function ChessSquare({ squareConfig, clickSquare }) {
             style={{
                 ...squareStyle,
                 backgroundColor: getSquareColor(),
-                width: squareConfig.width,
-                height: squareConfig.height
             }}
+            onClick={() => clickSquare(square.x, square.y)}
         >
-            {squareConfig.piece && <ChessPiece pieceConfig={squareConfig.piece} clickPiece={clickPiece} />}
+            {square.piece && <ChessPiece pieceConfig={square.piece} />}
         </div>
     )
 }
@@ -34,15 +31,21 @@ const squareStyle = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    width: '12.5%',
+    height: '12.5%',
 }
 
 ChessSquare.defaultProps = {
-    squareConfig: {},
+    square: {},
+    isSelected: false,
+    isDestination: false,
     clickSquare: () => {}
 }
 
 ChessSquare.propTypes = {
-    squareConfig: PropTypes.object,
+    square: PropTypes.object,
+    isSelected: PropTypes.bool,
+    isDestination: PropTypes.bool,
     clickSquare: PropTypes.func
 }
 

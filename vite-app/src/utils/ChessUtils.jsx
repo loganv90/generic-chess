@@ -39,12 +39,15 @@ function createSquaresFromFen(fenPieces) {
         for (const c of row) {
             let x = squares.length
             let y = squareRows.length
-            let color = x + y % 2 == 0 ? 'white' : 'black'
 
             if (isNaN(c)) {
-                squares.push(new Square(color, createPieceFromFen(c)))
+                squares.push(
+                    new Square(`${x}-${y}`, x, y, (x+y)%2==0, createPieceFromFen(c))
+                )
             } else {
-                squares.push(...Array(parseInt(c)).fill(new Square(color)))
+                squares.push(...Array.from({length: parseInt(c)}, (_,i) =>
+                    new Square(`${x+i}-${y}`, x+i, y, (x+i+y)%2==0)
+                ))
             }
         }
 
@@ -77,13 +80,36 @@ class Board {
         const piece = this.squares[y][x].piece
         return piece ? piece.constructor.getPieceMoves(this.squares, x, y) : []
     }
+
+    movePiece(fromX, fromY, toX, toY) {
+        const fromSquare = this.squares[fromY][fromX]
+        const toSquare = this.squares[toY][toX]
+
+        if (!fromSquare.piece
+            || !this.getPieceMoves(fromX, fromY).some((m) => m.x == toX && m.y == toY)
+            || fromSquare.piece.color != this.players[this.currentPlayer]
+        ) {
+            return false
+        }
+
+        toSquare.piece = fromSquare.piece
+        fromSquare.piece = null
+
+        this.currentPlayer = (this.currentPlayer+1) % this.players.length
+        this.halfMoveClock += 1
+        if (this.currentPlayer == 0) {
+            this.fullMoveNumber += 1
+        }
+        return true
+    }
 }
 
 class Square {
-    constructor(color, piece = null, isSelected = false, isDestination = false) {
-        this.color = color
-        this.isSelected = isSelected
-        this.isDestination = isDestination
+    constructor(id, x, y, isLight, piece = null) {
+        this.id = id
+        this.x = x
+        this.y = y
+        this.isLight = isLight
         this.piece = piece
     }
 }
