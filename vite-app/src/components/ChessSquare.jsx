@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import ChessPiece from './ChessPiece'
+import ChessPiece from '/src/components/ChessPiece'
 
 function ChessSquare({ square, isSelected, isDestination, clickSquare,  }) {
     const getSquareColor = () => {

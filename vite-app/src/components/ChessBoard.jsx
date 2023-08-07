@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import ChessSquare from './ChessSquare'
-import Board from '../utils/ChessUtils'
+import ChessSquare from '/src/components/ChessSquare'
+import { Board } from '/src/utils/chess/Board'
 
 function ChessBoard() {
     const [board, setBoard] = useState(new Board())
