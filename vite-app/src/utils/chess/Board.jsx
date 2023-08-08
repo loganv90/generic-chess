@@ -24,10 +24,10 @@ class Board {
             throw new Error('Invalid FEN string')
         }
 
-        this.minX = 0
-        this.maxX = this.squares[0].length - 1
-        this.minY = 0
-        this.maxY = this.squares.length - 1
+        this.xMin = 0
+        this.xMax = this.squares[0].length - 1
+        this.yMin = 0
+        this.yMax = this.squares.length - 1
     }
 
     createSquaresFromFen(fenPieces) {
@@ -59,177 +59,141 @@ class Board {
     }
 
     getPiece(x, y) {
-        return this.squares[y]?.[x]?.getPiece()
+        return this.squares[y]?.[x]?.piece
+    }
+
+    setPiece(x, y, piece) {
+        if (this.squares[y]?.[x]) {
+            this.squares[y][x].piece = piece
+        }
     }
 
     getMoves(x, y) {
-        return this.getPiece(x, y).getMoves()
-        .flatMap(m => m.options?.isDirection ? this.mapMoveDirection(x,y,m) : this.mapMoveDestination(x,y,m))
-        .filter(m => this.getPiece(m.x, m.y)?.getColor() !== this.players[this.currentPlayer])
-        .map(m => m.options?.canPromote ? this.mapMoveCanPromote(x,y,m) : m)
-        .map(m => m.options?.canEnPassant ? this.mapMoveCanEnPassant(m) : m)
-        .filter(m => m.options?.noCapture ? !this.getPiece(m.x, m.y) : true)
-        .map(m => {delete m.options.noCapture; return m})
-        .filter(m => m.options?.mustCapture ? m.options?.canEnPassant ? true : this.getPiece(m.x, m.y) : true)
-        .map(m => {delete m.options.mustCapture; return m})
+        return this.getPiece(x, y)?.getMoves()
+        .filter(() => this.filterSameColorSource(x, y))
+        .flatMap(m => m.options?.isDirection ? this.mapToDirection(x, y, m) : this.mapToDestination(x, y, m))
+        .filter(m => this.filterOutOfBounds(m))
+        .filter(m => this.filterSameColorDestination(m))
+        .map(m => m.options?.canPromote ? this.mapCanPromote(x, y, m) : m)
+        .map(m => m.options?.canEnPassant ? this.mapCanEnPassant(m) : m)
+        .filter(m => this.filterNoCapture(m))
+        .filter(m => this.filterMustCapture(m))
+        .filter(m => this.filterMustCross(m))
+        .map(m => this.mapRemoveUnusedOptions(m)) ?? []
     }
 
-    mapMoveDirection(x, y, m) {
+    mapToDirection(x, y, m) {
+        delete m.options?.isDirection
+        delete m.options?.enPassant
+        delete m.options?.mustCross
         const moves = []
         let cx = x+m.x
         let cy = y+m.y
-        do {
-            delete m.options.isDirection
-            moves.push({...m, x: cx, y: cy})
-            cy += m.x
-            cx += m.y
-        } while (
-            cx >= this.xMin
+        while (cx >= this.xMin
             && cx <= this.xMax
             && cy >= this.yMin
             && cy <= this.yMax
-            && this.getPiece()
-        )
+        ) {
+            moves.push({...m, x: cx, y: cy})
+            if (this.getPiece(cx, cy)) {
+                break
+            }
+            cx += m.x
+            cy += m.y
+        }
         return moves
     }
 
-    mapMoveDestination(x, y, m) {
+    mapToDestination(x, y, m) {
         if (m.options?.enPassant) {
-            m.options.enPassant.x = x+m.options.enPassant.x
-            m.options.enPassant.y = y+m.options.enPassant.y
+            m.options.enPassant.x += x
+            m.options.enPassant.y += y
         }
-        return {...m, x: x+m.x, y: y+m.y}
-    }
-
-    mapMoveCanPromote(x, y, m) {
-        if (m.y == this.minY && y != this.minY
-            || m.y == this.maxY && y != this.maxY
-            || m.x == this.minX && x != this.minX
-            || m.x == this.maxX && x != this.maxX
-        ) {
-            m.options.canPromote = true
-        } else {
-            delete m.options.canPromote
+        if (m.options?.mustCross) {
+            m.options.mustCross.x += x
+            m.options.mustCross.y += y
         }
+        m.x += x
+        m.y += y
         return m
     }
 
-    mapMoveCanEnPassant(m) {
+    filterOutOfBounds(m) {
+        return m.x >= this.xMin && m.x <= this.xMax && m.y >= this.yMin && m.y <= this.yMax
+    }
+
+    filterSameColorDestination(m) {
+        return this.getPiece(m.x, m.y)?.color !== this.players[this.currentPlayer]
+    }
+
+    filterSameColorSource(x, y) {
+        return this.getPiece(x, y)?.color === this.players[this.currentPlayer]
+    }
+
+    filterNoCapture(m) {
+        return m.options?.noCapture ? !this.getPiece(m.x, m.y) : true
+    }
+
+    filterMustCapture(m) {
+        return m.options?.mustCapture ? m.options?.canEnPassant ? true : this.getPiece(m.x, m.y) : true
+    }
+
+    filterMustCross(m) {
+        return m.options?.mustCross ? !this.getPiece(m.options.mustCross.x, m.options.mustCross.y) : true
+    }
+
+    mapCanPromote(x, y, m) {
+        if (m.y == this.yMin && y != this.yMin
+            || m.y == this.yMax && y != this.yMax
+            || m.x == this.xMin && x != this.xMin
+            || m.x == this.xMax && x != this.xMax
+        ) {
+            return m
+        }
+        delete m.options?.canPromote
+        return m
+    }
+
+    mapCanEnPassant(m) {
         const canEnPassant = [{x: 1, y:0}, {x: -1, y:0}, {x: 0, y:1}, {x: 0, y:-1}].map(d => {
-            const enPassant = this.getPiece(m.x+d.x, m.y+d.y)?.getEnPassant()
+            const enPassant = this.getPiece(m.x+d.x, m.y+d.y)?.enPassant
             if (enPassant && enPassant.x === m.x && enPassant.y === m.y) {
                 return {x: m.x+d.x, y: m.y+d.y}
             }
         }).filter(e => e)
         if (canEnPassant.length > 0) {
             m.options.canEnPassant = canEnPassant
-        } else {
-            delete m.options.canEnPassant
+            return m
+        }
+        delete m.options?.canEnPassant
+        return m
+    }
+
+    mapRemoveUnusedOptions(m) {
+        delete m.options?.noCapture
+        delete m.options?.mustCapture
+        delete m.options?.mustCross
+        if (m.options && Object.keys(m.options).length === 0) {
+            delete m.options
         }
         return m
     }
 
-    // getPawnMoves(x, y) {
-    //     const pawn = this.squares[y][x].piece
-    //     const moves = []
-    //     const xMin = 0
-    //     const xMax = this.squares[0].length - 1
-    //     const yMin = 0
-    //     const yMax = this.squares.length - 1
+    increment() {
+        this.currentPlayer = (this.currentPlayer+1) % this.players.length
+        this.halfMoveClock += 1
+        if (this.currentPlayer == 0) {
+            this.fullMoveNumber += 1
+        }
+    }
 
-
-    //     const straights = []
-    //     const diagonals = []
-    //     if (pawn.xDir > 0) {
-    //         if (x+1<=xMax) { straights.push({x: x+1, y: y}) }
-    //         if (!pawn.moved && x+2<=xMax) { straights.push({x: x+2, y: y}) }
-    //         if (x+1<=xMax && y+1<=yMax) { diagonals.push({x: x+1, y: y+1, xSide: x, ySide: y+1}) }
-    //         if (x+1<=xMax && y-1>=yMin) { diagonals.push({x: x+1, y: y-1, xSide: x, ySide: y-1}) }
-    //     } else if (pawn.xDir < 0) {
-    //         if (x-1>=xMin) { straights.push({x: x-1, y: y}) }
-    //         if (!pawn.moved && x-2>=xMin) { straights.push({x: x-2, y: y}) }
-    //         if (x-1>=xMin && y+1<=yMax) { diagonals.push({x: x-1, y: y+1, xSide: x, ySide: y+1}) }
-    //         if (x-1>=xMin && y-1>=yMin) { diagonals.push({x: x-1, y: y-1, xSide: x, ySide: y-1}) }
-    //     } else if (pawn.yDir > 0) {
-    //         if (y+1<=yMax) { straights.push({x: x, y: y+1}) }
-    //         if (!pawn.moved && y+2<=yMax) { straights.push({x: x, y: y+2}) }
-    //         if (x+1<=xMax && y+1<=yMax) { diagonals.push({x: x+1, y: y+1, xSide: x+1, ySide: y}) }
-    //         if (x-1>=xMin && y+1<=yMax) { diagonals.push({x: x-1, y: y+1, xSide: x-1, ySide: y}) }
-    //     } else if (pawn.yDir < 0) {
-    //         if (y-1>=yMin) { straights.push({x: x, y: y-1}) }
-    //         if (!pawn.moved && y-2>=yMin) { straights.push({x: x, y: y-2}) }
-    //         if (x+1<=xMax && y-1>=yMin) { diagonals.push({x: x+1, y: y-1, xSide: x+1, ySide: y}) }
-    //         if (x-1>=xMin && y-1>=yMin) { diagonals.push({x: x-1, y: y-1, xSide: x-1, ySide: y}) }
-    //     }
-
-    //     for (const straight of straights) {
-    //         if (!this.squares[straight.y][straight.x].piece) {
-    //             moves.push({x: straight.x, y: straight.y})
-    //         } else {
-    //             break
-    //         }
-    //     }
-
-    //     for (const diagonal of diagonals) {
-    //         if (this.squares[diagonal.y][diagonal.x].piece
-    //             && this.squares[diagonal.y][diagonal.x].piece.color != pawn.color) {
-    //             moves.push({x: diagonal.x, y: diagonal.y})
-    //         } else if (this.squares[diagonal.ySide][diagonal.xSide].piece
-    //             && this.squares[diagonal.ySide][diagonal.xSide].piece.color != pawn.color
-    //             && this.squares[diagonal.ySide][diagonal.xSide].piece.name == 'p'
-    //             && this.squares[diagonal.ySide][diagonal.xSide].piece.enPassant.x == diagonal.x
-    //             && this.squares[diagonal.ySide][diagonal.xSide].piece.enPassant.y == diagonal.y) {
-    //             moves.push({x: diagonal.x, y: diagonal.y})
-    //         }
-    //     }
-
-    //     return moves
-    // }
-
-    // static move(squares, fromX, fromY, toX, toY) {
-    //     const pawn = squares[fromY][fromX].piece
-    //     const dx = toX - fromX
-    //     const dy = toY - fromY
-
-    //     if (Math.abs(dx) + Math.abs(dy) > 1) {
-    //         pawn.enPassant = {
-    //             x: dx>0 ? fromX+1 : dx<0 ? fromX-1 : fromX,
-    //             y: dy>0 ? fromY+1 : dy<0 ? fromY-1 : fromY,
-    //         }
-    //     }
-
-    //     return super.move(squares, fromX, fromY, toX, toY)
-    // }
-
-    // movePiece(fromX, fromY, toX, toY) {
-    //     const piece = this.squares[fromY][fromX].piece
-
-    //     if (!piece
-    //         || piece.color != this.players[this.currentPlayer]
-    //         || !this.getPieceMoves(fromX, fromY).some((m) => m.x == toX && m.y == toY)
-    //         || !piece.constructor.move(this.squares, fromX, fromY, toX, toY)
-    //     ) {
-    //         return false
-    //     }
-
-    //     this.currentPlayer = (this.currentPlayer+1) % this.players.length
-    //     this.halfMoveClock += 1
-    //     if (this.currentPlayer == 0) {
-    //         this.fullMoveNumber += 1
-
-    //     }
-
-    //     this.squares.forEach((row) => row.forEach((s) => {
-    //         if (s.piece
-    //             && s.piece.color === this.players[this.currentPlayer]
-    //             && s.piece.enPassant
-    //         ) {
-    //             s.piece.enPassant = null
-    //         }
-    //     }))
-
-    //     return true
-    // }
+    decrement() {
+        this.currentPlayer = this.currentPlayer-1 < 0 ? this.players.length-1 : this.currentPlayer-1
+        this.halfMoveClock -= 1
+        if (this.currentPlayer == this.players.length-1) {
+            this.fullMoveNumber -= 1
+        }
+    }
 }
 
 export { Board }

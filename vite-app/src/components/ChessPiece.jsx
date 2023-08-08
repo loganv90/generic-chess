@@ -1,11 +1,11 @@
 import PropTypes from 'prop-types'
 
-function ChessPiece({ pieceConfig }) {
+function ChessPiece({ piece }) {
     return (
         <div
-            style={{...pieceStyle, color: pieceConfig.color}}
+            style={{...pieceStyle, color: piece.color}}
         >
-            {pieceConfig.name}
+            {piece.constructor.name}
         </div>
     )
 }
@@ -16,12 +16,12 @@ const pieceStyle = {
 }
 
 ChessPiece.defaultProps = {
-    pieceConfig: {},
+    piece: {},
     clickSquare: () => {}
 }
 
 ChessPiece.propTypes = {
-    pieceConfig: PropTypes.object,
+    piece: PropTypes.object,
     clickPiece: PropTypes.func
 }
 

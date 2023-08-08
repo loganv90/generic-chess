@@ -9,14 +9,6 @@ class Square {
         this.piece = this.createPieceFromFen(fenChar)
     }
 
-    getId() {
-        return this.id
-    }
-
-    getPiece() {
-        return this.piece
-    }
-
     getMoves() {
         return this.piece ? this.piece.getMoves() : []
     }

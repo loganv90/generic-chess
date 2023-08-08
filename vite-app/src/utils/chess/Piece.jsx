@@ -3,13 +3,7 @@ class Piece {
         this.color = color
     }
 
-    getColor() { return this.color }
-
     move() {}
-
-    getEnPassant() { return {} }
-
-    setEnPassant() {}
 
     copy() {
         throw new Error('Piece.copy not implemented')
@@ -36,14 +30,6 @@ class Pawn extends Piece {
         }
     }
 
-    getEnPassant() {
-        return this.enPassant
-    }
-
-    setEnPassant(enPassant) {
-        this.enPassant = enPassant
-    }
-
     copy() {
         return new Pawn(this.color, this.xDir, this.yDir, this.moved, this.enPassant)
     }
@@ -67,6 +53,10 @@ class Pawn extends Piece {
                 x: this.xDir*2,
                 y: this.yDir*2,
                 options: {
+                    mustCross: {
+                        x: this.xDir,
+                        y: this.yDir
+                    },
                     noCapture: true,
                     canPromote: true,
                     enPassant: {
@@ -126,7 +116,6 @@ class Pawn extends Piece {
 class Knight extends Piece {
     constructor(color) {
         super(color)
-        this.options = {}
     }
 
     copy() {
@@ -135,13 +124,14 @@ class Knight extends Piece {
 
     getMoves() {
         return [
-            {x: 1, y: 2, options: this.options},
-            {x: 1, y: -2, options: this.options},
-            {x: -1, y: -2, options: this.options},
-            {x: 2, y: 1, options: this.options},
-            {x: 2, y: -1, options: this.options},
-            {x: -2, y: 1, options: this.options},
-            {x: -2, y: -1, options: this.options},
+            {x: 1, y: 2},
+            {x: 1, y: -2},
+            {x: -1, y: -2},
+            {x: -1, y: 2},
+            {x: 2, y: 1},
+            {x: 2, y: -1},
+            {x: -2, y: 1},
+            {x: -2, y: -1},
         ]
     }
 }
@@ -149,19 +139,18 @@ class Knight extends Piece {
 class Bishop extends Piece {
     constructor(color) {
         super(color)
-        this.options = {isDirection: true}
     }
 
     copy() {
         return new Bishop(this.color)
     }
 
-    static getMoves() {
+    getMoves() {
         return [
-            {x: 1, y: 1, options: this.options},
-            {x: 1, y: -1, options: this.options},
-            {x: -1, y: 1, options: this.options},
-            {x: -1, y: -1, options: this.options},
+            {x: 1, y: 1, options: {isDirection: true}},
+            {x: 1, y: -1, options: {isDirection: true}},
+            {x: -1, y: 1, options: {isDirection: true}},
+            {x: -1, y: -1, options: {isDirection: true}},
         ]
     }
 }
@@ -170,7 +159,6 @@ class Rook extends Piece {
     constructor(color, moved=false) {
         super(color)
         this.moved = moved
-        this.options = {isDirection: true}
     }
 
     copy() {
@@ -181,12 +169,12 @@ class Rook extends Piece {
         this.moved = true
     }
 
-    static getMoves() {
+    getMoves() {
         return [
-            {x: 1, y: 0, options: this.options},
-            {x: -1, y: 0, options: this.options},
-            {x: 0, y: 1, options: this.options},
-            {x: 0, y: -1, options: this.options},
+            {x: 1, y: 0, options: {isDirection: true}},
+            {x: -1, y: 0, options: {isDirection: true}},
+            {x: 0, y: 1, options: {isDirection: true}},
+            {x: 0, y: -1, options: {isDirection: true}},
         ]
     }
 }
@@ -194,23 +182,22 @@ class Rook extends Piece {
 class Queen extends Piece {
     constructor(color) {
         super(color)
-        this.options = {isDirection: true}
     }
 
     copy() {
         return new Queen(this.color)
     }
 
-    static getMoves() {
+    getMoves() {
         return [
-            {x: 1, y: 1, options: this.options},
-            {x: 1, y: -1, options: this.options},
-            {x: -1, y: 1, options: this.options},
-            {x: -1, y: -1, options: this.options},
-            {x: 1, y: 0, options: this.options},
-            {x: -1, y: 0, options: this.options},
-            {x: 0, y: 1, options: this.options},
-            {x: 0, y: -1, options: this.options},
+            {x: 1, y: 1, options: {isDirection: true}},
+            {x: 1, y: -1, options: {isDirection: true}},
+            {x: -1, y: 1, options: {isDirection: true}},
+            {x: -1, y: -1, options: {isDirection: true}},
+            {x: 1, y: 0, options: {isDirection: true}},
+            {x: -1, y: 0, options: {isDirection: true}},
+            {x: 0, y: 1, options: {isDirection: true}},
+            {x: 0, y: -1, options: {isDirection: true}}
         ]
     }
 }
@@ -219,7 +206,6 @@ class King extends Piece {
     constructor(color, moved=false) {
         super(color)
         this.moved = moved
-        this.options = {}
     }
 
     copy() {
@@ -230,16 +216,16 @@ class King extends Piece {
         this.moved = true
     }
 
-    static getMoves() {
+    getMoves() {
         return [
-            {x: 1, y: 1, options: this.options},
-            {x: 1, y: -1, options: this.options},
-            {x: -1, y: 1, options: this.options},
-            {x: -1, y: -1, options: this.options},
-            {x: 1, y: 0, options: this.options},
-            {x: -1, y: 0, options: this.options},
-            {x: 0, y: 1, options: this.options},
-            {x: 0, y: -1, options: this.options},
+            {x: 1, y: 1},
+            {x: 1, y: -1},
+            {x: -1, y: 1},
+            {x: -1, y: -1},
+            {x: 1, y: 0},
+            {x: -1, y: 0},
+            {x: 0, y: 1},
+            {x: 0, y: -1}
         ]
     }
 }

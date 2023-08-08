@@ -27,7 +27,9 @@ describe('SimpleMove', () => {
                 return piece2
             }
         })
-        board.setPiece = vi.fn(() => true)
+        board.setPiece = vi.fn()
+        board.increment = vi.fn()
+        board.decrement = vi.fn()
 
         const move = new SimpleMove(board, 0, 0, 1, 1)
         expect(board.getPiece).toBeCalledWith(0, 0)

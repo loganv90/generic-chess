@@ -16,13 +16,10 @@ function ChessSquare({ square, isSelected, isDestination, clickSquare,  }) {
 
     return (
         <div
-            style={{
-                ...squareStyle,
-                backgroundColor: getSquareColor(),
-            }}
+            style={{...squareStyle, backgroundColor: getSquareColor()}}
             onClick={() => clickSquare(square.x, square.y)}
         >
-            {square.piece && <ChessPiece pieceConfig={square.piece} />}
+            {square.piece && <ChessPiece piece={square.piece} />}
         </div>
     )
 }

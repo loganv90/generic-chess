@@ -11,26 +11,34 @@ class Move {
 }
 
 class SimpleMove extends Move {
-    constructor(board, fromX, fromY, toX, toY) {
+    constructor(board, fromX, fromY, toX, toY, options) {
         super()
         this.board = board
+
         this.fromX = fromX
         this.fromY = fromY
         this.toX = toX
         this.toY = toY
+
         this.piece = board.getPiece(fromX, fromY)
+        this.newPiece = this.piece.copy()
+        this.newPiece.move()
         this.capturedPiece = board.getPiece(toX, toY)
     }
 
     execute() {
-        this.board.setPiece(this.toX, this.toY, this.piece)
+        this.board.setPiece(this.toX, this.toY, this.newPiece)
         this.board.setPiece(this.fromX, this.fromY, null)
+        this.board.increment()
+
         return true
     }
 
     undo() {
         this.board.setPiece(this.fromX, this.fromY, this.piece)
         this.board.setPiece(this.toX, this.toY, this.capturedPiece)
+        this.board.decrement()
+
         return true
     }
 }
