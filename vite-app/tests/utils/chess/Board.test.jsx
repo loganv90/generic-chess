@@ -62,11 +62,11 @@ describe('Board', () => {
             const board = new Board(0, 0, ['white', 'black'], 'rnbqkbnr/pppppppp/8/3pP3/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
             board.getPiece(4, 3).move()
             board.getPiece(3, 3).move()
-            board.getPiece(3, 3).enPassant = {x: 3, y: 2}
+            board.enPassant['black'] = {x: 3, y: 2, xPiece: 3, yPiece: 3}
     
             const eMoves = [
                 {x: 4, y: 2},
-                {x: 3, y: 2, options: {canEnPassant: [{x: 3, y: 3}]}}
+                {x: 3, y: 2, options: {canEnPassant: true}}
             ]
             const aMoves = board.getMoves(4, 3)
     

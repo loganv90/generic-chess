@@ -11,6 +11,11 @@ class Board {
         this.currentPlayer = currentPlayer
         this.players = players
 
+        this.enPassant = {}
+        for (const player of this.players) {
+            this.enPassant[player] = {}
+        }
+
         const fenSplit = fen.split(' ')
         if (fenSplit.length != 6) {
             throw new Error('Invalid FEN string')
@@ -66,6 +71,20 @@ class Board {
         if (this.squares[y]?.[x]) {
             this.squares[y][x].piece = piece
         }
+    }
+
+    getEnPassant(x, y) {
+        return this.players
+        .map(player => this.enPassant[player])
+        .filter(enPassant => enPassant.x === x && enPassant.y === y)
+    }
+
+    setEnPassant(x, y, xPiece, yPiece, color) {
+        this.enPassant[color] = {x: x, y: y, xPiece: xPiece, yPiece: yPiece}
+    }
+
+    clearEnPassant(color) {
+        this.enPassant[color] = {}
     }
 
     getMoves(x, y) {
@@ -155,14 +174,12 @@ class Board {
     }
 
     mapCanEnPassant(m) {
-        const canEnPassant = [{x: 1, y:0}, {x: -1, y:0}, {x: 0, y:1}, {x: 0, y:-1}].map(d => {
-            const enPassant = this.getPiece(m.x+d.x, m.y+d.y)?.enPassant
-            if (enPassant && enPassant.x === m.x && enPassant.y === m.y) {
-                return {x: m.x+d.x, y: m.y+d.y}
-            }
-        }).filter(e => e)
-        if (canEnPassant.length > 0) {
-            m.options.canEnPassant = canEnPassant
+        if (this.players
+            .filter(player => player !== this.players[this.currentPlayer])
+            .map(player => this.enPassant[player])
+            .filter(enPassant => enPassant.x === m.x && enPassant.y === m.y)
+            .length > 0
+        ) {
             return m
         }
         delete m.options?.canEnPassant

@@ -15,10 +15,9 @@ class Piece {
 }
 
 class Pawn extends Piece {
-    constructor(color, xDir, yDir, moved=false, enPassant={}) {
+    constructor(color, xDir, yDir, moved=false) {
         super(color)
         this.moved = moved
-        this.enPassant = enPassant
 
         this.xDir = xDir > 0 ? 1 : xDir < 0 ? -1 : 0
         this.yDir = yDir > 0 ? 1 : yDir < 0 ? -1 : 0
@@ -31,7 +30,7 @@ class Pawn extends Piece {
     }
 
     copy() {
-        return new Pawn(this.color, this.xDir, this.yDir, this.moved, this.enPassant)
+        return new Pawn(this.color, this.xDir, this.yDir, this.moved)
     }
 
     move() {
