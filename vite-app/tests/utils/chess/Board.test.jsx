@@ -264,88 +264,22 @@ describe('Board', () => {
         })
     })
 
-    // describe('movePiece', () => {
-    //     it('should move piece when player turn', () => {
-    //         const board = new Board()
+    describe('getEnPassants', () => {
+        it('should return correct en passants', () => {
+            const board = new Board()
+            
+            const enPassantWhite = {x: 1, y: 1, xPiece: 2, yPiece: 2}
+            const enPassantBlack = {x: 1, y: 1, xPiece: 3, yPiece: 3}
+            const enPassantGrey = {x: 1, y: 1, xPiece: 4, yPiece: 4}
+            board.enPassant['white'] = enPassantWhite
+            board.enPassant['black'] = enPassantBlack
+            board.enPassant['grey'] = enPassantGrey
 
-    //         const fromX = 4
-    //         const fromY = 6
-    //         const toX = 4
-    //         const toY = 4
-    //         const piece = board.squares[fromY][fromX].piece
-    //         const res = board.movePiece(fromX, fromY, toX, toY)
+            const eEnPassants = [enPassantWhite, enPassantBlack]
+            const aEnPassants = board.getEnPassants('grey', 1, 1)
 
-    //         expect(res).toBe(true)
-    //         expect(board.squares[fromY][fromX].piece).toBe(null)
-    //         expect(board.squares[toY][toX].piece).toBe(piece)
-    //         expect(board.currentPlayer).toBe(1)
-    //     })
-    
-    //     it('should not move piece when not player turn', () => {
-    //         const board = new Board()
-
-    //         const fromX = 4
-    //         const fromY = 1
-    //         const toX = 4
-    //         const toY = 3
-    //         const piece = board.squares[fromY][fromX].piece
-    //         const res = board.movePiece(fromX, fromY, toX, toY)
-
-    //         expect(res).toBe(false)
-    //         expect(board.squares[fromY][fromX].piece).toBe(piece)
-    //         expect(board.squares[toY][toX].piece).toBe(null)
-    //         expect(board.currentPlayer).toBe(0)
-    //     })
-    
-    //     it('should not move piece when invalid from', () => {
-    //         const board = new Board()
-
-    //         const fromX = 4
-    //         const fromY = 5
-    //         const toX = 4
-    //         const toY = 4
-    //         const piece = board.squares[fromY][fromX].piece
-    //         const res = board.movePiece(fromX, fromY, toX, toY)
-
-    //         expect(res).toBe(false)
-    //         expect(board.squares[fromY][fromX].piece).toBe(piece)
-    //         expect(board.squares[toY][toX].piece).toBe(null)
-    //         expect(board.currentPlayer).toBe(0)
-    //     })
-    
-    //     it('should not move piece when invalid to', () => {
-    //         const board = new Board()
-
-    //         const fromX = 4
-    //         const fromY = 6
-    //         const toX = 4
-    //         const toY = 3
-    //         const piece = board.squares[fromY][fromX].piece
-    //         const res = board.movePiece(fromX, fromY, toX, toY)
-
-    //         expect(res).toBe(false)
-    //         expect(board.squares[fromY][fromX].piece).toBe(piece)
-    //         expect(board.squares[toY][toX].piece).toBe(null)
-    //         expect(board.currentPlayer).toBe(0)
-    //     })
-
-    //     it('should record en passant and clear it after next move', () => {
-    //         const board = new Board()
-
-    //         const fromX = 4
-    //         const fromY = 6
-    //         const toX = 4
-    //         const toY = 4
-    //         const fromXb = 4
-    //         const fromYb = 1
-    //         const toXb = 4
-    //         const toYb = 3
-
-    //         const piece = board.squares[fromY][fromX].piece
-    //         board.movePiece(fromX, fromY, toX, toY)
-    //         expect(piece.enPassant).toEqual({x: 4, y: 5})
-    //         board.movePiece(fromXb, fromYb, toXb, toYb)
-    //         expect(piece.enPassant).toEqual(null)
-    //     })
-    // })
+            expect(aEnPassants).toEqual(expect.arrayContaining(eEnPassants))
+            expect(aEnPassants.length).toBe(eEnPassants.length)
+        })
+    })
 })

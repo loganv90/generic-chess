@@ -13,7 +13,7 @@ class Board {
 
         this.enPassant = {}
         for (const player of this.players) {
-            this.enPassant[player] = {}
+            this.enPassant[player] = null
         }
 
         const fenSplit = fen.split(' ')
@@ -73,18 +73,19 @@ class Board {
         }
     }
 
-    getEnPassant(x, y) {
+    getEnPassants(color, x, y) {
         return this.players
+        .filter(player => player !== color)
         .map(player => this.enPassant[player])
         .filter(enPassant => enPassant.x === x && enPassant.y === y)
     }
 
-    setEnPassant(x, y, xPiece, yPiece, color) {
-        this.enPassant[color] = {x: x, y: y, xPiece: xPiece, yPiece: yPiece}
+    getEnPassant(color) {
+        return this.enPassant[color]
     }
 
-    clearEnPassant(color) {
-        this.enPassant[color] = {}
+    setEnPassant(color, enPassant) {
+        this.enPassant[color] = enPassant
     }
 
     getMoves(x, y) {
@@ -177,7 +178,7 @@ class Board {
         if (this.players
             .filter(player => player !== this.players[this.currentPlayer])
             .map(player => this.enPassant[player])
-            .filter(enPassant => enPassant.x === m.x && enPassant.y === m.y)
+            .filter(enPassant => enPassant?.x === m.x && enPassant?.y === m.y)
             .length > 0
         ) {
             return m

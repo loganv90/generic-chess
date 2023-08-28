@@ -3,7 +3,7 @@ import ChessSquare from '/src/components/ChessSquare'
 import ChessActionBar from '/src/components/ChessActionBar'
 import { Board } from '/src/utils/chess/Board'
 import { SimpleInvoker } from '/src/utils/chess/Invoker'
-import { SimpleMove } from '/src/utils/chess/Move'
+import { MoveFactory } from '/src/utils/chess/Move'
 
 function ChessBoard() {
     const invoker = useRef(new SimpleInvoker())
@@ -12,35 +12,43 @@ function ChessBoard() {
     const [selected, setSelected] = useState({})
     const [destinations, setDestinations] = useState([])
 
+    const clearSelect = () => {
+        setDestinations([])
+        setSelected({})
+    }
+
     const executeMove = (xFrom, yFrom, xTo, yTo, options) => {
-        invoker.current.execute(new SimpleMove(board.current, xFrom, yFrom, xTo, yTo, options))
+        const move = MoveFactory.createMove(board.current, xFrom, yFrom, xTo, yTo, options)
+        invoker.current.execute(move)
         setSquares(s => [...s])
+        clearSelect()
     }
 
     const undoMove = () => {
         invoker.current.undo()
         setSquares(s => [...s])
+        clearSelect()
     }
 
     const redoMove = () => {
         invoker.current.redo()
         setSquares(s => [...s])
+        clearSelect()
     }
 
     const clickSquare = (x, y) => {
-        if (selected.x === x && selected.y === y) {
-            setDestinations([])
-            setSelected({})
+        const sameSquare = selected.x === x && selected.y === y
+        if (sameSquare) {
+            clearSelect()
             return
         }
         const destination = destinations.find((d) => d.x === x && d.y === y)
         if (destination) {
             executeMove(selected.x, selected.y, x, y, destination.options)
-            setDestinations([])
-            setSelected({})
             return
         }
-        setDestinations(board.current.getMoves(x, y))
+        const moves = board.current.getMoves(x, y)
+        setDestinations(moves)
         setSelected({x, y})
     }
  

@@ -27,6 +27,8 @@ class SimpleInvoker extends Invoker {
         if (success) {
             this.history.splice(this.index, this.history.length-this.index, move)
             this.index += 1
+        } else {
+            throw new Error('Failed to execute move')
         }
 
         return success
@@ -42,6 +44,8 @@ class SimpleInvoker extends Invoker {
 
         if (success) {
             this.index -= 1
+        } else {
+            throw new Error('Failed to undo move')
         }
 
         return success
@@ -57,6 +61,8 @@ class SimpleInvoker extends Invoker {
 
         if (success) {
             this.index += 1
+        } else {
+            throw new Error('Failed to redo move')
         }
 
         return success
