@@ -112,6 +112,10 @@ class CaptureEnPassantMove extends SimpleMove {
     constructor(board: Board, m: BoardMove) {
         super(board, m)
 
+        if (!m.options.captureEnPassant) {
+            throw new Error('Invalid move options')
+        }
+
         this.enPassantsAndCapturedPieces = this.board.getEnPassants(this.piece.color, m.xTo, m.yTo)
         .map((e) => ({enPassant: e, capturedPiece: board.getPiece(e.xPiece, e.yPiece)?.copy()}))
         .filter((e): e is {enPassant: EnPassant, capturedPiece: Piece} => true)
