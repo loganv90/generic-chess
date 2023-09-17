@@ -3,13 +3,13 @@ import { Square } from './Square'
 import { Piece } from './Piece'
 
 class Board {
+    readonly squares: Square[][]
     private localPlayer: number
     private currentPlayer: number
     private players: string[]
     private enPassant: EnPassantMap
     private halfMoveClock: number
     private fullMoveNumber: number
-    private squares: Square[][]
     private xMin: number
     private xMax: number
     private yMin: number

@@ -5,12 +5,21 @@ import { Pawn } from '../../../src/utils/chess/Piece'
 import { BoardMove } from '../../../src/utils/chess/Types'
 
 vi.mock('../../../src/utils/chess/Piece', () => {
-    const Pawn = vi.fn()
+    const Pawn = vi.fn(() => ({
+        copy: vi.fn(),
+    }))
     return { Pawn }
 })
 
 vi.mock('../../../src/utils/chess/Board', () => {
-    const Board = vi.fn()
+    const Board = vi.fn(() => ({
+        getPiece: vi.fn(),
+        setPiece: vi.fn(),
+        getEnPassant: vi.fn(),
+        setEnPassant: vi.fn(),
+        increment: vi.fn(),
+        decrement: vi.fn(),
+    }))
     return { Board }
 })
 
@@ -60,13 +69,8 @@ describe('RevealEnPassantMove', () => {
         const board = new Board()
         const piece = new Pawn('', 0, 0)
         const enPassant = {x: 2, y: 2, xPiece: 1, yPiece: 1}
-        board.getPiece = vi.fn(() => piece)
-        board.setPiece = vi.fn()
-        board.getEnPassant = vi.fn()
         board.setEnPassant = mockedSetEnPassant
-        board.increment = vi.fn()
-        board.decrement = vi.fn()
-        piece.copy = vi.fn(() => piece)
+        board.getPiece = vi.fn(() => piece)
         Object.defineProperty(piece, 'color', {value: 'piece'})
 
         const boardMove: BoardMove = {xFrom: 0, yFrom: 0, xTo: 1, yTo: 1, options: {revealEnPassant: {x: 2, y: 2}}}
@@ -88,6 +92,7 @@ describe('CaptureEnPassantMove', () => {
         const pieceGrey = new Pawn('', 0, 0)
         const enPassantGrey = {x: 2, y: 2, xPiece: 1, yPiece: 1}
         const enPassantBlack = {x: 2, y: 2, xPiece: 3, yPiece: 3}
+        board.setPiece = mockedSetPiece
         pieceWhite.copy = vi.fn(() => pieceWhite)
         pieceBlack.copy = vi.fn(() => pieceBlack)
         pieceGrey.copy = vi.fn(() => pieceGrey)
@@ -96,11 +101,6 @@ describe('CaptureEnPassantMove', () => {
             if (x == 3 && y == 3) {return pieceBlack}
             return pieceWhite
         })
-        board.setPiece = mockedSetPiece
-        board.getEnPassant = vi.fn()
-        board.setEnPassant = vi.fn()
-        board.increment = vi.fn()
-        board.decrement = vi.fn()
         board.getEnPassants = vi.fn((color, x, y) => {
             if (color === 'white' && x === 1 && y === 1) {return [enPassantGrey, enPassantBlack]}
             return []

@@ -1,5 +1,7 @@
 import React from 'react'
 import ChessPiece from './ChessPiece'
+import { Square } from '../utils/chess/Square'
+import { Piece } from '../utils/chess/Piece'
 
 const squareStyle: React.CSSProperties = {
     display: 'flex',
@@ -9,10 +11,19 @@ const squareStyle: React.CSSProperties = {
     height: '12.5%',
 }
 
-const ChessSquare = (
-    { square, isSelected, isDestination, clickSquare }:
-    { square: any, isSelected: boolean, isDestination: boolean, clickSquare: Function }
-): JSX.Element => {
+const ChessSquare = ({
+    square,
+    isSelected,
+    isDestination,
+    clickSquare
+}:{
+    square: Square,
+    isSelected: boolean,
+    isDestination: boolean,
+    clickSquare: (x: number, y: number) => void
+}): JSX.Element => {
+    const piece: Piece | null = square.getPiece()
+
     const getSquareColor = (): string => {
         if (isSelected) {
             return 'red'
@@ -30,7 +41,7 @@ const ChessSquare = (
             style={{...squareStyle, backgroundColor: getSquareColor()}}
             onClick={() => clickSquare(square.x, square.y)}
         >
-            {square.piece && <ChessPiece piece={square.piece} />}
+            {piece && <ChessPiece piece={piece} />}
         </div>
     )
 }

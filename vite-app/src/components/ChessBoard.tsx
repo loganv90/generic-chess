@@ -4,6 +4,9 @@ import ChessActionBar from './ChessActionBar'
 import { Board } from '../utils/chess/Board'
 import { SimpleInvoker } from '../utils/chess/Invoker'
 import { MoveFactory } from '../utils/chess/Move'
+import { Square } from '../utils/chess/Square'
+import { BoardMove } from '../utils/chess/Types'
+import { Move } from '../utils/chess/Move'
 
 const boardStyle: React.CSSProperties = {
     display: 'flex',
@@ -15,18 +18,18 @@ const boardStyle: React.CSSProperties = {
 const ChessBoard = (): JSX.Element => {
     const invoker = useRef(new SimpleInvoker())
     const board = useRef(new Board())
-    const [squares, setSquares] = useState<any[][]>(board.current.squares)
+    const [squares, setSquares] = useState<Square[][]>(board.current.squares)
     const [selected, setSelected] = useState<{x: number, y: number}>({x: -1, y: -1})
-    const [destinations, setDestinations] = useState<{x: number, y: number, options: object}[]>([])
+    const [boardMoves, setBoardMoves] = useState<BoardMove[]>([])
 
     const clearSelect = (): void => {
-        setDestinations([])
+        setBoardMoves([])
         setSelected({x: -1, y: -1})
     }
 
-    const executeMove = (xFrom: number, yFrom: number, xTo: number, yTo: number, options: object): void => {
-        const move = MoveFactory.createMove(board.current, xFrom, yFrom, xTo, yTo, options)
-        invoker.current.execute(move)
+    const executeMove = (boardMove: BoardMove): void => {
+        const move: Move | null = MoveFactory.createMove(board.current, boardMove)
+        move && invoker.current.execute(move)
         setSquares(s => [...s])
         clearSelect()
     }
@@ -49,14 +52,18 @@ const ChessBoard = (): JSX.Element => {
             clearSelect()
             return
         }
-        const destination = destinations.find((d) => d.x === x && d.y === y)
-        if (destination) {
-            executeMove(selected.x, selected.y, x, y, destination.options)
+
+        const boardMove = boardMoves.find((d) => d.xTo === x && d.yTo === y)
+        if (boardMove) {
+            executeMove(boardMove)
             return
         }
+
         const moves = board.current.getMoves(x, y)
-        setDestinations(moves)
+        setBoardMoves(moves)
         setSelected({x, y})
+
+        console.log(boardMoves)
     }
  
     return (
@@ -67,7 +74,7 @@ const ChessBoard = (): JSX.Element => {
                         key={s.id}
                         square={s}
                         isSelected={selected.x === s.x && selected.y === s.y}
-                        isDestination={destinations.some((d) => d.x === s.x && d.y === s.y)}
+                        isDestination={boardMoves.some((d) => d.xTo === s.x && d.yTo === s.y)}
                         clickSquare={clickSquare}
                     />
                 ))}

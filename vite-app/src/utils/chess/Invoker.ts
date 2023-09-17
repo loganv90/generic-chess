@@ -1,27 +1,22 @@
-class Invoker {
-    constructor() {}
+import { Move } from './Move'
 
-    execute() {
-        throw new Error('Invoker.execute not implemented')
-    }
-
-    undo() {
-        throw new Error('Invoker.undo not implemented')
-    }
-
-    redo() {
-        throw new Error('Invoker.redo not implemented')
-    }
+abstract class Invoker {
+    abstract execute(move: Move): boolean
+    abstract undo(): boolean
+    abstract redo(): boolean
 }
 
 class SimpleInvoker extends Invoker {
+    private history: Move[]
+    private index: number
+
     constructor() {
         super()
         this.history = []
         this.index = 0
     }
 
-    execute(move) {
+    execute(move: Move): boolean {
         const success = move.execute()
 
         if (success) {
