@@ -39,7 +39,7 @@ class Square {
             case 'q':
                 return new Queen('black')
             case 'k':
-                return new King('black')
+                return new King('black', 0, 1)
             case 'p':
                 return new Pawn('black', 0, 1)
             case 'R':
@@ -51,7 +51,7 @@ class Square {
             case 'Q':
                 return new Queen('white')
             case 'K':
-                return new King('white')
+                return new King('white', 0, -1)
             case 'P':
                 return new Pawn('white', 0, -1)
             default:

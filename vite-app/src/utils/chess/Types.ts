@@ -10,6 +10,7 @@ type PieceMoveOptions = {
     mustCapture?: true,
     canPromote?: true,
     canCaptureEnPassant?: true,
+    mustCastle?: true,
     mustRevealEnPassant?: {x: number, y: number},
 }
 

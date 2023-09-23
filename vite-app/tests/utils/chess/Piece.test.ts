@@ -119,7 +119,7 @@ describe('Queen', () => {
 describe('King', () => {
     describe('getMoves', () => {
         it('should return king moves', () => {
-            const king = new King('white')
+            const king = new King('white', 0, 1)
 
             const eMoves = [
                 {x: 1, y: 1, options: {}},
@@ -130,6 +130,8 @@ describe('King', () => {
                 {x: -1, y: 1, options: {}},
                 {x: -1, y: 0, options: {}},
                 {x: -1, y: -1, options: {}},
+                {x: 1, y: 0, options: {mustCastle: true}},
+                {x: -1, y: 0, options: {mustCastle: true}},
             ]
             const aMoves = king.getMoves()
 

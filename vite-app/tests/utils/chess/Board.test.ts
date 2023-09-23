@@ -255,6 +255,9 @@ describe('Board', () => {
                 {xFrom: 4, yFrom: 4, xTo: 4, yTo: 5, options: {}},
                 {xFrom: 4, yFrom: 4, xTo: 3, yTo: 3, options: {}},
                 {xFrom: 4, yFrom: 4, xTo: 4, yTo: 3, options: {}},
+                {xFrom: 4, yFrom: 4, xTo: 5, yTo: 4, options: {}}, // castle one direction
+                {xFrom: 4, yFrom: 4, xTo: 3, yTo: 4, options: {}}, // castle other direction
+                // also make a test for moved king and rooks
             ]
             const aMoves = board.getMoves(4, 4)
     

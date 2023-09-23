@@ -163,16 +163,29 @@ class Queen extends Piece {
 }
 
 class King extends Piece {
-    constructor(color: string, moved=false) {
+    private xDir: 1|0|-1;
+    private yDir: 1|0|-1;
+
+    constructor(color: string, xDir: 1|0|-1, yDir: 1|0|-1, moved=false) {
         super(color, moved)
+
+        this.xDir = xDir
+        this.yDir = yDir
+
+        if (this.xDir && this.yDir) {
+            throw new Error('King can not have diagonal direction')
+        } else if (!this.xDir && !this.yDir) {
+            throw new Error('King must have a direction')
+        }
+
     }
 
     copy(): King {
-        return new King(this.color, true)
+        return new King(this.color, this.xDir, this.yDir, true)
     }
 
     getMoves(): PieceMove[] {
-        return [
+        const moves = [
             {x: 1, y: 1, options: {}},
             {x: 1, y: -1, options: {}},
             {x: -1, y: 1, options: {}},
@@ -182,6 +195,16 @@ class King extends Piece {
             {x: 0, y: 1, options: {}},
             {x: 0, y: -1, options: {}},
         ]
+
+        if (this.xDir) {
+            moves.push({x: 0, y: 1, options: {mustCastle: true}})
+            moves.push({x: 0, y: -1, options: {mustCastle: true}})
+        } else if (this.yDir) {
+            moves.push({x: 1, y: 0, options: {mustCastle: true}})
+            moves.push({x: -1, y: 0, options: {mustCastle: true}})
+        }
+
+        return moves
     }
 }
 
