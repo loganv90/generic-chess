@@ -1,4 +1,3 @@
-import { PieceMove } from './Types'
 import { Piece, Pawn, Knight, Bishop, Rook, Queen, King } from './Piece'
 
 class Square {
@@ -22,10 +21,6 @@ class Square {
 
     setPiece(piece: Piece | null): void {
         this.piece = piece
-    }
-
-    getMoves(): PieceMove[] {
-        return this.piece ? this.piece.getMoves() : []
     }
 
     private createPieceFromFen(fenChar: string): Piece | null {

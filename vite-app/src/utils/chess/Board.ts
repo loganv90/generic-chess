@@ -1,19 +1,30 @@
-import { PieceMove, BoardMove, EnPassantMap, EnPassant } from './Types'
 import { Square } from './Square'
 import { Piece } from './Piece'
+import { Move } from './Move'
+
+type EnPassantMap = {
+    [key: string]: EnPassant | null,
+}
+
+type EnPassant = {
+    xTarget: number,
+    yTarget: number,
+    xPiece: number,
+    yPiece: number,
+}
 
 class Board {
     readonly squares: Square[][]
+    readonly xMin: number
+    readonly xMax: number
+    readonly yMin: number
+    readonly yMax: number
     private localPlayer: number
     private currentPlayer: number
     private players: string[]
     private enPassant: EnPassantMap
     private halfMoveClock: number
     private fullMoveNumber: number
-    private xMin: number
-    private xMax: number
-    private yMin: number
-    private yMax: number
 
     constructor(
         localPlayer=0,
@@ -72,22 +83,18 @@ class Board {
     getEnPassants(color: string, x: number, y: number): EnPassant[] {
         return Object.entries(this.enPassant)
         .filter((e): e is [string, EnPassant] => e[0] !== color)
-        .filter((e): e is [string, EnPassant] => e[1]?.x === x && e[1].y === y)
+        .filter((e): e is [string, EnPassant] => e[1]?.xTarget === x && e[1].yTarget === y)
         .map(e => e[1])
     }
 
-    getMoves(x: number, y: number): BoardMove[] {
-        return this.getPiece(x, y)?.getMoves()
-        .filter(() => this.filterSameColorSource(x, y))
-        .flatMap(m => m.options.direction ? this.mapToDirection(x, y, m) : this.mapToDestination(x, y, m))
-        .filter(m => this.filterOutOfBounds(m))
-        .filter(m => this.filterSameColorDestination(m))
-        .map(m => m.options.canPromote ? this.mapCanPromote(x, y, m) : m)
-        .map(m => m.options.canCaptureEnPassant ? this.mapCanCaptureEnPassant(m) : m)
-        .filter(m => this.filterNoCapture(m))
-        .filter(m => this.filterMustCapture(m))
-        .filter(m => this.filterMustRevealEnPassant(m))
-        .map(m => this.mapToBoardMove(x, y, m)) ?? []
+    getMoves(x: number, y: number): Move[] {
+        const piece = this.getPiece(x, y)
+
+        if (piece && piece.color === this.players[this.currentPlayer]) {
+            return piece.getMoves(x, y, this)
+        }
+
+        return []
     }
 
     increment(): void {
@@ -133,95 +140,6 @@ class Board {
         }
     
         return squareRows
-    }
-
-    private mapToDirection(x: number, y: number, m: PieceMove): PieceMove[] {
-        delete m.options.direction
-        delete m.options.mustRevealEnPassant
-        const moves = []
-        let cx = x+m.x
-        let cy = y+m.y
-        while (cx >= this.xMin
-            && cx <= this.xMax
-            && cy >= this.yMin
-            && cy <= this.yMax
-        ) {
-            moves.push({...m, x: cx, y: cy})
-            if (this.getPiece(cx, cy)) {
-                break
-            }
-            cx += m.x
-            cy += m.y
-        }
-        return moves
-    }
-
-    private mapToDestination(x: number, y: number, m: PieceMove): PieceMove {
-        if (m.options.mustRevealEnPassant) {
-            m.options.mustRevealEnPassant.x += x
-            m.options.mustRevealEnPassant.y += y
-        }
-        m.x += x
-        m.y += y
-        return m
-    }
-
-    private filterOutOfBounds(m: PieceMove): boolean {
-        return m.x >= this.xMin && m.x <= this.xMax && m.y >= this.yMin && m.y <= this.yMax
-    }
-
-    private filterSameColorDestination(m: PieceMove): boolean {
-        return this.getPiece(m.x, m.y)?.color !== this.players[this.currentPlayer]
-    }
-
-    private filterSameColorSource(x: number, y: number): boolean {
-        return this.getPiece(x, y)?.color === this.players[this.currentPlayer]
-    }
-
-    private filterNoCapture(m: PieceMove): boolean {
-        return m.options.noCapture ? !this.getPiece(m.x, m.y) : true
-    }
-
-    private filterMustCapture(m: PieceMove): boolean {
-        return Boolean(m.options.mustCapture ? m.options.canCaptureEnPassant ? true : this.getPiece(m.x, m.y) : true)
-    }
-
-    private filterMustRevealEnPassant(m: PieceMove): boolean {
-        return m.options.mustRevealEnPassant ? !this.getPiece(m.options.mustRevealEnPassant.x, m.options.mustRevealEnPassant.y) : true
-    }
-
-    private mapCanPromote(x: number, y: number, m: PieceMove): PieceMove {
-        if (m.y == this.yMin && y != this.yMin
-            || m.y == this.yMax && y != this.yMax
-            || m.x == this.xMin && x != this.xMin
-            || m.x == this.xMax && x != this.xMax
-        ) {
-            return m
-        }
-        delete m.options.canPromote
-        return m
-    }
-
-    private mapCanCaptureEnPassant(m: PieceMove): PieceMove {
-        if (this.getEnPassants(this.players[this.currentPlayer], m.x, m.y).length > 0) {
-            return m
-        }
-        delete m.options.canCaptureEnPassant
-        return m
-    }
-
-    private mapToBoardMove(x: number, y: number, m: PieceMove): BoardMove {
-        const boardMove: BoardMove = {xFrom: x, yFrom: y, xTo: m.x, yTo: m.y, options: {}}
-        if (m.options.canCaptureEnPassant) {
-            boardMove.options.captureEnPassant = m.options.canCaptureEnPassant
-        }
-        if (m.options.mustRevealEnPassant) {
-            boardMove.options.revealEnPassant = m.options.mustRevealEnPassant
-        }
-        if (m.options.canPromote) {
-            boardMove.options.promote = true
-        }
-        return boardMove
     }
 }
 
