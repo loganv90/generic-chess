@@ -55,12 +55,10 @@ abstract class Piece {
         dy: number,
         color: string,
     ): void => {
-        let cx = xFrom
-        let cy = yFrom
+        let cx = xFrom + dx
+        let cy = yFrom + dy
 
         while (!Piece.movedOutOfBounds(cx, cy, board)) {
-            cx += dx
-            cy += dy
             const piece = board.getPiece(cx, cy)
 
             if (piece && piece.color === color) {
@@ -73,6 +71,9 @@ abstract class Piece {
                 const simpleMove = new SimpleMove(board, xFrom, yFrom, cx, cy)
                 moves.push(simpleMove)
             }
+            
+            cx += dx
+            cy += dy
         }
     }
 

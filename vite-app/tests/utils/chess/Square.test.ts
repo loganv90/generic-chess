@@ -1,24 +1,20 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Square } from '../../../src/utils/chess/Square'
-import { PieceMove } from '../../../src/utils/chess/Types'
+import { Pawn } from '../../../src/utils/chess/Piece'
 
 vi.mock('../../../src/utils/chess/Piece', () => {
-    const Pawn = vi.fn(() => ({
-        getMoves: vi.fn((): PieceMove[] => [{x: 0, y: 0, options: {}}])
-    }))
+    const Pawn = vi.fn()
     return { Pawn }
 })
 
 describe('Square', () => {
-    describe('getMoves', () => {
-        it('should return empty array if there is no piece', () => {
-            const square = new Square('0-0', 0, 0)
-            expect(square.getMoves().length).toBe(0)
-        })
+    it('should have null piece when not given character', () => {
+        const square = new Square('0-0', 0, 0)
+        expect(square.getPiece()).toBe(null)
+    })
 
-        it('should return array if there is a piece', () => {
-            const square = new Square('0-0', 0, 0, 'p')
-            expect(square.getMoves().length).toBeGreaterThan(0)
-        })
+    it('should have pawn piece when given p character', () => {
+        const square = new Square('0-0', 0, 0, 'p')
+        expect(square.getPiece()).instanceOf(Pawn)
     })
 })

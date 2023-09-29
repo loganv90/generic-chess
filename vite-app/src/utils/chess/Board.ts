@@ -2,11 +2,11 @@ import { Square } from './Square'
 import { Piece } from './Piece'
 import { Move } from './Move'
 
-type EnPassantMap = {
+export type EnPassantMap = {
     [key: string]: EnPassant | null,
 }
 
-type EnPassant = {
+export type EnPassant = {
     xTarget: number,
     yTarget: number,
     xPiece: number,
