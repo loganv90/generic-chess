@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest'
 import { SimpleInvoker } from '../../../src/utils/chess/Invoker'
 import { SimpleMove } from '../../../src/utils/chess/Move'
 import { Board } from '../../../src/utils/chess/Board'
-import { BoardMove } from '../../../src/utils/chess/Types'
 
 vi.mock('/src/utils/chess/Move', () => {
     const SimpleMove = vi.fn(() => ({
@@ -18,11 +17,12 @@ describe('SimpleInvoker', () => {
         const mockedUndo1 = vi.fn(() => true)
         const mockedExecute2 = vi.fn(() => true)
         const mockedUndo2 = vi.fn(() => true)
+
         const simpleInvoker = new SimpleInvoker()
         const board = new Board()
-        const boardMove: BoardMove = {xFrom: 0, yFrom: 0, xTo: 0, yTo: 0, options: {}}
-        const move1 = new SimpleMove(board, boardMove)
-        const move2 = new SimpleMove(board, boardMove)
+        const move1 = new SimpleMove(board, 0, 0, 0, 0)
+        const move2 = new SimpleMove(board, 0, 0, 0, 0)
+
         move1.execute = mockedExecute1
         move1.undo = mockedUndo1
         move2.execute = mockedExecute2
@@ -57,10 +57,9 @@ describe('SimpleInvoker', () => {
     it('should overwrite history when executing a new move', () => {
         const simpleInvoker = new SimpleInvoker()
         const board = new Board()
-        const boardMove: BoardMove = {xFrom: 0, yFrom: 0, xTo: 0, yTo: 0, options: {}}
-        const move1 = new SimpleMove(board, boardMove)
-        const move2 = new SimpleMove(board, boardMove)
-        const move3 = new SimpleMove(board, boardMove)
+        const move1 = new SimpleMove(board, 0, 0, 0, 0)
+        const move2 = new SimpleMove(board, 0, 0, 0, 0)
+        const move3 = new SimpleMove(board, 0, 0, 0, 0)
 
         expect(simpleInvoker.execute(move1)).toBe(true)
         expect(simpleInvoker.execute(move2)).toBe(true)

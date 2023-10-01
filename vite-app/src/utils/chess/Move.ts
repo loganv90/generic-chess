@@ -1,20 +1,29 @@
 import { Piece } from './Piece'
-import { Board } from './Board'
+import { Board, EnPassant } from './Board'
 
 abstract class Move {
+    readonly xFrom: number
+    readonly yFrom: number
+    readonly xTo: number
+    readonly yTo: number
+
+    constructor(xFrom: number, yFrom: number, xTo: number, yTo: number) {
+        this.xFrom = xFrom
+        this.yFrom = yFrom
+        this.xTo = xTo
+        this.yTo = yTo
+    }
+
     abstract execute(): boolean
     abstract undo(): boolean
 }
 
 class SimpleMove extends Move {
     protected readonly board: Board
-    protected readonly xFrom: number
-    protected readonly yFrom: number
-    protected readonly xTo: number
-    protected readonly yTo: number
     protected readonly piece: Piece
     protected readonly newPiece: Piece
     protected readonly capturedPiece: Piece | null
+    protected readonly enPassant: EnPassant | null
 
     constructor(
         board: Board,
@@ -23,12 +32,8 @@ class SimpleMove extends Move {
         xTo: number,
         yTo: number,
     ) {
-        super()
+        super(xFrom, yFrom, xTo, yTo)
         this.board = board
-        this.xFrom = xFrom
-        this.yFrom = yFrom
-        this.xTo = xTo
-        this.yTo = yTo
 
         const tempPiece = board.getPiece(xFrom, yFrom)
         if (!tempPiece) {
@@ -43,11 +48,13 @@ class SimpleMove extends Move {
         this.piece = tempPiece
         this.newPiece = this.piece.copy()
         this.capturedPiece = tempCapturedPiece
+        this.enPassant = board.getEnPassant(this.piece.color)
     }
 
     execute(): boolean {
         this.board.setPiece(this.xTo, this.yTo, this.newPiece)
         this.board.setPiece(this.xFrom, this.yFrom, null)
+        this.board.setEnPassant(this.piece.color, null)
         this.board.increment()
 
         return true
@@ -56,6 +63,7 @@ class SimpleMove extends Move {
     undo(): boolean {
         this.board.setPiece(this.xFrom, this.yFrom, this.piece)
         this.board.setPiece(this.xTo, this.yTo, this.capturedPiece)
+        this.board.setEnPassant(this.piece.color, this.enPassant)
         this.board.decrement()
 
         return true
