@@ -19,11 +19,11 @@ abstract class Move {
 }
 
 class SimpleMove extends Move {
-    protected readonly board: Board
-    protected readonly piece: Piece
-    protected readonly newPiece: Piece
-    protected readonly capturedPiece: Piece | null
-    protected readonly enPassant: EnPassant | null
+    private readonly board: Board
+    private readonly piece: Piece
+    private readonly newPiece: Piece
+    private readonly capturedPiece: Piece | null
+    private readonly enPassant: EnPassant | null
 
     constructor(
         board: Board,
@@ -70,35 +70,89 @@ class SimpleMove extends Move {
     }
 }
 
-// class RevealEnPassantMove extends SimpleMove {
-//     private revealEnPassant: {x: number, y: number}
+// class RevealEnPassantMove extends Move {
+//     // private revealEnPassant: {x: number, y: number}
 
-//     constructor(board: Board, m: BoardMove) {
-//         super(board, m)
+//     // constructor(board: Board, m: BoardMove) {
+//     //     super(board, m)
 
-//         if (!m.options.revealEnPassant) {
-//             throw new Error('Invalid move options')
+//     //     if (!m.options.revealEnPassant) {
+//     //         throw new Error('Invalid move options')
+//     //     }
+
+//     //     this.revealEnPassant = m.options.revealEnPassant
+//     // }
+
+//     // execute(): boolean {
+//     //     const res = super.execute()
+//     //     this.board.setEnPassant(
+//     //         this.piece.color,
+//     //         {
+//     //             x: this.revealEnPassant.x,
+//     //             y: this.revealEnPassant.y,
+//     //             xPiece: this.m.xTo,
+//     //             yPiece: this.m.yTo,
+//     //         }
+//     //     )
+//     //     return res
+//     // }
+
+//     // undo(): boolean {
+//     //     return super.undo()
+//     // }
+
+//     private readonly board: Board
+//     private readonly piece: Piece
+//     private readonly newPiece: Piece
+//     private readonly capturedPiece: Piece | null
+//     private readonly enPassant: EnPassant | null
+//     private readonly revealedEnPassant: EnPassant
+
+//     constructor(
+//         board: Board,
+//         xFrom: number,
+//         yFrom: number,
+//         xTo: number,
+//         yTo: number,
+//         xTarget: number,
+//         yTarget: number,
+//     ) {
+//         super(xFrom, yFrom, xTo, yTo)
+//         this.board = board
+//         this.xTarg
+
+//         const tempPiece = board.getPiece(xFrom, yFrom)
+//         if (!tempPiece) {
+//             throw new Error('Invalid from position')
 //         }
 
-//         this.revealEnPassant = m.options.revealEnPassant
+//         const tempCapturedPiece = board.getPiece(xTo, yTo)
+//         if (tempCapturedPiece === undefined) {
+//             throw new Error('Invalid to position')
+//         }
+
+//         this.piece = tempPiece
+//         this.newPiece = this.piece.copy()
+//         this.capturedPiece = tempCapturedPiece
+//         this.enPassant = board.getEnPassant(this.piece.color)
 //     }
 
 //     execute(): boolean {
-//         const res = super.execute()
-//         this.board.setEnPassant(
-//             this.piece.color,
-//             {
-//                 x: this.revealEnPassant.x,
-//                 y: this.revealEnPassant.y,
-//                 xPiece: this.m.xTo,
-//                 yPiece: this.m.yTo,
-//             }
-//         )
-//         return res
+//         this.board.setPiece(this.xTo, this.yTo, this.newPiece)
+//         this.board.setPiece(this.xFrom, this.yFrom, null)
+//         this.board.setEnPassant(this.piece.color, null)
+//         this.board.increment()
+
+//         return true
 //     }
 
 //     undo(): boolean {
-//         return super.undo()
+//         this.board.setPiece(this.xFrom, this.yFrom, this.piece)
+//         this.board.setPiece(this.xTo, this.yTo, this.capturedPiece)
+//         this.board.setEnPassant(this.piece.color, this.enPassant)
+//         this.board.decrement()
+
+//         return true
 //     }
 // }
 
