@@ -2,62 +2,73 @@ package chess
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestNewBoardWithDefaultFen(t *testing.T) {
-	board, err := NewBoard(
+func TestNewSimpleBoardWithDefaultFen(t *testing.T) {
+	s, err := newSimpleBoard(
 		[]string{"white", "black"},
 		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 	)
+	assert.Nil(t, err)
 
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	if len(board.pieces) != 8 || len(board.pieces[0]) != 8 {
-		t.Fatalf("board should have 8 rows and 8 columns")
-	}
-
-	for row := 2; row < 6; row++ {
-		for col := 0; col < 8; col++ {
-			if board.pieces[row][col] != nil {
-				t.Fatalf("piece at row %d and column %d should be nil", row, col)
-			}
+	for y := 2; y <= 5; y++ {
+		for x := 0; x <= 7; x++ {
+			piece, err := s.getPiece(x, y)
+			assert.Nil(t, err)
+			assert.Nil(t, piece)
 		}
 	}
 
-	for _, row := range []int{1, 6} {
-		for col := 0; col < 8; col++ {
-			if _, ok := board.pieces[row][col].(*pawn); !ok {
-				t.Fatalf("piece at row %d and column %d should be a pawn", row, col)
-			}
+	for _, y := range []int{1, 6} {
+		for x := 0; x <= 7; x++ {
+			piece, err := s.getPiece(x, y)
+			assert.Nil(t, err)
+			_, ok := piece.(*pawn)
+			assert.True(t, ok)
 		}
 	}
 
-	for _, row := range []int{0, 7} {
-		if _, ok := board.pieces[row][0].(*rook); !ok {
-			t.Fatalf("piece at row %d and column %d should be a rook", row, 0)
-		}
-		if _, ok := board.pieces[row][1].(*knight); !ok {
-			t.Fatalf("piece at row %d and column %d should be a knight", row, 1)
-		}
-		if _, ok := board.pieces[row][2].(*bishop); !ok {
-			t.Fatalf("piece at row %d and column %d should be a bishop", row, 2)
-		}
-		if _, ok := board.pieces[row][3].(*queen); !ok {
-			t.Fatalf("piece at row %d and column %d should be a queen", row, 3)
-		}
-		if _, ok := board.pieces[row][4].(*king); !ok {
-			t.Fatalf("piece at row %d and column %d should be a queen", row, 4)
-		}
-		if _, ok := board.pieces[row][5].(*bishop); !ok {
-			t.Fatalf("piece at row %d and column %d should be a bishop", row, 5)
-		}
-		if _, ok := board.pieces[row][6].(*knight); !ok {
-			t.Fatalf("piece at row %d and column %d should be a knight", row, 6)
-		}
-		if _, ok := board.pieces[row][7].(*rook); !ok {
-			t.Fatalf("piece at row %d and column %d should be a rook", row, 7)
-		}
+	for _, y := range []int{0, 7} {
+		piece, err := s.getPiece(0, y)
+		assert.Nil(t, err)
+		_, ok := piece.(*rook)
+		assert.True(t, ok)
+
+		piece, err = s.getPiece(1, y)
+		assert.Nil(t, err)
+		_, ok = piece.(*knight)
+		assert.True(t, ok)
+
+		piece, err = s.getPiece(2, y)
+		assert.Nil(t, err)
+		_, ok = piece.(*bishop)
+		assert.True(t, ok)
+
+		piece, err = s.getPiece(3, y)
+		assert.Nil(t, err)
+		_, ok = piece.(*queen)
+		assert.True(t, ok)
+
+		piece, err = s.getPiece(4, y)
+		assert.Nil(t, err)
+		_, ok = piece.(*king)
+		assert.True(t, ok)
+
+		piece, err = s.getPiece(5, y)
+		assert.Nil(t, err)
+		_, ok = piece.(*bishop)
+		assert.True(t, ok)
+
+		piece, err = s.getPiece(6, y)
+		assert.Nil(t, err)
+		_, ok = piece.(*knight)
+		assert.True(t, ok)
+
+		piece, err = s.getPiece(7, y)
+		assert.Nil(t, err)
+		_, ok = piece.(*rook)
+		assert.True(t, ok)
 	}
 }

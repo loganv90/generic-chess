@@ -1,49 +1,105 @@
 package chess
 
 type piece interface {
-	getMoved() piece
+	getColor() string
+	movedCopy() piece
+	moves(board, int, int) []move
+}
+
+type allegiant struct {
+	color string
+}
+
+func (a *allegiant) getColor() string {
+	return a.color
 }
 
 type pawn struct {
+	allegiant
 	moved bool
 	xDir  int
 	yDir  int
 }
 
-func (p *pawn) getMoved() piece {
+func (p *pawn) movedCopy() piece {
 	return &pawn{
-		moved: true,
-		xDir:  p.xDir,
-		yDir:  p.yDir,
+		allegiant{p.color},
+		true,
+		p.xDir,
+		p.yDir,
 	}
 }
 
-type knight struct{}
-
-func (k *knight) getMoved() piece {
-	return &knight{}
+func (p *pawn) moves(b board, x int, y int) []move {
+	return []move{}
 }
 
-type bishop struct{}
-
-func (b *bishop) getMoved() piece {
-	return &bishop{}
+type knight struct {
+	allegiant
 }
 
-type rook struct{}
-
-func (r *rook) getMoved() piece {
-	return &rook{}
+func (k *knight) movedCopy() piece {
+	return &knight{
+		allegiant{k.color},
+	}
 }
 
-type queen struct{}
-
-func (q *queen) getMoved() piece {
-	return &queen{}
+func (k *knight) moves(b board, x int, y int) []move {
+	return []move{}
 }
 
-type king struct{}
+type bishop struct {
+	allegiant
+}
 
-func (k *king) getMoved() piece {
-	return &king{}
+func (s *bishop) movedCopy() piece {
+	return &bishop{
+		allegiant{s.color},
+	}
+}
+
+func (s *bishop) moves(b board, x int, y int) []move {
+	return []move{}
+}
+
+type rook struct {
+	allegiant
+}
+
+func (r *rook) movedCopy() piece {
+	return &rook{
+		allegiant{r.color},
+	}
+}
+
+func (r *rook) moves(b board, x int, y int) []move {
+	return []move{}
+}
+
+type queen struct {
+	allegiant
+}
+
+func (q *queen) movedCopy() piece {
+	return &queen{
+		allegiant{q.color},
+	}
+}
+
+func (q *queen) moves(b board, x int, y int) []move {
+	return []move{}
+}
+
+type king struct {
+	allegiant
+}
+
+func (k *king) movedCopy() piece {
+	return &king{
+		allegiant{k.color},
+	}
+}
+
+func (k *king) moves(b board, x int, y int) []move {
+	return []move{}
 }
