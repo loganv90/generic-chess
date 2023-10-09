@@ -1,16 +1,16 @@
 package chess
 
-type move interface {
-	execute() error
-	undo() error
-}
-
 type action struct {
 	b     board
 	xFrom int
 	yFrom int
 	xTo   int
 	yTo   int
+}
+
+type move interface {
+	execute() error
+	undo() error
 }
 
 func newSimpleMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*simpleMove, error) {
@@ -82,7 +82,7 @@ func (s *simpleMove) undo() error {
 		return err
 	}
 
-	s.b.clrEnPassant(s.piece.getColor())
+	s.b.setEnPassant(s.piece.getColor(), s.enPassant)
 	s.b.decrement()
 
 	return nil

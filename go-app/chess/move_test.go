@@ -52,6 +52,16 @@ func (m *mockBoard) decrement() {
 	m.Called()
 }
 
+func (m *mockBoard) xLen() int {
+	args := m.Called()
+	return args.Int(0)
+}
+
+func (m *mockBoard) yLen() int {
+	args := m.Called()
+	return args.Int(0)
+}
+
 type mockPiece struct {
 	mock.Mock
 }
@@ -85,16 +95,22 @@ func TestSimpleMove(t *testing.T) {
 	piece.On("getColor").Return("white")
 	board.On("setPiece", 0, 0, nil).Return(nil)
 	board.On("setPiece", 1, 1, newPiece).Return(nil)
-	board.On("clrEnPassant", "white").Return(nil)
+	board.On("setPiece", 0, 0, piece).Return(nil)
+	board.On("setPiece", 1, 1, capturedPiece).Return(nil)
+	board.On("clrEnPassant", "white").Return()
+	board.On("setEnPassant", "white", enPassant).Return()
 	board.On("increment").Return()
 	board.On("decrement").Return()
 
 	simpleMove, err := newSimpleMove(board, 0, 0, 1, 1)
 	assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	piece.AssertExpectations(t)
-
 	err = simpleMove.execute()
 	assert.Nil(t, err)
+
+	err = simpleMove.undo()
+	assert.Nil(t, err)
+
+	board.AssertExpectations(t)
+	piece.AssertExpectations(t)
 }

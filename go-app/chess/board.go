@@ -24,6 +24,8 @@ type board interface {
 	moves(x int, y int) []move
 	increment()
 	decrement()
+	xLen() int
+	yLen() int
 }
 
 func newSimpleBoard(players []string, fen string) (*simpleBoard, error) {
@@ -192,4 +194,12 @@ func (s *simpleBoard) decrement() {
 	if s.currentPlayer == len(s.players)-1 {
 		s.fullMoveClock--
 	}
+}
+
+func (s *simpleBoard) xLen() int {
+	return len(s.pieces[0])
+}
+
+func (s *simpleBoard) yLen() int {
+	return len(s.pieces)
 }
