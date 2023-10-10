@@ -61,6 +61,7 @@ func newSimpleBoard(players []string, fen string) (*simpleBoard, error) {
 }
 
 func createPiecesFromFen(fenRows string) [][]piece {
+	f := &concreteMoveFactory{}
 	fenRowsSplit := strings.Split(fenRows, "/")
 	pieceRows := [][]piece{}
 
@@ -73,7 +74,7 @@ func createPiecesFromFen(fenRows string) [][]piece {
 					pieces = append(pieces, nil)
 				}
 			} else {
-				pieces = append(pieces, createPieceFromChar(char))
+				pieces = append(pieces, createPieceFromChar(f, char))
 			}
 		}
 
@@ -83,7 +84,7 @@ func createPiecesFromFen(fenRows string) [][]piece {
 	return pieceRows
 }
 
-func createPieceFromChar(char rune) piece {
+func createPieceFromChar(f moveFactory, char rune) piece {
 	switch char {
 	case 'r':
 		return &rook{}
@@ -96,7 +97,11 @@ func createPieceFromChar(char rune) piece {
 	case 'k':
 		return &king{}
 	case 'p':
-		return &pawn{allegiant{"black"}, false, 0, 1}
+		if pawn, err := newPawn(f, "black", false, 0, -1); err != nil {
+			return nil
+		} else {
+			return pawn
+		}
 	case 'R':
 		return &rook{}
 	case 'N':
@@ -108,7 +113,11 @@ func createPieceFromChar(char rune) piece {
 	case 'K':
 		return &king{}
 	case 'P':
-		return &pawn{allegiant{"white"}, false, 0, -1}
+		if pawn, err := newPawn(f, "white", false, 0, -1); err != nil {
+			return nil
+		} else {
+			return pawn
+		}
 	default:
 		return nil
 	}

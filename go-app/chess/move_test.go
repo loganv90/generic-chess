@@ -7,78 +7,24 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type mockBoard struct {
+type mockMoveFactory struct {
 	mock.Mock
 }
 
-func (m *mockBoard) getPiece(x int, y int) (piece, error) {
-	args := m.Called(x, y)
-	return args.Get(0).(piece), args.Error(1)
-}
+func (m *mockMoveFactory) newSimpleMove(
+	b board,
+	xFrom int,
+	yFrom int,
+	xTo int,
+	yTo int,
+) (*simpleMove, error) {
+	args := m.Called(b, xFrom, yFrom, xTo, yTo)
 
-func (m *mockBoard) setPiece(x int, y int, piece piece) error {
-	args := m.Called(x, y, piece)
-	return args.Error(0)
-}
-
-func (m *mockBoard) getEnPassant(color string) (*enPassant, error) {
-	args := m.Called(color)
-	return args.Get(0).(*enPassant), args.Error(1)
-}
-
-func (m *mockBoard) setEnPassant(color string, enPassant *enPassant) {
-	m.Called(color, enPassant)
-}
-
-func (m *mockBoard) clrEnPassant(color string) {
-	m.Called(color)
-}
-
-func (m *mockBoard) possibleEnPassants(color string, xTarget int, yTarget int) []*enPassant {
-	args := m.Called(color, xTarget, yTarget)
-	return args.Get(0).([]*enPassant)
-}
-
-func (m *mockBoard) moves(x int, y int) []move {
-	args := m.Called(x, y)
-	return args.Get(0).([]move)
-}
-
-func (m *mockBoard) increment() {
-	m.Called()
-}
-
-func (m *mockBoard) decrement() {
-	m.Called()
-}
-
-func (m *mockBoard) xLen() int {
-	args := m.Called()
-	return args.Int(0)
-}
-
-func (m *mockBoard) yLen() int {
-	args := m.Called()
-	return args.Int(0)
-}
-
-type mockPiece struct {
-	mock.Mock
-}
-
-func (m *mockPiece) getColor() string {
-	args := m.Called()
-	return args.String(0)
-}
-
-func (m *mockPiece) movedCopy() piece {
-	args := m.Called()
-	return args.Get(0).(piece)
-}
-
-func (m *mockPiece) moves(board board, x int, y int) []move {
-	args := m.Called(board, x, y)
-	return args.Get(0).([]move)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	} else {
+		return args.Get(0).(*simpleMove), args.Error(1)
+	}
 }
 
 func TestSimpleMove(t *testing.T) {
@@ -87,6 +33,7 @@ func TestSimpleMove(t *testing.T) {
 	newPiece := &mockPiece{}
 	capturedPiece := &mockPiece{}
 	enPassant := &enPassant{}
+	moveFactory := &concreteMoveFactory{}
 
 	board.On("getPiece", 0, 0).Return(piece, nil)
 	board.On("getPiece", 1, 1).Return(capturedPiece, nil)
@@ -102,7 +49,7 @@ func TestSimpleMove(t *testing.T) {
 	board.On("increment").Return()
 	board.On("decrement").Return()
 
-	simpleMove, err := newSimpleMove(board, 0, 0, 1, 1)
+	simpleMove, err := moveFactory.newSimpleMove(board, 0, 0, 1, 1)
 	assert.Nil(t, err)
 
 	err = simpleMove.execute()

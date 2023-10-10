@@ -8,12 +8,13 @@ type action struct {
 	yTo   int
 }
 
-type move interface {
-	execute() error
-	undo() error
+type moveFactory interface {
+	newSimpleMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*simpleMove, error)
 }
 
-func newSimpleMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*simpleMove, error) {
+type concreteMoveFactory struct{}
+
+func (f *concreteMoveFactory) newSimpleMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*simpleMove, error) {
 	piece, err := b.getPiece(xFrom, yFrom)
 	if err != nil {
 		return nil, err
@@ -44,6 +45,11 @@ func newSimpleMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*simpleMove
 		capturedPiece,
 		enPassant,
 	}, nil
+}
+
+type move interface {
+	execute() error
+	undo() error
 }
 
 type simpleMove struct {
