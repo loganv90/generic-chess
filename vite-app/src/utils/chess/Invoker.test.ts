@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import { SimpleInvoker } from '../../../src/utils/chess/Invoker'
-import { SimpleMove } from '../../../src/utils/chess/Move'
-import { Board } from '../../../src/utils/chess/Board'
+import { SimpleInvoker } from './Invoker'
+import { SimpleMove } from './Move'
+import { Board } from './Board'
 
 vi.mock('/src/utils/chess/Move', () => {
     const SimpleMove = vi.fn(() => ({

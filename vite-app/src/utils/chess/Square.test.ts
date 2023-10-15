@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Square } from '../../../src/utils/chess/Square'
-import { Pawn } from '../../../src/utils/chess/Piece'
+import { Square } from './Square'
+import { Pawn } from './Piece'
 
-vi.mock('../../../src/utils/chess/Piece', () => {
+vi.mock('./Piece', () => {
     const Pawn = vi.fn()
     return { Pawn }
 })

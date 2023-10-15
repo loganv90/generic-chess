@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { Board } from '../../../src/utils/chess/Board'
-import { Pawn, Knight, Bishop, Rook, Queen, King } from '../../../src/utils/chess/Piece'
+import { Board } from './Board'
+import { Pawn, Knight, Bishop, Rook, Queen, King } from './Piece'
 
 describe('Board', () => {
     it('should have default pieces', () => {

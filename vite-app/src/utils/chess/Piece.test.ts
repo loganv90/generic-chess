@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from 'vitest'
-import { Piece, Pawn, Knight, Bishop, Rook, Queen, King } from '../../../src/utils/chess/Piece'
-import { Board } from '../../../src/utils/chess/Board'
-import { SimpleMove } from '../../../src/utils/chess/Move'
+import { Piece, Pawn, Knight, Bishop, Rook, Queen, King } from './Piece'
+import { Board } from './Board'
+import { SimpleMove } from './Move'
 
-vi.mock('../../../src/utils/chess/Move', () => {
+vi.mock('./Move', () => {
     const SimpleMove = vi.fn()
     return { SimpleMove }
 })
 
-vi.mock('../../../src/utils/chess/Board', () => {
+vi.mock('./Board', () => {
     const Board = vi.fn(() => ({
         xMin: 0,
         xMax: 7,

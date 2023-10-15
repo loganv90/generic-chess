@@ -1,16 +1,16 @@
 import { describe, it, expect, vi } from 'vitest'
-import { SimpleMove } from '../../../src/utils/chess/Move'
-import { Board } from '../../../src/utils/chess/Board'
-import { Pawn } from '../../../src/utils/chess/Piece'
+import { SimpleMove } from './Move'
+import { Board } from './Board'
+import { Pawn } from './Piece'
 
-vi.mock('../../../src/utils/chess/Piece', () => {
+vi.mock('./Piece', () => {
     const Pawn = vi.fn(() => ({
         copy: vi.fn(),
     }))
     return { Pawn }
 })
 
-vi.mock('../../../src/utils/chess/Board', () => {
+vi.mock('./Board', () => {
     const Board = vi.fn(() => ({
         getPiece: vi.fn(),
         setPiece: vi.fn(),
