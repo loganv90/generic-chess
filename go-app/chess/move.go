@@ -8,6 +8,8 @@ type action struct {
 	yTo   int
 }
 
+var moveFactoryInstance = moveFactory(&concreteMoveFactory{})
+
 type moveFactory interface {
 	newSimpleMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*simpleMove, error)
 }

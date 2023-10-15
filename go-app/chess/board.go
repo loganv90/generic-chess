@@ -61,7 +61,6 @@ func newSimpleBoard(players []string, fen string) (*simpleBoard, error) {
 }
 
 func createPiecesFromFen(fenRows string) [][]piece {
-	f := &concreteMoveFactory{}
 	fenRowsSplit := strings.Split(fenRows, "/")
 	pieceRows := [][]piece{}
 
@@ -74,7 +73,7 @@ func createPiecesFromFen(fenRows string) [][]piece {
 					pieces = append(pieces, nil)
 				}
 			} else {
-				pieces = append(pieces, createPieceFromChar(f, char))
+				pieces = append(pieces, createPieceFromChar(char))
 			}
 		}
 
@@ -84,12 +83,16 @@ func createPiecesFromFen(fenRows string) [][]piece {
 	return pieceRows
 }
 
-func createPieceFromChar(f moveFactory, char rune) piece {
+func createPieceFromChar(char rune) piece {
 	switch char {
 	case 'r':
 		return &rook{}
 	case 'n':
-		return &knight{}
+		if knight, err := newKnight("black"); err != nil {
+			return nil
+		} else {
+			return knight
+		}
 	case 'b':
 		return &bishop{}
 	case 'q':
@@ -97,7 +100,7 @@ func createPieceFromChar(f moveFactory, char rune) piece {
 	case 'k':
 		return &king{}
 	case 'p':
-		if pawn, err := newPawn(f, "black", false, 0, -1); err != nil {
+		if pawn, err := newPawn("black", false, 0, -1); err != nil {
 			return nil
 		} else {
 			return pawn
@@ -105,7 +108,11 @@ func createPieceFromChar(f moveFactory, char rune) piece {
 	case 'R':
 		return &rook{}
 	case 'N':
-		return &knight{}
+		if knight, err := newKnight("white"); err != nil {
+			return nil
+		} else {
+			return knight
+		}
 	case 'B':
 		return &bishop{}
 	case 'Q':
@@ -113,7 +120,7 @@ func createPieceFromChar(f moveFactory, char rune) piece {
 	case 'K':
 		return &king{}
 	case 'P':
-		if pawn, err := newPawn(f, "white", false, 0, -1); err != nil {
+		if pawn, err := newPawn("white", false, 0, -1); err != nil {
 			return nil
 		} else {
 			return pawn

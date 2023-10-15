@@ -49,11 +49,10 @@ func addDirection(
 	xFrom int,
 	yFrom int,
 	b board,
-	moves []move,
+	moves *[]move,
 	dx int,
 	dy int,
 	color string,
-	f moveFactory,
 ) {
 	xCurrent := xFrom + dx
 	yCurrent := yFrom + dy
@@ -65,14 +64,14 @@ func addDirection(
 		}
 
 		if p == nil {
-			simpleMove, err := f.newSimpleMove(b, xFrom, yFrom, xCurrent, yCurrent)
+			simpleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xCurrent, yCurrent)
 			if err == nil {
-				moves = append(moves, simpleMove)
+				*moves = append(*moves, simpleMove)
 			}
 		} else if p.getColor() != color {
-			simpleMove, err := f.newSimpleMove(b, xFrom, yFrom, xCurrent, yCurrent)
+			simpleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xCurrent, yCurrent)
 			if err == nil {
-				moves = append(moves, simpleMove)
+				*moves = append(*moves, simpleMove)
 			}
 			break
 		} else {
@@ -88,11 +87,10 @@ func addSimple(
 	xFrom int,
 	yFrom int,
 	b board,
-	moves []move,
+	moves *[]move,
 	dx int,
 	dy int,
 	color string,
-	f moveFactory,
 ) {
 	xTo := xFrom + dx
 	yTo := yFrom + dy
@@ -107,19 +105,19 @@ func addSimple(
 	}
 
 	if p == nil {
-		simpleMove, err := f.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
+		simpleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
 		if err == nil {
-			moves = append(moves, simpleMove)
+			*moves = append(*moves, simpleMove)
 		}
 	} else if p.getColor() != color {
-		simpleMove, err := f.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
+		simpleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
 		if err == nil {
-			moves = append(moves, simpleMove)
+			*moves = append(*moves, simpleMove)
 		}
 	}
 }
 
-func newPawn(f moveFactory, color string, moved bool, xDir int, yDir int) (*pawn, error) {
+func newPawn(color string, moved bool, xDir int, yDir int) (*pawn, error) {
 	var forward1 *direction
 	var forward2 *direction
 	var captures []*direction
@@ -148,7 +146,6 @@ func newPawn(f moveFactory, color string, moved bool, xDir int, yDir int) (*pawn
 		forward1,
 		forward2,
 		captures,
-		f,
 	}, nil
 }
 
@@ -158,7 +155,6 @@ type pawn struct {
 	forward1 *direction
 	forward2 *direction
 	captures []*direction
-	f        moveFactory
 }
 
 func (a *pawn) movedCopy() piece {
@@ -168,7 +164,6 @@ func (a *pawn) movedCopy() piece {
 		a.forward1,
 		a.forward2,
 		a.captures,
-		a.f,
 	}
 }
 
@@ -186,12 +181,12 @@ func (a *pawn) addForward(b board, xFrom int, yFrom int, moves *[]move) {
 	if piece, err := b.getPiece(xTo1, yTo1); err != nil || piece != nil {
 		return
 	} else if movedToPromotionSquare(xTo1, yTo1, xFrom, yFrom, b) {
-		promotionMove, err := a.f.newSimpleMove(b, xFrom, yFrom, xTo1, yTo1)
+		promotionMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo1, yTo1)
 		if err == nil {
 			*moves = append(*moves, promotionMove)
 		}
 	} else {
-		simpleMove, err := a.f.newSimpleMove(b, xFrom, yFrom, xTo1, yTo1)
+		simpleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo1, yTo1)
 		if err == nil {
 			*moves = append(*moves, simpleMove)
 		}
@@ -207,12 +202,12 @@ func (a *pawn) addForward(b board, xFrom int, yFrom int, moves *[]move) {
 	if piece, err := b.getPiece(xTo2, yTo2); err != nil || piece != nil {
 		return
 	} else if movedToPromotionSquare(xTo2, yTo2, xFrom, yFrom, b) {
-		promotionMove, err := a.f.newSimpleMove(b, xFrom, yFrom, xTo2, yTo2)
+		promotionMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo2, yTo2)
 		if err == nil {
 			*moves = append(*moves, promotionMove)
 		}
 	} else {
-		simpleMove, err := a.f.newSimpleMove(b, xFrom, yFrom, xTo2, yTo2)
+		simpleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo2, yTo2)
 		if err == nil {
 			*moves = append(*moves, simpleMove)
 		}
@@ -227,17 +222,34 @@ func (a *pawn) addCaptures(b board, xFrom int, yFrom int, moves *[]move) {
 		if piece, err := b.getPiece(xTo, yTo); err != nil {
 			continue
 		} else if len(b.possibleEnPassants(a.color, xTo, yTo)) > 0 {
-			captureEnPassantMove, err := a.f.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
+			captureEnPassantMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
 			if err == nil {
 				*moves = append(*moves, captureEnPassantMove)
 			}
 		} else if piece != nil && piece.getColor() != a.color {
-			simpleMove, err := a.f.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
+			simpleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
 			if err == nil {
 				*moves = append(*moves, simpleMove)
 			}
 		}
 	}
+}
+
+var knightSimples = []*direction{
+	{1, 2},
+	{-1, 2},
+	{2, 1},
+	{-2, 1},
+	{1, -2},
+	{-1, -2},
+	{2, -1},
+	{-2, -1},
+}
+
+func newKnight(color string) (*knight, error) {
+	return &knight{
+		allegiant{color},
+	}, nil
 }
 
 type knight struct {
@@ -250,8 +262,29 @@ func (n *knight) movedCopy() piece {
 	}
 }
 
-func (n *knight) moves(b board, x int, y int) []move {
-	return []move{}
+func (n *knight) moves(b board, xFrom int, yFrom int) []move {
+	moves := &[]move{}
+	n.addSimples(b, xFrom, yFrom, moves)
+	return *moves
+}
+
+func (n *knight) addSimples(b board, xFrom int, yFrom int, moves *[]move) {
+	for _, simple := range knightSimples {
+		addSimple(xFrom, yFrom, b, moves, simple.dx, simple.dy, n.color)
+	}
+}
+
+var bishopDirections = []*direction{
+	{1, 1},
+	{-1, 1},
+	{1, -1},
+	{-1, -1},
+}
+
+func newBishop(color string) (*bishop, error) {
+	return &bishop{
+		allegiant{color},
+	}, nil
 }
 
 type bishop struct {
@@ -264,22 +297,71 @@ func (s *bishop) movedCopy() piece {
 	}
 }
 
-func (s *bishop) moves(b board, x int, y int) []move {
-	return []move{}
+func (s *bishop) moves(b board, xFrom int, yFrom int) []move {
+	moves := &[]move{}
+	s.addDirections(b, xFrom, yFrom, moves)
+	return *moves
+}
+
+func (s *bishop) addDirections(b board, xFrom int, yFrom int, moves *[]move) {
+	for _, direction := range bishopDirections {
+		addDirection(xFrom, yFrom, b, moves, direction.dx, direction.dy, s.color)
+	}
+}
+
+var rookDirections = []*direction{
+	{1, 0},
+	{-1, 0},
+	{0, 1},
+	{0, -1},
+}
+
+func newRook(color string, moved bool) (*rook, error) {
+	return &rook{
+		allegiant{color},
+		moved,
+	}, nil
 }
 
 type rook struct {
 	allegiant
+	moved bool
 }
 
 func (r *rook) movedCopy() piece {
 	return &rook{
 		allegiant{r.color},
+		true,
 	}
 }
 
 func (r *rook) moves(b board, x int, y int) []move {
-	return []move{}
+	moves := &[]move{}
+	r.addDirections(b, x, y, moves)
+	return *moves
+}
+
+func (r *rook) addDirections(b board, xFrom int, yFrom int, moves *[]move) {
+	for _, direction := range rookDirections {
+		addDirection(xFrom, yFrom, b, moves, direction.dx, direction.dy, r.color)
+	}
+}
+
+var queenDirections = []*direction{
+	{1, 0},
+	{-1, 0},
+	{0, 1},
+	{0, -1},
+	{1, 1},
+	{-1, 1},
+	{1, -1},
+	{-1, -1},
+}
+
+func newQueen(color string) (*queen, error) {
+	return &queen{
+		allegiant{color},
+	}, nil
 }
 
 type queen struct {
@@ -293,19 +375,107 @@ func (q *queen) movedCopy() piece {
 }
 
 func (q *queen) moves(b board, x int, y int) []move {
-	return []move{}
+	moves := &[]move{}
+	q.addDirections(b, x, y, moves)
+	return *moves
+}
+
+func (q *queen) addDirections(b board, xFrom int, yFrom int, moves *[]move) {
+	for _, direction := range queenDirections {
+		addDirection(xFrom, yFrom, b, moves, direction.dx, direction.dy, q.color)
+	}
+}
+
+var kingSimples = []*direction{
+	{1, 0},
+	{-1, 0},
+	{0, 1},
+	{0, -1},
+	{1, 1},
+	{-1, 1},
+	{1, -1},
+	{-1, -1},
+}
+
+func newKing(color string, moved bool, xDir int, yDir int) (*king, error) {
+	var castles []*direction
+
+	if xDir == 1 || xDir == -1 {
+		castles = []*direction{
+			{0, 1},
+			{0, -1},
+		}
+	} else if yDir == 1 || yDir == -1 {
+		castles = []*direction{
+			{1, 0},
+			{-1, 0},
+		}
+	} else {
+		return nil, fmt.Errorf("invalid direction")
+	}
+
+	return &king{
+		allegiant{color},
+		moved,
+		castles,
+	}, nil
 }
 
 type king struct {
 	allegiant
+	moved   bool
+	castles []*direction
 }
 
 func (k *king) movedCopy() piece {
 	return &king{
 		allegiant{k.color},
+		true,
+		k.castles,
 	}
 }
 
 func (k *king) moves(b board, x int, y int) []move {
-	return []move{}
+	moves := &[]move{}
+	k.addSimples(b, x, y, moves)
+	k.addCastles(b, x, y, moves)
+	return *moves
+}
+
+func (k *king) addSimples(b board, xFrom int, yFrom int, moves *[]move) {
+	for _, simple := range kingSimples {
+		addSimple(xFrom, yFrom, b, moves, simple.dx, simple.dy, k.color)
+	}
+}
+
+func (k *king) addCastles(b board, xFrom int, yFrom int, moves *[]move) {
+	if k.moved {
+		return
+	}
+
+	for _, castle := range k.castles {
+		xCurrent := xFrom + castle.dx
+		yCurrent := yFrom + castle.dy
+
+		for !movedOutOfBounds(xCurrent, yCurrent, b) {
+			if piece, err := b.getPiece(xCurrent, yCurrent); err != nil {
+				break
+			} else if piece == nil {
+				xCurrent += castle.dx
+				yCurrent += castle.dy
+				continue
+			} else if rook, ok := piece.(*rook); ok && !rook.moved && rook.color == k.color {
+				castleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xCurrent, yCurrent)
+				if err == nil {
+					*moves = append(*moves, castleMove)
+				}
+
+				xCurrent += castle.dx
+				yCurrent += castle.dy
+				continue
+			} else {
+				break
+			}
+		}
+	}
 }
