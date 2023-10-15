@@ -1,11 +1,27 @@
 package chess
 
+import "github.com/stretchr/testify/mock"
+
 type action struct {
 	b     board
 	xFrom int
 	yFrom int
 	xTo   int
 	yTo   int
+}
+
+type mockMove struct {
+	mock.Mock
+}
+
+func (m *mockMove) execute() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+func (m *mockMove) undo() error {
+	args := m.Called()
+	return args.Error(0)
 }
 
 var moveFactoryInstance = moveFactory(&concreteMoveFactory{})

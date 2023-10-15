@@ -27,13 +27,12 @@ func (m *mockMoveFactory) newSimpleMove(
 	}
 }
 
-func TestSimpleMove(t *testing.T) {
+func Test_SimpleMove(t *testing.T) {
 	board := &mockBoard{}
 	piece := &mockPiece{}
 	newPiece := &mockPiece{}
 	capturedPiece := &mockPiece{}
 	enPassant := &enPassant{}
-	moveFactory := &concreteMoveFactory{}
 
 	board.On("getPiece", 0, 0).Return(piece, nil)
 	board.On("getPiece", 1, 1).Return(capturedPiece, nil)
@@ -49,7 +48,7 @@ func TestSimpleMove(t *testing.T) {
 	board.On("increment").Return()
 	board.On("decrement").Return()
 
-	simpleMove, err := moveFactory.newSimpleMove(board, 0, 0, 1, 1)
+	simpleMove, err := moveFactoryInstance.newSimpleMove(board, 0, 0, 1, 1)
 	assert.Nil(t, err)
 
 	err = simpleMove.execute()

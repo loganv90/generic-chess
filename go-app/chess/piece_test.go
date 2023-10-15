@@ -26,7 +26,7 @@ func (m *mockPiece) moves(board board, x int, y int) []move {
 	return args.Get(0).([]move)
 }
 
-func TestPawnMovesWhenUnmoved(t *testing.T) {
+func Test_Pawn_Moves_Unmoved(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
 	board.On("xLen").Return(8)
@@ -48,7 +48,7 @@ func TestPawnMovesWhenUnmoved(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestPawnMovesWhenMoved(t *testing.T) {
+func Test_Pawn_Moves_Moved(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
 	board.On("xLen").Return(8)
@@ -69,7 +69,7 @@ func TestPawnMovesWhenMoved(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestPawnMovesWhenCapturing(t *testing.T) {
+func Test_Pawn_Moves_Capturing(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", 2, 4).Return(nil, nil)
 	board.On("getPiece", 3, 4).Return(nil, nil)
@@ -98,7 +98,7 @@ func TestPawnMovesWhenCapturing(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestPawnMovesWhenCapturingEnPassant(t *testing.T) {
+func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", 2, 4).Return(nil, nil)
 	board.On("getPiece", 3, 4).Return(nil, nil)
@@ -125,7 +125,7 @@ func TestPawnMovesWhenCapturingEnPassant(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestKnightMoves(t *testing.T) {
+func Test_Knight_Moves(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", 2, 3).Return(nil, nil)
 	board.On("getPiece", 3, 2).Return(nil, nil)
@@ -151,7 +151,7 @@ func TestKnightMoves(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestBishopMoves(t *testing.T) {
+func Test_Bishop_Moves(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", 2, 2).Return(nil, nil)
 	board.On("getPiece", 3, 3).Return(nil, nil)
@@ -187,7 +187,7 @@ func TestBishopMoves(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestRookMoves(t *testing.T) {
+func Test_Rook_Moves(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", 2, 1).Return(nil, nil)
 	board.On("getPiece", 3, 1).Return(nil, nil)
@@ -233,7 +233,7 @@ func TestRookMoves(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestQueenMoves(t *testing.T) {
+func Test_Queen_Moves(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", 2, 2).Return(nil, nil)
 	board.On("getPiece", 3, 3).Return(nil, nil)
@@ -297,7 +297,7 @@ func TestQueenMoves(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestKingMovesWhenCanCastleAndUnmoved(t *testing.T) {
+func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", 2, 2).Return(nil, nil)
 	board.On("getPiece", 3, 2).Return(nil, nil)
@@ -341,7 +341,7 @@ func TestKingMovesWhenCanCastleAndUnmoved(t *testing.T) {
 	moveFactory.AssertExpectations(t)
 }
 
-func TestKingMovesWhenCanCastleAndMoved(t *testing.T) {
+func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", 2, 2).Return(nil, nil)
 	board.On("getPiece", 3, 2).Return(nil, nil)

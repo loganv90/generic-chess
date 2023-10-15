@@ -67,7 +67,7 @@ func (m *mockBoard) yLen() int {
 	return args.Int(0)
 }
 
-func TestNewSimpleBoardWithDefaultFen(t *testing.T) {
+func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
 	s, err := newSimpleBoard(
 		[]string{"white", "black"},
 		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
