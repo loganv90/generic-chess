@@ -26,6 +26,7 @@ type board interface {
 	decrement()
 	xLen() int
 	yLen() int
+	print() string
 }
 
 func newSimpleBoard(players []string, fen string) (*simpleBoard, error) {
@@ -69,7 +70,7 @@ func createPiecesFromFen(fenRows string) [][]piece {
 
 		for _, char := range row {
 			if unicode.IsDigit(char) {
-				for i := 0; i < int(char); i++ {
+				for i := 0; i < int(char-'0'); i++ {
 					pieces = append(pieces, nil)
 				}
 			} else {
@@ -86,7 +87,11 @@ func createPiecesFromFen(fenRows string) [][]piece {
 func createPieceFromChar(char rune) piece {
 	switch char {
 	case 'r':
-		return &rook{}
+		if rook, err := newRook("black", false); err != nil {
+			return nil
+		} else {
+			return rook
+		}
 	case 'n':
 		if knight, err := newKnight("black"); err != nil {
 			return nil
@@ -94,19 +99,35 @@ func createPieceFromChar(char rune) piece {
 			return knight
 		}
 	case 'b':
-		return &bishop{}
+		if bishop, err := newBishop("black"); err != nil {
+			return nil
+		} else {
+			return bishop
+		}
 	case 'q':
-		return &queen{}
+		if queen, err := newQueen("black"); err != nil {
+			return nil
+		} else {
+			return queen
+		}
 	case 'k':
-		return &king{}
+		if king, err := newKing("black", false, 0, 1); err != nil {
+			return nil
+		} else {
+			return king
+		}
 	case 'p':
-		if pawn, err := newPawn("black", false, 0, -1); err != nil {
+		if pawn, err := newPawn("black", false, 0, 1); err != nil {
 			return nil
 		} else {
 			return pawn
 		}
 	case 'R':
-		return &rook{}
+		if rook, err := newRook("white", false); err != nil {
+			return nil
+		} else {
+			return rook
+		}
 	case 'N':
 		if knight, err := newKnight("white"); err != nil {
 			return nil
@@ -114,11 +135,23 @@ func createPieceFromChar(char rune) piece {
 			return knight
 		}
 	case 'B':
-		return &bishop{}
+		if bishop, err := newBishop("white"); err != nil {
+			return nil
+		} else {
+			return bishop
+		}
 	case 'Q':
-		return &queen{}
+		if queen, err := newQueen("white"); err != nil {
+			return nil
+		} else {
+			return queen
+		}
 	case 'K':
-		return &king{}
+		if king, err := newKing("white", false, 0, -1); err != nil {
+			return nil
+		} else {
+			return king
+		}
 	case 'P':
 		if pawn, err := newPawn("white", false, 0, -1); err != nil {
 			return nil
@@ -160,7 +193,7 @@ func (s *simpleBoard) setPiece(x int, y int, p piece) error {
 func (s *simpleBoard) getEnPassant(color string) (*enPassant, error) {
 	en, ok := s.enPassantMap[color]
 	if !ok {
-		return en, fmt.Errorf("en passant not found")
+		return nil, nil
 	}
 
 	return en, nil
@@ -218,4 +251,45 @@ func (s *simpleBoard) xLen() int {
 
 func (s *simpleBoard) yLen() int {
 	return len(s.pieces)
+}
+
+func (s *simpleBoard) print() string {
+	var builder strings.Builder
+	var cellWidth int = 12
+
+	builder.WriteString(fmt.Sprintf("Player: %s\n", s.players[s.currentPlayer]))
+	builder.WriteString(fmt.Sprintf("Check:  %t\n", false))
+	builder.WriteString(fmt.Sprintf("Mate:   %t\n", false))
+	for y, row := range s.pieces {
+		builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*s.xLen()-1)))
+		for x := range row {
+			builder.WriteString(fmt.Sprintf("|%s%2dx ", strings.Repeat(" ", cellWidth-4), x))
+		}
+		builder.WriteString("|\n")
+		for _, piece := range row {
+			if piece == nil {
+				builder.WriteString(fmt.Sprintf("|%s", strings.Repeat(" ", cellWidth)))
+			} else {
+				p := piece.print()
+				if len(p) > 1 {
+					p = p[:1]
+				}
+
+				pColor := piece.getColor()
+				if len(pColor) > 8 {
+					pColor = pColor[:8]
+				}
+
+				builder.WriteString(fmt.Sprintf("| %-1s %-8s ", p, pColor))
+			}
+		}
+		builder.WriteString("|\n")
+		for range row {
+			builder.WriteString(fmt.Sprintf("|%s%2dy ", strings.Repeat(" ", cellWidth-4), y))
+		}
+		builder.WriteString("|\n")
+	}
+	builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*s.xLen()-1)))
+
+	return builder.String()
 }

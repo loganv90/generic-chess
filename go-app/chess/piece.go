@@ -19,6 +19,7 @@ type piece interface {
 	getColor() string
 	movedCopy() piece
 	moves(board, int, int) []move
+	print() string
 }
 
 func movedOutOfBounds(
@@ -157,6 +158,10 @@ type pawn struct {
 	captures []*direction
 }
 
+func (a *pawn) print() string {
+	return "P"
+}
+
 func (a *pawn) movedCopy() piece {
 	return &pawn{
 		allegiant{a.color},
@@ -256,6 +261,10 @@ type knight struct {
 	allegiant
 }
 
+func (n *knight) print() string {
+	return "N"
+}
+
 func (n *knight) movedCopy() piece {
 	return &knight{
 		allegiant{n.color},
@@ -289,6 +298,10 @@ func newBishop(color string) (*bishop, error) {
 
 type bishop struct {
 	allegiant
+}
+
+func (s *bishop) print() string {
+	return "B"
 }
 
 func (s *bishop) movedCopy() piece {
@@ -326,6 +339,10 @@ func newRook(color string, moved bool) (*rook, error) {
 type rook struct {
 	allegiant
 	moved bool
+}
+
+func (r *rook) print() string {
+	return "R"
 }
 
 func (r *rook) movedCopy() piece {
@@ -366,6 +383,10 @@ func newQueen(color string) (*queen, error) {
 
 type queen struct {
 	allegiant
+}
+
+func (q *queen) print() string {
+	return "Q"
 }
 
 func (q *queen) movedCopy() piece {
@@ -425,6 +446,10 @@ type king struct {
 	allegiant
 	moved   bool
 	castles []*direction
+}
+
+func (k *king) print() string {
+	return "K"
 }
 
 func (k *king) movedCopy() piece {

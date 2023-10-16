@@ -27,6 +27,20 @@ func (m *mockMoveFactory) newSimpleMove(
 	}
 }
 
+type mockMove struct {
+	mock.Mock
+}
+
+func (m *mockMove) execute() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+func (m *mockMove) undo() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 func Test_SimpleMove(t *testing.T) {
 	board := &mockBoard{}
 	piece := &mockPiece{}

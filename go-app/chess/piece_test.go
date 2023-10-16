@@ -26,6 +26,11 @@ func (m *mockPiece) moves(board board, x int, y int) []move {
 	return args.Get(0).([]move)
 }
 
+func (m *mockPiece) print() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 func Test_Pawn_Moves_Unmoved(t *testing.T) {
 	board := &mockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
