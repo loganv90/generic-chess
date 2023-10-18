@@ -27,6 +27,24 @@ func (m *mockMoveFactory) newSimpleMove(
 	}
 }
 
+func (m *mockMoveFactory) newRevealEnPassantMove(
+	b board,
+	xFrom int,
+	yFrom int,
+	xTo int,
+	yTo int,
+	xTarget int,
+	yTarget int,
+) (*revealEnPassantMove, error) {
+	args := m.Called(b, xFrom, yFrom, xTo, yTo, xTarget, yTarget)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	} else {
+		return args.Get(0).(*revealEnPassantMove), args.Error(1)
+	}
+}
+
 type mockMove struct {
 	mock.Mock
 }
@@ -39,6 +57,11 @@ func (m *mockMove) execute() error {
 func (m *mockMove) undo() error {
 	args := m.Called()
 	return args.Error(0)
+}
+
+func (m *mockMove) getAction() *action {
+	args := m.Called()
+	return args.Get(0).(*action)
 }
 
 func Test_SimpleMove(t *testing.T) {

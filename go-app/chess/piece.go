@@ -212,7 +212,7 @@ func (a *pawn) addForward(b board, xFrom int, yFrom int, moves *[]move) {
 			*moves = append(*moves, promotionMove)
 		}
 	} else {
-		simpleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo2, yTo2)
+		simpleMove, err := moveFactoryInstance.newRevealEnPassantMove(b, xFrom, yFrom, xTo2, yTo2, xTo1, yTo1)
 		if err == nil {
 			*moves = append(*moves, simpleMove)
 		}
