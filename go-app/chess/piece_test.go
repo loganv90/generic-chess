@@ -117,7 +117,7 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 	moveFactory := &mockMoveFactory{}
 	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
 	moveFactory.On("newRevealEnPassantMove", board, 3, 3, 3, 5, 3, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 4, 4).Return(nil, nil)
+	moveFactory.On("newCaptureEnPassantMove", board, 3, 3, 4, 4).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	pawn, err := newPawn("white", false, 0, 1)

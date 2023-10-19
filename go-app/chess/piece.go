@@ -227,7 +227,7 @@ func (a *pawn) addCaptures(b board, xFrom int, yFrom int, moves *[]move) {
 		if piece, err := b.getPiece(xTo, yTo); err != nil {
 			continue
 		} else if len(b.possibleEnPassants(a.color, xTo, yTo)) > 0 {
-			captureEnPassantMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xTo, yTo)
+			captureEnPassantMove, err := moveFactoryInstance.newCaptureEnPassantMove(b, xFrom, yFrom, xTo, yTo)
 			if err == nil {
 				*moves = append(*moves, captureEnPassantMove)
 			}
