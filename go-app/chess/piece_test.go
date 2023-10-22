@@ -313,8 +313,11 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 	board.On("getPiece", 3, 4).Return(nil, nil)
 	board.On("getPiece", 4, 4).Return(nil, nil)
 	board.On("getPiece", 5, 3).Return(nil, nil)
-	board.On("getPiece", 6, 3).Return(nil, nil)
 	board.On("getPiece", 1, 3).Return(nil, nil)
+	board.On("getPiece", 2, 3).Return(nil, nil)
+	board.On("getPiece", 4, 3).Return(nil, nil)
+	board.On("getPiece", 5, 3).Return(nil, nil)
+	board.On("getPiece", 6, 3).Return(nil, nil)
 	board.On("xLen").Return(8)
 	board.On("yLen").Return(8)
 
@@ -327,8 +330,8 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 	moveFactory.On("newSimpleMove", board, 3, 3, 2, 4).Return(nil, nil)
 	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
 	moveFactory.On("newSimpleMove", board, 3, 3, 4, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 0, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 7, 3).Return(nil, nil)
+	moveFactory.On("newCastleMove", board, 3, 3, 0, 3, 1, 3, 2, 3).Return(nil, nil)
+	moveFactory.On("newCastleMove", board, 3, 3, 7, 3, 6, 3, 5, 3).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	king, err := newKing("white", false, 0, 1)

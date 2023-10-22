@@ -7,6 +7,12 @@ type direction struct {
 	dy int
 }
 
+type castleDirection struct {
+	direction
+	kingOffset *direction
+	rookOffset *direction
+}
+
 type allegiant struct {
 	color string
 }
@@ -419,17 +425,17 @@ var kingSimples = []*direction{
 }
 
 func newKing(color string, moved bool, xDir int, yDir int) (*king, error) {
-	var castles []*direction
+	var castles []*castleDirection
 
 	if xDir == 1 || xDir == -1 {
-		castles = []*direction{
-			{0, 1},
-			{0, -1},
+		castles = []*castleDirection{
+			{direction{0, 1}, &direction{0, -1}, &direction{0, -2}},
+			{direction{0, -1}, &direction{0, 1}, &direction{0, 2}},
 		}
 	} else if yDir == 1 || yDir == -1 {
-		castles = []*direction{
-			{1, 0},
-			{-1, 0},
+		castles = []*castleDirection{
+			{direction{1, 0}, &direction{-1, 0}, &direction{-2, 0}},
+			{direction{-1, 0}, &direction{1, 0}, &direction{2, 0}},
 		}
 	} else {
 		return nil, fmt.Errorf("invalid direction")
@@ -445,7 +451,7 @@ func newKing(color string, moved bool, xDir int, yDir int) (*king, error) {
 type king struct {
 	allegiant
 	moved   bool
-	castles []*direction
+	castles []*castleDirection
 }
 
 func (k *king) print() string {
@@ -482,25 +488,95 @@ func (k *king) addCastles(b board, xFrom int, yFrom int, moves *[]move) {
 		xCurrent := xFrom + castle.dx
 		yCurrent := yFrom + castle.dy
 
-		for !movedOutOfBounds(xCurrent, yCurrent, b) {
-			if piece, err := b.getPiece(xCurrent, yCurrent); err != nil {
-				break
-			} else if piece == nil {
-				xCurrent += castle.dx
-				yCurrent += castle.dy
-				continue
-			} else if rook, ok := piece.(*rook); ok && !rook.moved && rook.color == k.color {
-				castleMove, err := moveFactoryInstance.newSimpleMove(b, xFrom, yFrom, xCurrent, yCurrent)
-				if err == nil {
-					*moves = append(*moves, castleMove)
-				}
-
-				xCurrent += castle.dx
-				yCurrent += castle.dy
-				continue
-			} else {
+		rookFound := false
+		for {
+			piece, err := b.getPiece(xCurrent, yCurrent)
+			if err != nil {
 				break
 			}
+
+			if piece == nil {
+				xCurrent += castle.dx
+				yCurrent += castle.dy
+				continue
+			}
+
+			rook, ok := piece.(*rook)
+			if !ok || rook.moved || rook.color != k.color {
+				break
+			}
+
+			rookFound = true
+			break
+		}
+		if !rookFound {
+			continue
+		}
+
+		xToKing := xFrom
+		xToRook := xCurrent
+		yToKing := yFrom
+		yToRook := yCurrent
+		if castle.kingOffset.dx > 0 {
+			xToKing = castle.kingOffset.dx
+		} else if castle.kingOffset.dx < 0 {
+			xToKing = b.xLen() - 1 + castle.kingOffset.dx
+		}
+		if castle.kingOffset.dy > 0 {
+			yToKing = castle.kingOffset.dy
+		} else if castle.kingOffset.dy < 0 {
+			yToKing = b.yLen() - 1 + castle.kingOffset.dy
+		}
+		if castle.rookOffset.dx > 0 {
+			xToRook = castle.rookOffset.dx
+		} else if castle.rookOffset.dx < 0 {
+			xToRook = b.xLen() - 1 + castle.rookOffset.dx
+		}
+		if castle.rookOffset.dy > 0 {
+			yToRook = castle.rookOffset.dy
+		} else if castle.rookOffset.dy < 0 {
+			yToRook = b.yLen() - 1 + castle.rookOffset.dy
+		}
+		if movedOutOfBounds(xToKing, yToKing, b) || movedOutOfBounds(xToRook, yToRook, b) {
+			continue
+		}
+		xMin := min(xToKing, xToRook)
+		xMax := max(xToKing, xToRook)
+		yMin := min(yToKing, yToRook)
+		yMax := max(yToKing, yToRook)
+
+		clear := true
+		for x := xMin; x < min(xFrom, xCurrent) && clear; x++ {
+			if piece, err := b.getPiece(x, xFrom); err != nil || piece != nil {
+				clear = false
+				break
+			}
+		}
+		for y := yMin; y < min(yFrom, yCurrent) && clear; y++ {
+			if piece, err := b.getPiece(y, yFrom); err != nil || piece != nil {
+				clear = false
+				break
+			}
+		}
+		for x := xMax; x < max(xFrom, xCurrent) && clear; x++ {
+			if piece, err := b.getPiece(x, xFrom); err != nil || piece != nil {
+				clear = false
+				break
+			}
+		}
+		for y := yMax; y < max(yFrom, yCurrent) && clear; y++ {
+			if piece, err := b.getPiece(y, yFrom); err != nil || piece != nil {
+				clear = false
+				break
+			}
+		}
+		if !clear {
+			continue
+		}
+
+		castleMove, err := moveFactoryInstance.newCastleMove(b, xFrom, yFrom, xCurrent, yCurrent, xToKing, yToKing, xToRook, yToRook)
+		if err == nil {
+			*moves = append(*moves, castleMove)
 		}
 	}
 }

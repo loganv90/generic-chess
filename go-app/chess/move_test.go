@@ -61,6 +61,26 @@ func (m *mockMoveFactory) newCaptureEnPassantMove(
 	}
 }
 
+func (m *mockMoveFactory) newCastleMove(
+	b board,
+	xFrom int,
+	yFrom int,
+	xTo int,
+	yTo int,
+	xToKing int,
+	yToKing int,
+	xToRook int,
+	yToRook int,
+) (*castleMove, error) {
+	args := m.Called(b, xFrom, yFrom, xTo, yTo, xToKing, yToKing, xToRook, yToRook)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	} else {
+		return args.Get(0).(*castleMove), args.Error(1)
+	}
+}
+
 type mockMove struct {
 	mock.Mock
 }
@@ -181,4 +201,44 @@ func Test_CaptureEnPassantMove(t *testing.T) {
 	board.On("decrement").Return()
 	err = captureEnPassantMove.undo()
 	assert.Nil(t, err)
+}
+
+func Test_CastleMove(t *testing.T) {
+	board := &mockBoard{}
+	king := &mockPiece{}
+	newKing := &mockPiece{}
+	rook := &mockPiece{}
+	newRook := &mockPiece{}
+	en := &enPassant{}
+
+	board.On("getPiece", 0, 0).Return(king, nil)
+	board.On("getPiece", 1, 1).Return(rook, nil)
+	king.On("movedCopy").Return(newKing)
+	rook.On("movedCopy").Return(newRook)
+	board.On("getEnPassant", "white").Return(en, nil)
+	king.On("getColor").Return("white")
+	castleMove, err := moveFactoryInstance.newCastleMove(board, 0, 0, 1, 1, 2, 2, 3, 3)
+	assert.Nil(t, err)
+
+	board.On("setPiece", 0, 0, nil).Return(nil)
+	board.On("setPiece", 1, 1, nil).Return(nil)
+	board.On("setPiece", 2, 2, newKing).Return(nil)
+	board.On("setPiece", 3, 3, newRook).Return(nil)
+	board.On("clrEnPassant", "white").Return()
+	board.On("increment").Return()
+	err = castleMove.execute()
+	assert.Nil(t, err)
+
+	board.On("setPiece", 0, 0, king).Return(nil)
+	board.On("setPiece", 1, 1, rook).Return(nil)
+	board.On("setPiece", 2, 2, nil).Return(nil)
+	board.On("setPiece", 3, 3, nil).Return(nil)
+	board.On("setEnPassant", "white", en).Return()
+	board.On("decrement").Return()
+	err = castleMove.undo()
+	assert.Nil(t, err)
+
+	board.AssertExpectations(t)
+	king.AssertExpectations(t)
+	rook.AssertExpectations(t)
 }

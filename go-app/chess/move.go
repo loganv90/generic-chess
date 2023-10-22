@@ -33,6 +33,7 @@ type moveFactory interface {
 	newSimpleMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*simpleMove, error)
 	newRevealEnPassantMove(b board, xFrom int, yFrom int, xTo int, yTo int, xTarget int, yTarget int) (*revealEnPassantMove, error)
 	newCaptureEnPassantMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*captureEnPassantMove, error)
+	newCastleMove(b board, xFrom int, yFrom int, xTo int, yTo int, xToKing int, yToKing int, xToRook int, yToRook int) (*castleMove, error)
 }
 
 type concreteMoveFactory struct{}
@@ -178,6 +179,57 @@ func (f *concreteMoveFactory) newCaptureEnPassantMove(
 	}, nil
 }
 
+func (f *concreteMoveFactory) newCastleMove(
+	b board,
+	xFrom int,
+	yFrom int,
+	xTo int,
+	yTo int,
+	xToKing int,
+	yToKing int,
+	xToRook int,
+	yToRook int,
+) (*castleMove, error) {
+	king, err := b.getPiece(xFrom, yFrom)
+	if err != nil {
+		return nil, err
+	}
+
+	newKing := king.movedCopy()
+
+	rook, err := b.getPiece(xTo, yTo)
+	if err != nil {
+		return nil, err
+	}
+
+	newRook := rook.movedCopy()
+
+	en, err := b.getEnPassant(king.getColor())
+	if err != nil {
+		return nil, err
+	}
+
+	return &castleMove{
+		action{
+			b:     b,
+			xFrom: xFrom,
+			yFrom: yFrom,
+			xTo:   xTo,
+			yTo:   yTo,
+		},
+		king,
+		newKing,
+		xToKing,
+		yToKing,
+		rook,
+		newRook,
+		xToRook,
+		yToRook,
+		en,
+	}, nil
+
+}
+
 type move interface {
 	execute() error
 	undo() error
@@ -321,6 +373,74 @@ func (c *captureEnPassantMove) undo() error {
 	}
 
 	c.b.setEnPassant(c.piece.getColor(), c.en)
+	c.b.decrement()
+
+	return nil
+}
+
+type castleMove struct {
+	action
+	king    piece
+	newKing piece
+	xToKing int
+	yToKing int
+	rook    piece
+	newRook piece
+	xToRook int
+	yToRook int
+	en      *enPassant
+}
+
+func (c *castleMove) execute() error {
+	err := c.b.setPiece(c.xFrom, c.yFrom, nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.b.setPiece(c.xTo, c.yTo, nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.b.setPiece(c.xToRook, c.yToRook, c.newRook)
+	if err != nil {
+		return err
+	}
+
+	err = c.b.setPiece(c.xToKing, c.yToKing, c.newKing)
+	if err != nil {
+		return err
+	}
+
+	c.b.clrEnPassant(c.king.getColor())
+	c.b.increment()
+
+	return nil
+
+}
+
+func (c *castleMove) undo() error {
+	err := c.b.setPiece(c.xFrom, c.yFrom, c.king)
+	if err != nil {
+		return err
+	}
+
+	err = c.b.setPiece(c.xTo, c.yTo, c.rook)
+	if err != nil {
+		return err
+	}
+
+	err = c.b.setPiece(c.xToRook, c.yToRook, nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.b.setPiece(c.xToKing, c.yToKing, nil)
+	if err != nil {
+		return err
+	}
+
+	c.b.setEnPassant(c.king.getColor(), c.en)
 	c.b.decrement()
 
 	return nil
