@@ -330,7 +330,7 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 	moveFactory.On("newSimpleMove", board, 3, 3, 2, 4).Return(nil, nil)
 	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
 	moveFactory.On("newSimpleMove", board, 3, 3, 4, 4).Return(nil, nil)
-	moveFactory.On("newCastleMove", board, 3, 3, 0, 3, 1, 3, 2, 3).Return(nil, nil)
+	moveFactory.On("newCastleMove", board, 3, 3, 0, 3, 2, 3, 3, 3).Return(nil, nil)
 	moveFactory.On("newCastleMove", board, 3, 3, 7, 3, 6, 3, 5, 3).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 

@@ -429,13 +429,13 @@ func newKing(color string, moved bool, xDir int, yDir int) (*king, error) {
 
 	if xDir == 1 || xDir == -1 {
 		castles = []*castleDirection{
-			{direction{0, 1}, &direction{0, -1}, &direction{0, -2}},
+			{direction{0, 1}, &direction{0, -2}, &direction{0, -3}},
 			{direction{0, -1}, &direction{0, 1}, &direction{0, 2}},
 		}
 	} else if yDir == 1 || yDir == -1 {
 		castles = []*castleDirection{
 			{direction{1, 0}, &direction{-1, 0}, &direction{-2, 0}},
-			{direction{-1, 0}, &direction{1, 0}, &direction{2, 0}},
+			{direction{-1, 0}, &direction{2, 0}, &direction{3, 0}},
 		}
 	} else {
 		return nil, fmt.Errorf("invalid direction")
