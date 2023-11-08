@@ -540,39 +540,45 @@ func (k *king) addCastles(b board, xFrom int, yFrom int, moves *[]move) {
 		if movedOutOfBounds(xToKing, yToKing, b) || movedOutOfBounds(xToRook, yToRook, b) {
 			continue
 		}
-		xMin := min(xToKing, xToRook)
-		xMax := max(xToKing, xToRook)
-		yMin := min(yToKing, yToRook)
-		yMax := max(yToKing, yToRook)
 
-		clear := true
-		for x := xMin; x < min(xFrom, xCurrent) && clear; x++ {
-			if piece, err := b.getPiece(x, xFrom); err != nil || piece != nil {
-				clear = false
-				break
-			}
-		}
-		for y := yMin; y < min(yFrom, yCurrent) && clear; y++ {
-			if piece, err := b.getPiece(y, yFrom); err != nil || piece != nil {
-				clear = false
-				break
-			}
-		}
-		for x := xMax; x < max(xFrom, xCurrent) && clear; x++ {
-			if piece, err := b.getPiece(x, xFrom); err != nil || piece != nil {
-				clear = false
-				break
-			}
-		}
-		for y := yMax; y < max(yFrom, yCurrent) && clear; y++ {
-			if piece, err := b.getPiece(y, yFrom); err != nil || piece != nil {
-				clear = false
-				break
-			}
-		}
-		if !clear {
-			continue
-		}
+        xCheckedMin := min(xFrom, xCurrent)
+        xCheckedMax := max(xFrom, xCurrent)
+        yCheckedMin := min(yFrom, yCurrent)
+        yCheckedMax := max(yFrom, yCurrent)
+
+        xToMin := min(xToKing, xToRook)
+        xToMax := max(xToKing, xToRook)
+        yToMin := min(yToKing, yToRook)
+        yToMax := max(yToKing, yToRook)
+
+        clear := true
+        for x := xCheckedMin; x > xToMin && clear; x-- {
+            if piece, err := b.getPiece(x, yFrom); err != nil || piece != nil {
+                clear = false
+                break
+            }
+        }
+        for y := yCheckedMin; y > yToMin && clear; y-- {
+            if piece, err := b.getPiece(xFrom, y); err != nil || piece != nil {
+                clear = false
+                break
+            }
+        }
+        for x := xCheckedMax; x < xToMax && clear; x++ {
+            if piece, err := b.getPiece(x, yFrom); err != nil || piece != nil {
+                clear = false
+                break
+            }
+        }
+        for y := yCheckedMax; y < yToMax && clear; y++ {
+            if piece, err := b.getPiece(xFrom, y); err != nil || piece != nil {
+                clear = false
+                break
+            }
+        }
+        if !clear {
+            continue
+        }
 
 		castleMove, err := moveFactoryInstance.newCastleMove(b, xFrom, yFrom, xCurrent, yCurrent, xToKing, yToKing, xToRook, yToRook)
 		if err == nil {
