@@ -24,22 +24,35 @@ func main() {
 		if err != nil {
 			return
 		}
-		defer conn.Close()
 		conn.SetCloseHandler(func(code int, text string) error {
 			fmt.Println("closing connection")
 			return nil
 		})
 
-		for {
-			err := conn.WriteMessage(websocket.TextMessage, []byte("Hello, client!"))
-
-			if err != nil {
-				break
-			}
-
-			time.Sleep(time.Second)
-			fmt.Println("sending message")
-		}
+        go readLoop(conn)
+        go writeLoop(conn)
 	})
 	router.Run(":8080")
+}
+
+func readLoop(conn *websocket.Conn) {
+    for {
+        _, _, err := conn.ReadMessage()
+        if err != nil {
+            break
+        }
+        fmt.Println("received message")
+    }
+    conn.Close()
+}
+
+func writeLoop(conn *websocket.Conn) {
+    for {
+        err := conn.WriteMessage(websocket.TextMessage, []byte("Hello, client!"))
+        if err != nil {
+            break
+        }
+        time.Sleep(time.Second)
+        fmt.Println("sending message")
+    }
 }
