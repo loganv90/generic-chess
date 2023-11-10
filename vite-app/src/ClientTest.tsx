@@ -1,24 +1,57 @@
 import { useState, useEffect } from 'react'
 import useWebSocket from 'react-use-websocket'
+import ChessBoard from './components/ChessBoard'
 
-function ClientTest() {
-    const [socketUrl] = useState('ws://localhost:8080/ws')
+function createJsonMessage(message: string) : string {
+    return JSON.stringify({
+        type: 'message',
+        data: message
+    })
+}
+
+const baseUrl = '/ws'
+const ClientTest = () => {
+    const [urlExtension, setUrlExtension] = useState('')
+    const [currentUrlExtension, setCurrentUrlExtension] = useState('')
+
+    return (
+        <>
+            <input
+                type="text"
+                onChange={(e) => setUrlExtension(e.target.value)}
+            />
+            <button
+                onClick={() => setCurrentUrlExtension(`${baseUrl}/${urlExtension}`)}
+            />
+            { currentUrlExtension && <ChessGame urlExtension={currentUrlExtension} /> }
+        </>
+    )
+}
+
+
+const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
+    const [message, setMessage] = useState('')
+    const [socketUrl] = useState(`ws://localhost:8080${urlExtension}`)
     const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(socketUrl)
     
     useEffect(() => {
         console.log(lastMessage)
     }, [lastMessage])
 
-    setTimeout(() => {
-        // close websocket connection
-        getWebSocket()?.close()
-    }, 5000)
+    // setTimeout(() => {
+    //     getWebSocket()?.close()
+    // }, 5000)
 
     return (
         <>
-            <div>
-                {readyState}
-            </div>
+            <input
+                type="text"
+                onChange={(e) => setMessage(e.target.value)}
+            />
+            <button
+                onClick={() => sendMessage(createJsonMessage(message))}
+            />
+            <ChessBoard />
         </>
     )
 }
