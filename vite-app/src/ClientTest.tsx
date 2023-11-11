@@ -21,7 +21,7 @@ const ClientTest = () => {
                 onChange={(e) => setUrlExtension(e.target.value)}
             />
             <button
-                onClick={() => setCurrentUrlExtension(`${baseUrl}/${urlExtension}`)}
+                onClick={() => setCurrentUrlExtension(`${baseUrl}${urlExtension}`)}
             />
             { currentUrlExtension && <ChessGame urlExtension={currentUrlExtension} /> }
         </>
