@@ -3,17 +3,12 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
     "math/rand"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
-const writeWait = 10 * time.Second
-const pongWait = 60 * time.Second
-const pingPeriod = (pongWait * 9) / 10
-const maxMessageSize = 512
 const roomIdLength = 4
 
 var newline = []byte{'\n'}

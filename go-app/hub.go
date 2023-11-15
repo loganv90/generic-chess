@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
     "go-app/chess"
 )
 
@@ -9,8 +10,9 @@ type Hub struct {
     broadcast chan []byte
     register chan *Client
     unregister chan *Client
+    move chan *ClientMoveData
     capacity int
-    game *chess.Game
+    game chess.Game
 }
 
 func newHub() *Hub {
@@ -24,8 +26,9 @@ func newHub() *Hub {
         register:   make(chan *Client),
         unregister: make(chan *Client),
         clients:    make(map[*Client]bool),
+        move:       make(chan *ClientMoveData),
         capacity:   2,
-        game:       &game,
+        game:       game,
     }
 }
 
@@ -42,6 +45,14 @@ func (h *Hub) run() {
             if len(h.clients) <= 0 {
                 return
             }
+        case clientMoveData := <-h.move:
+            h.game.Execute(
+                clientMoveData.moveData.XFrom,
+                clientMoveData.moveData.YFrom,
+                clientMoveData.moveData.XTo,
+                clientMoveData.moveData.YTo,
+            )
+            fmt.Println(h.game.Print())
         case message := <-h.broadcast:
             for client := range h.clients {
                 select {

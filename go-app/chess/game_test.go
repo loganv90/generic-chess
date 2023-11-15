@@ -11,7 +11,7 @@ func Test_NewSimpleGame_EnPassant(t *testing.T) {
 	game, err := NewSimpleGame()
 	assert.Nil(t, err)
 
-	actualPrintedBoard := game.print()
+	actualPrintedBoard := game.Print()
 	expectedPrintedBoard := strings.Trim(`
 Player: white
 Check:  false
@@ -55,7 +55,7 @@ Mate:   false
 	_, err = game.Execute(4, 6, 4, 4) // white pawn advance
 	assert.Nil(t, err)
 
-	actualPrintedBoard = game.print()
+	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
 Player: black
 Check:  false
@@ -99,7 +99,7 @@ Mate:   false
 	_, err = game.Execute(1, 0, 2, 2) // black knight advance
 	assert.Nil(t, err)
 
-	actualPrintedBoard = game.print()
+	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
 Player: white
 Check:  false
@@ -149,7 +149,7 @@ Mate:   false
 	_, err = game.Execute(4, 3, 3, 2) // white pawn capture en passant
 	assert.Nil(t, err)
 
-	actualPrintedBoard = game.print()
+	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
 Player: black
 Check:  false
@@ -205,7 +205,7 @@ Mate:   false
 	_, err = game.Execute(4, 0, 0, 0) // black castle
 	assert.Nil(t, err)
 
-	actualPrintedBoard = game.print()
+	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
 Player: white
 Check:  false
@@ -249,7 +249,7 @@ Mate:   false
 	_, err = game.Execute(4, 7, 7, 7) // white castle
 	assert.Nil(t, err)
 
-	actualPrintedBoard = game.print()
+	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
 Player: black
 Check:  false

@@ -51,9 +51,24 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
             <button
                 onClick={() => sendMessage(createJsonMessage(message))}
             />
+            <button
+                onClick={() => sendMessage(CreateMoveData())}
+            >move data button</button>
             <ChessBoard />
         </>
     )
+}
+
+const CreateMoveData = () : string => {
+    return JSON.stringify({
+        title: 'move',
+        data: {
+            xFrom: 4,
+            yFrom: 6,
+            xTo: 4,
+            yTo: 4,
+        }
+    })
 }
 
 export default ClientTest

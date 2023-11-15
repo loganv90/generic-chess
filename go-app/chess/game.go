@@ -11,7 +11,7 @@ type Game interface {
 	Execute(xFrom int, yFrom int, xTo int, yTo int) (*Status, error)
 	Undo() error
 	Redo() error
-	print() string
+	Print() string
 }
 
 func NewSimpleGame() (Game, error) {
@@ -65,6 +65,6 @@ func (s *SimpleGame) Redo() error {
 	return s.i.redo()
 }
 
-func (s *SimpleGame) print() string {
+func (s *SimpleGame) Print() string {
 	return s.b.print()
 }
