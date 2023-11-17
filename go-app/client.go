@@ -11,7 +11,7 @@ import (
 const writeWait = 10 * time.Second
 const pongWait = 60 * time.Second
 const pingPeriod = (pongWait * 9) / 10
-const maxMessageSize = 512
+const maxMessageSize = 1024 
 
 type ClientMessage struct {
     message []byte

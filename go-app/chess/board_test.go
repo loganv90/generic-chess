@@ -72,6 +72,16 @@ func (m *mockBoard) print() string {
 	return args.String(0)
 }
 
+func (m *mockBoard) turn() string {
+    args := m.Called()
+    return args.String(0)
+}
+
+func (m *mockBoard) squares() [][]SquareData {
+    args := m.Called()
+    return args.Get(0).([][]SquareData)
+}
+
 func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
 	s, err := newSimpleBoard(
 		[]string{"white", "black"},

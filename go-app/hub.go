@@ -6,16 +6,6 @@ import (
     "go-app/chess"
 )
 
-type BoardData struct {
-    squares [][]SquareData
-    turn string
-}
-
-type SquareData struct {
-    color string
-    piece string
-}
-
 type MoveData struct {
     XFrom int
     YFrom int
@@ -90,6 +80,17 @@ func (h *Hub) full() bool {
     return len(h.clients) >= h.capacity
 }
 
+func (h *Hub) broadcastMessage(message []byte) {
+    for client := range h.clients {
+        select {
+        case client.send <- message:
+        default:
+            close(client.send)
+            delete(h.clients, client)
+        }
+    }
+}
+
 func (h *Hub) handleMessage(c *Client, message []byte) {
     var jsonMessage map[string]json.RawMessage
     err := json.Unmarshal(message, &jsonMessage)
@@ -131,13 +132,26 @@ func (h *Hub) handleMoveMessage(messageData json.RawMessage) {
 
     fmt.Println("printing move data", moveData)
 
-    h.game.Execute(
+    state, err := h.game.Execute(
         moveData.XFrom,
         moveData.YFrom,
         moveData.XTo,
         moveData.YTo,
     )
+    if err != nil {
+        fmt.Println("error executing move")
+        return
+    }
+
+    message, err := h.createStateMessage(state)
+    if err != nil {
+        fmt.Println("error creating state message")
+        return
+    }
+
+    h.broadcastMessage(message)
     fmt.Println(h.game.Print())
+    fmt.Println(state)
 }
 
 func (h *Hub) handleViewMessage(messageData json.RawMessage) {
@@ -149,7 +163,14 @@ func (h *Hub) handleViewMessage(messageData json.RawMessage) {
     }
 
     fmt.Println("printing view data", viewData)
-
-    fmt.Println(h.game.Print())
 }
 
+func (h *Hub) createStateMessage(status *chess.State) ([]byte, error) {
+    message, err := json.Marshal(status)
+    if err != nil {
+        fmt.Println("error marshalling state")
+        return nil, err
+    }
+
+    return message, nil
+}

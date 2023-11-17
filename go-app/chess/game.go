@@ -2,13 +2,20 @@ package chess
 
 import "fmt"
 
-type Status struct {
+type State struct {
+    Squares [][]SquareData
+    Turn string
 	Check bool
 	Mate  bool
 }
 
+type SquareData struct {
+    Color string
+    Piece string
+}
+
 type Game interface {
-	Execute(xFrom int, yFrom int, xTo int, yTo int) (*Status, error)
+	Execute(xFrom int, yFrom int, xTo int, yTo int) (*State, error)
 	Undo() error
 	Redo() error
 	Print() string
@@ -39,19 +46,21 @@ type SimpleGame struct {
 	i invoker
 }
 
-func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*Status, error) {
+func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*State, error) {
 	moves := s.b.moves(xFrom, yFrom)
 	move := getMoveFromSlice(moves, xTo, yTo)
 	if move == nil {
-		return &Status{}, fmt.Errorf("move not possible")
+		return nil, fmt.Errorf("move not possible")
 	}
 
 	err := s.i.execute(move)
 	if err != nil {
-		return &Status{}, err
+		return nil, err
 	}
 
-	return &Status{
+	return &State{
+        Squares: s.b.squares(),
+        Turn: s.b.turn(),
 		Check: false,
 		Mate:  false,
 	}, nil
@@ -68,3 +77,4 @@ func (s *SimpleGame) Redo() error {
 func (s *SimpleGame) Print() string {
 	return s.b.print()
 }
+

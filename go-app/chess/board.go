@@ -27,6 +27,8 @@ type board interface {
 	xLen() int
 	yLen() int
 	print() string
+    turn() string
+    squares() [][]SquareData
 }
 
 func newSimpleBoard(players []string, fen string) (*simpleBoard, error) {
@@ -293,3 +295,30 @@ func (s *simpleBoard) print() string {
 
 	return builder.String()
 }
+
+func (s *simpleBoard) turn() string {
+    return s.players[s.currentPlayer]
+}
+
+func (s *simpleBoard) squares() [][]SquareData {
+    squares := [][]SquareData{}
+
+    for y, row := range s.pieces {
+        squaresRow := []SquareData{}
+        for x := range row {
+            piece := s.pieces[y][x]
+            if piece != nil {
+                squaresRow = append(squaresRow, SquareData{
+                    Piece: piece.print(),
+                    Color: piece.getColor(),
+                })
+            } else {
+                squaresRow = append(squaresRow, SquareData{})
+            }
+        }
+        squares = append(squares, squaresRow)
+    }
+
+    return squares
+}
+
