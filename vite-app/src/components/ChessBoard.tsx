@@ -13,7 +13,13 @@ const boardStyle: React.CSSProperties = {
     height: '500px',
 }
 
-const ChessBoard = (): JSX.Element => {
+const ChessBoard = ({
+    handleMove,
+    handleView
+}: {
+    handleMove: (xFrom: number, yFrom: number, xTo: number, yTo: number) => void,
+    handleView: (x: number, y: number) => void
+}): JSX.Element => {
     const invoker = useRef(new SimpleInvoker())
     const board = useRef(new Board())
     const [squares, setSquares] = useState<Square[][]>(board.current.squares)
@@ -29,6 +35,7 @@ const ChessBoard = (): JSX.Element => {
         invoker.current.execute(move)
         setSquares(s => [...s])
         clearSelect()
+        handleMove(move.xFrom, move.yFrom, move.xTo, move.yTo)
     }
 
     const undoMove = (): void => {
@@ -57,6 +64,7 @@ const ChessBoard = (): JSX.Element => {
         }
 
         setMoves(board.current.getMoves(x, y))
+        handleView(x, y)
         setSelected({x, y})
     }
  

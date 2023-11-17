@@ -1,9 +1,9 @@
 package main
 
 import (
+    "bytes"
 	"fmt"
 	"time"
-    "encoding/json"
 
 	"github.com/gorilla/websocket"
 )
@@ -13,26 +13,9 @@ const pongWait = 60 * time.Second
 const pingPeriod = (pongWait * 9) / 10
 const maxMessageSize = 512
 
-type ClientMoveData struct {
-    moveData MoveData
+type ClientMessage struct {
+    message []byte
     client *Client
-}
-
-type MoveData struct {
-    XFrom int
-    YFrom int
-    XTo int
-    YTo int
-}
-
-type BoardData struct {
-    squares [][]SquareData
-    turn string
-}
-
-type SquareData struct {
-    color string
-    piece string
 }
 
 type Client struct {
@@ -56,7 +39,12 @@ func (c *Client) readLoop() {
             fmt.Println("error reading message")
             break
         }
-        c.handleMessage(message)
+        message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+
+        c.hub.send <- &ClientMessage{
+            message: message,
+            client: c,
+        }
     }
 }
 
@@ -95,55 +83,6 @@ func (c *Client) writeLoop() {
                 return
             }
         }
-    }
-}
-
-func (c *Client) handleMessage(message []byte) {
-    fmt.Println("received message", message)
-
-    var jsonMessage map[string]json.RawMessage
-    err := json.Unmarshal(message, &jsonMessage)
-    if err != nil {
-        fmt.Println("error unmarshalling message")
-        return
-    }
-
-    var messageTitle string
-    err = json.Unmarshal(jsonMessage["title"], &messageTitle)
-    if err != nil {
-        fmt.Println("error unmarshalling message title")
-        return
-    }
-
-    var messageData json.RawMessage
-    err = json.Unmarshal(jsonMessage["data"], &messageData)
-    if err != nil {
-        fmt.Println("error unmarshalling message data")
-        return
-    }
-
-    if messageTitle == "move" {
-        c.handleMoveMessage(messageData)
-    } else {
-        fmt.Println("unknown message type")
-    }
-}
-
-func (c *Client) handleMoveMessage(messageData json.RawMessage) {
-    fmt.Println("handling move message", messageData)
-
-    var moveData MoveData
-    err := json.Unmarshal(messageData, &moveData)
-    if err != nil {
-        fmt.Println("error unmarshalling move data")
-        return
-    }
-
-    fmt.Println("printing move data", moveData)
-
-    c.hub.move <- &ClientMoveData{
-        moveData: moveData,
-        client: c,
     }
 }
 

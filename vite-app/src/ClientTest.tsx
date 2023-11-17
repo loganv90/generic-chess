@@ -2,7 +2,30 @@ import { useState, useEffect } from 'react'
 import useWebSocket from 'react-use-websocket'
 import ChessBoard from './components/ChessBoard'
 
-function createJsonMessage(message: string) : string {
+
+const CreateMoveData = (xFrom: number, yFrom: number, xTo: number, yTo: number) : string => {
+    return JSON.stringify({
+        title: 'move',
+        data: {
+            xFrom: xFrom,
+            yFrom: yFrom,
+            xTo: xTo,
+            yTo: yTo,
+        }
+    })
+}
+
+const CreateViewData = (x: number, y: number) : string => {
+    return JSON.stringify({
+        title: 'view',
+        data: {
+            x: x,
+            y: y,
+        }
+    })
+}
+
+const createJsonMessage = (message: string) : string => {
     return JSON.stringify({
         type: 'message',
         data: message
@@ -42,6 +65,16 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
     //     getWebSocket()?.close()
     // }, 5000)
 
+    const handleMove = (xFrom: number, yFrom: number, xTo: number, yTo: number): void => {
+        const moveData = CreateMoveData(xFrom, yFrom, xTo, yTo)
+        sendMessage(moveData)
+    }
+
+    const handleView = (x: number, y: number): void => {
+        const viewData = CreateViewData(x, y)
+        sendMessage(viewData)
+    }
+
     return (
         <>
             <input
@@ -51,24 +84,9 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
             <button
                 onClick={() => sendMessage(createJsonMessage(message))}
             />
-            <button
-                onClick={() => sendMessage(CreateMoveData())}
-            >move data button</button>
-            <ChessBoard />
+            <ChessBoard handleMove={handleMove} handleView={handleView} />
         </>
     )
-}
-
-const CreateMoveData = () : string => {
-    return JSON.stringify({
-        title: 'move',
-        data: {
-            xFrom: 4,
-            yFrom: 6,
-            xTo: 4,
-            yTo: 4,
-        }
-    })
 }
 
 export default ClientTest

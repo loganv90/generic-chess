@@ -1,16 +1,39 @@
 package main
 
 import (
+    "encoding/json"
     "fmt"
     "go-app/chess"
 )
+
+type BoardData struct {
+    squares [][]SquareData
+    turn string
+}
+
+type SquareData struct {
+    color string
+    piece string
+}
+
+type MoveData struct {
+    XFrom int
+    YFrom int
+    XTo int
+    YTo int
+}
+
+type ViewData struct {
+    X int
+    Y int
+}
 
 type Hub struct {
     clients map[*Client]bool
     broadcast chan []byte
     register chan *Client
     unregister chan *Client
-    move chan *ClientMoveData
+    send chan *ClientMessage
     capacity int
     game chess.Game
 }
@@ -22,11 +45,11 @@ func newHub() *Hub {
     }
 
     return &Hub{
+        clients:    make(map[*Client]bool),
         broadcast:  make(chan []byte),
         register:   make(chan *Client),
         unregister: make(chan *Client),
-        clients:    make(map[*Client]bool),
-        move:       make(chan *ClientMoveData),
+        send:       make(chan *ClientMessage),
         capacity:   2,
         game:       game,
     }
@@ -45,14 +68,11 @@ func (h *Hub) run() {
             if len(h.clients) <= 0 {
                 return
             }
-        case clientMoveData := <-h.move:
-            h.game.Execute(
-                clientMoveData.moveData.XFrom,
-                clientMoveData.moveData.YFrom,
-                clientMoveData.moveData.XTo,
-                clientMoveData.moveData.YTo,
+        case clientMessage := <-h.send:
+            h.handleMessage(
+                clientMessage.client,
+                clientMessage.message,
             )
-            fmt.Println(h.game.Print())
         case message := <-h.broadcast:
             for client := range h.clients {
                 select {
@@ -68,5 +88,68 @@ func (h *Hub) run() {
 
 func (h *Hub) full() bool {
     return len(h.clients) >= h.capacity
+}
+
+func (h *Hub) handleMessage(c *Client, message []byte) {
+    var jsonMessage map[string]json.RawMessage
+    err := json.Unmarshal(message, &jsonMessage)
+    if err != nil {
+        fmt.Println("error unmarshalling message")
+        return
+    }
+
+    var messageTitle string
+    err = json.Unmarshal(jsonMessage["title"], &messageTitle)
+    if err != nil {
+        fmt.Println("error unmarshalling message title")
+        return
+    }
+
+    var messageData json.RawMessage
+    err = json.Unmarshal(jsonMessage["data"], &messageData)
+    if err != nil {
+        fmt.Println("error unmarshalling message data")
+        return
+    }
+
+    if messageTitle == "move" {
+        h.handleMoveMessage(messageData)
+    } else if messageTitle == "view" {
+        h.handleViewMessage(messageData)
+    } else {
+        fmt.Println("unknown message type")
+    }
+}
+
+func (h *Hub) handleMoveMessage(messageData json.RawMessage) {
+    var moveData MoveData
+    err := json.Unmarshal(messageData, &moveData)
+    if err != nil {
+        fmt.Println("error unmarshalling move data")
+        return
+    }
+
+    fmt.Println("printing move data", moveData)
+
+    h.game.Execute(
+        moveData.XFrom,
+        moveData.YFrom,
+        moveData.XTo,
+        moveData.YTo,
+    )
+    fmt.Println(h.game.Print())
+}
+
+func (h *Hub) handleViewMessage(messageData json.RawMessage) {
+    var viewData ViewData
+    err := json.Unmarshal(messageData, &viewData)
+    if err != nil {
+        fmt.Println("error unmarshalling view data")
+        return
+    }
+
+    fmt.Println("printing view data", viewData)
+
+    fmt.Println(h.game.Print())
 }
 
