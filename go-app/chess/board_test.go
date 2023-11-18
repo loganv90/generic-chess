@@ -7,79 +7,99 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type mockBoard struct {
+type MockBoard struct {
 	mock.Mock
 }
 
-func (m *mockBoard) getPiece(x int, y int) (piece, error) {
-	args := m.Called(x, y)
+func (m *MockBoard) getPiece(location *Point) (Piece, error) {
+	args := m.Called(location)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	} else {
-		return args.Get(0).(piece), args.Error(1)
+		return args.Get(0).(Piece), args.Error(1)
 	}
 }
 
-func (m *mockBoard) setPiece(x int, y int, piece piece) error {
-	args := m.Called(x, y, piece)
+func (m *MockBoard) setPiece(location *Point, piece Piece) error {
+	args := m.Called(location, piece)
 	return args.Error(0)
 }
 
-func (m *mockBoard) getEnPassant(color string) (*enPassant, error) {
+func (m *MockBoard) getEnPassant(color string) (*EnPassant, error) {
 	args := m.Called(color)
-	return args.Get(0).(*enPassant), args.Error(1)
+	return args.Get(0).(*EnPassant), args.Error(1)
 }
 
-func (m *mockBoard) setEnPassant(color string, enPassant *enPassant) {
+func (m *MockBoard) setEnPassant(color string, enPassant *EnPassant) {
 	m.Called(color, enPassant)
 }
 
-func (m *mockBoard) clrEnPassant(color string) {
+func (m *MockBoard) clrEnPassant(color string) {
 	m.Called(color)
 }
 
-func (m *mockBoard) possibleEnPassants(color string, xTarget int, yTarget int) []*enPassant {
-	args := m.Called(color, xTarget, yTarget)
-	return args.Get(0).([]*enPassant)
+func (m *MockBoard) possibleEnPassants(color string, target *Point) []*EnPassant {
+	args := m.Called(color, target)
+	return args.Get(0).([]*EnPassant)
 }
 
-func (m *mockBoard) moves(x int, y int) []move {
-	args := m.Called(x, y)
-	return args.Get(0).([]move)
+func (m *MockBoard) moves(location *Point) []Move {
+	args := m.Called(location)
+	return args.Get(0).([]Move)
 }
 
-func (m *mockBoard) increment() {
+func (m *MockBoard) increment() {
 	m.Called()
 }
 
-func (m *mockBoard) decrement() {
+func (m *MockBoard) decrement() {
 	m.Called()
 }
 
-func (m *mockBoard) xLen() int {
+func (m *MockBoard) xLen() int {
 	args := m.Called()
 	return args.Int(0)
 }
 
-func (m *mockBoard) yLen() int {
+func (m *MockBoard) yLen() int {
 	args := m.Called()
 	return args.Int(0)
 }
 
-func (m *mockBoard) print() string {
+func (m *MockBoard) print() string {
 	args := m.Called()
 	return args.String(0)
 }
 
-func (m *mockBoard) turn() string {
+func (m *MockBoard) turn() string {
     args := m.Called()
     return args.String(0)
 }
 
-func (m *mockBoard) squares() [][]SquareData {
+func (m *MockBoard) squares() [][]*SquareData {
     args := m.Called()
-    return args.Get(0).([][]SquareData)
+    return args.Get(0).([][]*SquareData)
+}
+
+func (m *MockBoard) checkmate(color string) bool {
+    args := m.Called(color)
+    return args.Bool(0)
+}
+
+func (m *MockBoard) check(color string) bool {
+    args := m.Called(color)
+    return args.Bool(0)
+}
+
+func (m *MockBoard) pointOutOfBounds(p *Point) bool {
+    args := m.Called(p)
+    return args.Bool(0)
+}
+
+func (m *MockBoard) pointOnPromotionSquare(p *Point) bool {
+    args := m.Called(p)
+    return args.Bool(0)
 }
 
 func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
@@ -91,7 +111,7 @@ func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
 
 	for y := 2; y <= 5; y++ {
 		for x := 0; x <= 7; x++ {
-			piece, err := s.getPiece(x, y)
+			piece, err := s.getPiece(&Point{x, y})
 			assert.Nil(t, err)
 			assert.Nil(t, piece)
 		}
@@ -99,52 +119,52 @@ func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
 
 	for _, y := range []int{1, 6} {
 		for x := 0; x <= 7; x++ {
-			piece, err := s.getPiece(x, y)
+			piece, err := s.getPiece(&Point{x, y})
 			assert.Nil(t, err)
-			_, ok := piece.(*pawn)
+			_, ok := piece.(*Pawn)
 			assert.True(t, ok)
 		}
 	}
 
 	for _, y := range []int{0, 7} {
-		piece, err := s.getPiece(0, y)
+		piece, err := s.getPiece(&Point{0, y})
 		assert.Nil(t, err)
-		_, ok := piece.(*rook)
+		_, ok := piece.(*Rook)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(1, y)
+		piece, err = s.getPiece(&Point{1, y})
 		assert.Nil(t, err)
-		_, ok = piece.(*knight)
+		_, ok = piece.(*Knight)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(2, y)
+		piece, err = s.getPiece(&Point{2, y})
 		assert.Nil(t, err)
-		_, ok = piece.(*bishop)
+		_, ok = piece.(*Bishop)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(3, y)
+		piece, err = s.getPiece(&Point{3, y})
 		assert.Nil(t, err)
-		_, ok = piece.(*queen)
+		_, ok = piece.(*Queen)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(4, y)
+		piece, err = s.getPiece(&Point{4, y})
 		assert.Nil(t, err)
-		_, ok = piece.(*king)
+		_, ok = piece.(*King)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(5, y)
+		piece, err = s.getPiece(&Point{5, y})
 		assert.Nil(t, err)
-		_, ok = piece.(*bishop)
+		_, ok = piece.(*Bishop)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(6, y)
+		piece, err = s.getPiece(&Point{6, y})
 		assert.Nil(t, err)
-		_, ok = piece.(*knight)
+		_, ok = piece.(*Knight)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(7, y)
+		piece, err = s.getPiece(&Point{7, y})
 		assert.Nil(t, err)
-		_, ok = piece.(*rook)
+		_, ok = piece.(*Rook)
 		assert.True(t, ok)
 	}
 }

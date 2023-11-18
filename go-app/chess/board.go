@@ -7,31 +7,46 @@ import (
 	"unicode"
 )
 
-type enPassant struct {
-	xTarget int
-	yTarget int
-	xPiece  int
-	yPiece  int
+type Point struct {
+    x int
+    y int
 }
 
-type board interface {
-	getPiece(x int, y int) (piece, error)
-	setPiece(x int, y int, piece piece) error
-	getEnPassant(color string) (*enPassant, error)
-	setEnPassant(color string, enPassant *enPassant)
+func (p *Point) equals(other *Point) bool {
+    return p.x == other.x && p.y == other.y
+}
+
+func (p *Point) add(other *Point) *Point {
+    return &Point{p.x + other.x, p.y + other.y}
+}
+
+type EnPassant struct {
+    target *Point
+    pieceLocation *Point
+}
+
+type Board interface {
+	getPiece(location *Point) (Piece, error)
+	setPiece(location *Point, piece Piece) error
+	getEnPassant(color string) (*EnPassant, error)
+	setEnPassant(color string, enPassant *EnPassant)
 	clrEnPassant(color string)
-	possibleEnPassants(color string, xTarget int, yTarget int) []*enPassant
-	moves(x int, y int) []move
-	increment()
-	decrement()
-	xLen() int
+    possibleEnPassants(color string, target *Point) []*EnPassant
+	moves(location *Point) []Move
+    increment()
+    decrement()
+    xLen() int
 	yLen() int
 	print() string
     turn() string
-    squares() [][]SquareData
+    squares() [][]*SquareData
+    checkmate(color string) bool
+    check(color string) bool
+    pointOutOfBounds(p *Point) bool
+    pointOnPromotionSquare(p *Point) bool
 }
 
-func newSimpleBoard(players []string, fen string) (*simpleBoard, error) {
+func newSimpleBoard(players []string, fen string) (*SimpleBoard, error) {
 	if len(players) < 2 {
 		return nil, fmt.Errorf("not enough players")
 	}
@@ -53,22 +68,22 @@ func newSimpleBoard(players []string, fen string) (*simpleBoard, error) {
 		return nil, fmt.Errorf("invalid full move clock")
 	}
 
-	return &simpleBoard{
+	return &SimpleBoard{
 		currentPlayer: 0,
 		players:       players,
-		enPassantMap:  map[string]*enPassant{},
+		enPassantMap:  map[string]*EnPassant{},
 		pieces:        pieces,
 		halfMoveClock: halfMoveClock,
 		fullMoveClock: fullMoveClock,
 	}, nil
 }
 
-func createPiecesFromFen(fenRows string) [][]piece {
+func createPiecesFromFen(fenRows string) [][]Piece {
 	fenRowsSplit := strings.Split(fenRows, "/")
-	pieceRows := [][]piece{}
+	pieceRows := [][]Piece{}
 
 	for _, row := range fenRowsSplit {
-		pieces := []piece{}
+		pieces := []Piece{}
 
 		for _, char := range row {
 			if unicode.IsDigit(char) {
@@ -86,7 +101,7 @@ func createPiecesFromFen(fenRows string) [][]piece {
 	return pieceRows
 }
 
-func createPieceFromChar(char rune) piece {
+func createPieceFromChar(char rune) Piece {
 	switch char {
 	case 'r':
 		if rook, err := newRook("black", false); err != nil {
@@ -165,34 +180,47 @@ func createPieceFromChar(char rune) piece {
 	}
 }
 
-type simpleBoard struct {
+type SimpleBoard struct {
 	currentPlayer int
 	players       []string
-	enPassantMap  map[string]*enPassant
-	pieces        [][]piece
+	enPassantMap  map[string]*EnPassant
+	pieces        [][]Piece
 	halfMoveClock int
 	fullMoveClock int
 }
 
-func (s *simpleBoard) getPiece(x int, y int) (piece, error) {
-	if y < 0 || y >= len(s.pieces) || x < 0 || x >= len(s.pieces[y]) {
-		return nil, fmt.Errorf("coordinates out of bounds")
-	}
-
-	return s.pieces[y][x], nil
+func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {
+    if p.y < 0 || p.y >= len(s.pieces) || p.x < 0 || p.x >= len(s.pieces[p.y]) {
+        return true
+    }
+    return false
 }
 
-func (s *simpleBoard) setPiece(x int, y int, p piece) error {
-	if y < 0 || y >= len(s.pieces) || x < 0 || x >= len(s.pieces[y]) {
-		return fmt.Errorf("coordinates out of bounds")
-	}
+func (s *SimpleBoard) pointOnPromotionSquare(p *Point) bool {
+    if p.y == 0 || p.y == len(s.pieces)-1 || p.x == 0 || p.x == len(s.pieces[p.y])-1 {
+        return true
+    }
+    return false
+}
 
-	s.pieces[y][x] = p
+func (s *SimpleBoard) getPiece(location *Point) (Piece, error) {
+    if s.pointOutOfBounds(location) {
+        return nil, fmt.Errorf("point out of bounds")
+    }
 
+	return s.pieces[location.y][location.x], nil
+}
+
+func (s *SimpleBoard) setPiece(location *Point, p Piece) error {
+    if s.pointOutOfBounds(location) {
+        return fmt.Errorf("point out of bounds")
+    }
+
+	s.pieces[location.y][location.x] = p
 	return nil
 }
 
-func (s *simpleBoard) getEnPassant(color string) (*enPassant, error) {
+func (s *SimpleBoard) getEnPassant(color string) (*EnPassant, error) {
 	en, ok := s.enPassantMap[color]
 	if !ok {
 		return nil, nil
@@ -201,19 +229,19 @@ func (s *simpleBoard) getEnPassant(color string) (*enPassant, error) {
 	return en, nil
 }
 
-func (s *simpleBoard) setEnPassant(color string, enPassant *enPassant) {
+func (s *SimpleBoard) setEnPassant(color string, enPassant *EnPassant) {
 	s.enPassantMap[color] = enPassant
 }
 
-func (s *simpleBoard) clrEnPassant(color string) {
+func (s *SimpleBoard) clrEnPassant(color string) {
 	delete(s.enPassantMap, color)
 }
 
-func (s *simpleBoard) possibleEnPassants(color string, xTarget int, yTarget int) []*enPassant {
-	ens := []*enPassant{}
+func (s *SimpleBoard) possibleEnPassants(color string, target *Point) []*EnPassant {
+	ens := []*EnPassant{}
 
 	for k, v := range s.enPassantMap {
-		if k != color && v.xTarget == xTarget && v.yTarget == yTarget {
+		if k != color && target.equals(v.target) {
 			ens = append(ens, v)
 		}
 	}
@@ -221,17 +249,63 @@ func (s *simpleBoard) possibleEnPassants(color string, xTarget int, yTarget int)
 	return ens
 }
 
-func (s *simpleBoard) moves(x int, y int) []move {
-	piece := s.pieces[y][x]
+func (s *SimpleBoard) check(color string) bool {
+    kingLocation := &Point{-1, -1}
+    attackerLocations := []*Point{}
 
-	if piece != nil {
-		return piece.moves(s, x, y)
-	}
+    for y, row := range s.pieces {
+        for x, piece := range row {
+            if piece == nil {
+                continue
+            }
 
-	return []move{}
+            if piece.getColor() == color {
+			    if _, ok := piece.(*King); ok {
+                    kingLocation = &Point{x, y}
+                }
+            } else {
+                attackerLocations = append(attackerLocations, &Point{x, y})
+            }
+        }
+    }
+
+    if kingLocation == (&Point{-1, -1}) {
+        return false
+    }
+
+    for _, attackerLocation := range attackerLocations {
+        attackerPiece := s.pieces[attackerLocation.y][attackerLocation.x]
+        if attackerPiece == nil {
+            continue
+        }
+
+        attackerMoves := attackerPiece.moves(s, attackerLocation)
+        for _, attackerMove := range attackerMoves {
+            if attackerMove.getAction().toLocation == kingLocation {
+                return true
+            }
+        }
+    }
+
+
+    return true
 }
 
-func (s *simpleBoard) increment() {
+func (s *SimpleBoard) checkmate(color string) bool {
+    return false
+}
+
+func (s *SimpleBoard) moves(location *Point) []Move {
+	piece := s.pieces[location.y][location.x]
+
+	if piece != nil {
+		return piece.moves(s, location)
+	}
+
+	return []Move{}
+}
+
+func (s *SimpleBoard) increment() {
 	s.currentPlayer = (s.currentPlayer + 1) % len(s.players)
 	s.halfMoveClock++
 	if s.currentPlayer == 0 {
@@ -239,7 +313,7 @@ func (s *simpleBoard) increment() {
 	}
 }
 
-func (s *simpleBoard) decrement() {
+func (s *SimpleBoard) decrement() {
 	s.currentPlayer = (s.currentPlayer - 1) % len(s.players)
 	s.halfMoveClock--
 	if s.currentPlayer == len(s.players)-1 {
@@ -247,15 +321,18 @@ func (s *simpleBoard) decrement() {
 	}
 }
 
-func (s *simpleBoard) xLen() int {
+func (s *SimpleBoard) xLen() int {
+    if s.yLen() <= 0 {
+        return 0
+    }
 	return len(s.pieces[0])
 }
 
-func (s *simpleBoard) yLen() int {
+func (s *SimpleBoard) yLen() int {
 	return len(s.pieces)
 }
 
-func (s *simpleBoard) print() string {
+func (s *SimpleBoard) print() string {
 	var builder strings.Builder
 	var cellWidth int = 12
 
@@ -296,24 +373,24 @@ func (s *simpleBoard) print() string {
 	return builder.String()
 }
 
-func (s *simpleBoard) turn() string {
+func (s *SimpleBoard) turn() string {
     return s.players[s.currentPlayer]
 }
 
-func (s *simpleBoard) squares() [][]SquareData {
-    squares := [][]SquareData{}
+func (s *SimpleBoard) squares() [][]*SquareData {
+    squares := [][]*SquareData{}
 
     for y, row := range s.pieces {
-        squaresRow := []SquareData{}
+        squaresRow := []*SquareData{}
         for x := range row {
             piece := s.pieces[y][x]
             if piece != nil {
-                squaresRow = append(squaresRow, SquareData{
+                squaresRow = append(squaresRow, &SquareData{
                     Piece: piece.print(),
                     Color: piece.getColor(),
                 })
             } else {
-                squaresRow = append(squaresRow, SquareData{})
+                squaresRow = append(squaresRow, &SquareData{})
             }
         }
         squares = append(squares, squaresRow)

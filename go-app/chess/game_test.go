@@ -50,7 +50,7 @@ Mate:   false
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
-	assert.Equal(t, actualPrintedBoard, expectedPrintedBoard)
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
 	_, err = game.Execute(4, 6, 4, 4) // white pawn advance
 	assert.Nil(t, err)
@@ -94,7 +94,7 @@ Mate:   false
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
-	assert.Equal(t, actualPrintedBoard, expectedPrintedBoard)
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
 	_, err = game.Execute(1, 0, 2, 2) // black knight advance
 	assert.Nil(t, err)
@@ -138,7 +138,7 @@ Mate:   false
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
-	assert.Equal(t, actualPrintedBoard, expectedPrintedBoard)
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
 	_, err = game.Execute(4, 4, 4, 3) // white pawn advance
 	assert.Nil(t, err)
@@ -188,7 +188,7 @@ Mate:   false
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
-	assert.Equal(t, actualPrintedBoard, expectedPrintedBoard)
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
 	_, err = game.Execute(2, 0, 6, 4) // black bishop advance
 	assert.Nil(t, err)
@@ -244,7 +244,7 @@ Mate:   false
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
-	assert.Equal(t, actualPrintedBoard, expectedPrintedBoard)
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
 	_, err = game.Execute(4, 7, 7, 7) // white castle
 	assert.Nil(t, err)
@@ -288,5 +288,5 @@ Mate:   false
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
-	assert.Equal(t, actualPrintedBoard, expectedPrintedBoard)
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }

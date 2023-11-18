@@ -2,33 +2,33 @@ package chess
 
 import "fmt"
 
-var invokerFactoryInstance = invokerFactory(&concreteInvokerFactory{})
+var invokerFactoryInstance = InvokerFactory(&ConcreteInvokerFactory{})
 
-type invokerFactory interface {
-	newSimpleInvoker() (*simpleInvoker, error)
+type InvokerFactory interface {
+	newSimpleInvoker() (*SimpleInvoker, error)
 }
 
-type concreteInvokerFactory struct{}
+type ConcreteInvokerFactory struct{}
 
-func (f *concreteInvokerFactory) newSimpleInvoker() (*simpleInvoker, error) {
-	return &simpleInvoker{
-		history: []move{},
+func (f *ConcreteInvokerFactory) newSimpleInvoker() (*SimpleInvoker, error) {
+	return &SimpleInvoker{
+		history: []Move{},
 		index:   0,
 	}, nil
 }
 
-type invoker interface {
-	execute(m move) error
+type Invoker interface {
+	execute(m Move) error
 	undo() error
 	redo() error
 }
 
-type simpleInvoker struct {
-	history []move
+type SimpleInvoker struct {
+	history []Move
 	index   int
 }
 
-func (s *simpleInvoker) execute(m move) error {
+func (s *SimpleInvoker) execute(m Move) error {
 	err := m.execute()
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func (s *simpleInvoker) execute(m move) error {
 	return nil
 }
 
-func (s *simpleInvoker) undo() error {
+func (s *SimpleInvoker) undo() error {
 	if s.index <= 0 {
 		return fmt.Errorf("no moves to undo")
 	}
@@ -55,7 +55,7 @@ func (s *simpleInvoker) undo() error {
 	return nil
 }
 
-func (s *simpleInvoker) redo() error {
+func (s *SimpleInvoker) redo() error {
 	if s.index >= len(s.history) {
 		return fmt.Errorf("no moves to redo")
 	}

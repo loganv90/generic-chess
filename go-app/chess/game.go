@@ -3,7 +3,7 @@ package chess
 import "fmt"
 
 type State struct {
-    Squares [][]SquareData
+    Squares [][]*SquareData
     Turn string
 	Check bool
 	Mate  bool
@@ -42,13 +42,16 @@ func NewSimpleGame() (Game, error) {
 }
 
 type SimpleGame struct {
-	b board
-	i invoker
+	b Board
+	i Invoker
 }
 
 func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*State, error) {
-	moves := s.b.moves(xFrom, yFrom)
-	move := getMoveFromSlice(moves, xTo, yTo)
+    fromLocation := &Point{xFrom, yFrom}
+    toLocation := &Point{xTo, yTo}
+
+	moves := s.b.moves(fromLocation)
+	move := getMoveFromSlice(moves, toLocation)
 	if move == nil {
 		return nil, fmt.Errorf("move not possible")
 	}

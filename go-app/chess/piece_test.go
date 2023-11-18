@@ -2,51 +2,51 @@ package chess
 
 import (
 	"testing"
+    "errors"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-type mockPiece struct {
+type MockPiece struct {
 	mock.Mock
 }
 
-func (m *mockPiece) getColor() string {
+func (m *MockPiece) getColor() string {
 	args := m.Called()
 	return args.String(0)
 }
 
-func (m *mockPiece) movedCopy() piece {
+func (m *MockPiece) movedCopy() Piece {
 	args := m.Called()
-	return args.Get(0).(piece)
+	return args.Get(0).(Piece)
 }
 
-func (m *mockPiece) moves(board board, x int, y int) []move {
-	args := m.Called(board, x, y)
-	return args.Get(0).([]move)
+func (m *MockPiece) moves(board Board, location *Point) []Move {
+    args := m.Called(board, location)
+	return args.Get(0).([]Move)
 }
 
-func (m *mockPiece) print() string {
+func (m *MockPiece) print() string {
 	args := m.Called()
 	return args.String(0)
 }
 
 func Test_Pawn_Moves_Unmoved(t *testing.T) {
-	board := &mockBoard{}
+	board := &MockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
-	board.On("possibleEnPassants", mock.Anything, mock.Anything, mock.Anything).Return([]*enPassant{})
+	board.On("possibleEnPassants", mock.Anything, mock.Anything).Return([]*EnPassant{})
+    board.On("pointOnPromotionSquare", mock.Anything).Return(false)
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
-	moveFactory.On("newRevealEnPassantMove", board, 3, 3, 3, 5, 3, 4).Return(nil, nil)
+	moveFactory := &MockMoveFactory{}
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
+	moveFactory.On("newRevealEnPassantMove", board, &Point{3, 3}, &Point{3, 5}, &Point{3, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	pawn, err := newPawn("white", false, 0, 1)
 	assert.Nil(t, err)
 
-	moves := pawn.moves(board, 3, 3)
+	moves := pawn.moves(board, &Point{3, 3})
 	assert.Len(t, moves, 2)
 
 	board.AssertExpectations(t)
@@ -54,20 +54,19 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
 }
 
 func Test_Pawn_Moves_Moved(t *testing.T) {
-	board := &mockBoard{}
+	board := &MockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
-	board.On("possibleEnPassants", mock.Anything, mock.Anything, mock.Anything).Return([]*enPassant{})
+	board.On("possibleEnPassants", mock.Anything, mock.Anything).Return([]*EnPassant{})
+    board.On("pointOnPromotionSquare", mock.Anything).Return(false)
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
+	moveFactory := &MockMoveFactory{}
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	pawn, err := newPawn("white", true, 0, 1)
 	assert.Nil(t, err)
 
-	moves := pawn.moves(board, 3, 3)
+	moves := pawn.moves(board, &Point{3, 3})
 	assert.Len(t, moves, 1)
 
 	board.AssertExpectations(t)
@@ -75,18 +74,17 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
 }
 
 func Test_Pawn_Moves_Capturing(t *testing.T) {
-	board := &mockBoard{}
-	board.On("getPiece", 2, 4).Return(nil, nil)
-	board.On("getPiece", 3, 4).Return(nil, nil)
-	board.On("getPiece", 3, 5).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
-	board.On("possibleEnPassants", mock.Anything, mock.Anything, mock.Anything).Return([]*enPassant{})
+	board := &MockBoard{}
+	board.On("getPiece", &Point{2, 4}).Return(nil, nil)
+	board.On("getPiece", &Point{3, 4}).Return(nil, nil)
+	board.On("getPiece", &Point{3, 5}).Return(nil, nil)
+	board.On("possibleEnPassants", mock.Anything, mock.Anything).Return([]*EnPassant{})
+    board.On("pointOnPromotionSquare", mock.Anything).Return(false)
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
-	moveFactory.On("newRevealEnPassantMove", board, 3, 3, 3, 5, 3, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 4, 4).Return(nil, nil)
+	moveFactory := &MockMoveFactory{}
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
+	moveFactory.On("newRevealEnPassantMove", board, &Point{3, 3}, &Point{3, 5}, &Point{3, 4}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{4, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	pawn, err := newPawn("white", false, 0, 1)
@@ -94,9 +92,9 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
 
 	blackPawn, err := newPawn("black", false, 0, 1)
 	assert.Nil(t, err)
-	board.On("getPiece", 4, 4).Return(blackPawn, nil)
+	board.On("getPiece", &Point{4, 4}).Return(blackPawn, nil)
 
-	moves := pawn.moves(board, 3, 3)
+	moves := pawn.moves(board, &Point{3, 3})
 	assert.Len(t, moves, 3)
 
 	board.AssertExpectations(t)
@@ -104,26 +102,25 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
 }
 
 func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
-	board := &mockBoard{}
-	board.On("getPiece", 2, 4).Return(nil, nil)
-	board.On("getPiece", 3, 4).Return(nil, nil)
-	board.On("getPiece", 3, 5).Return(nil, nil)
-	board.On("getPiece", 4, 4).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
-	board.On("possibleEnPassants", "white", 4, 4).Return([]*enPassant{{4, 4, 3, 4}})
-	board.On("possibleEnPassants", "white", 2, 4).Return([]*enPassant{})
+	board := &MockBoard{}
+	board.On("getPiece", &Point{2, 4}).Return(nil, nil)
+	board.On("getPiece", &Point{3, 4}).Return(nil, nil)
+	board.On("getPiece", &Point{3, 5}).Return(nil, nil)
+	board.On("getPiece", &Point{4, 4}).Return(nil, nil)
+	board.On("possibleEnPassants", "white", &Point{4, 4}).Return([]*EnPassant{{&Point{4, 4}, &Point{3, 4}}})
+	board.On("possibleEnPassants", "white", &Point{2, 4}).Return([]*EnPassant{})
+    board.On("pointOnPromotionSquare", mock.Anything).Return(false)
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
-	moveFactory.On("newRevealEnPassantMove", board, 3, 3, 3, 5, 3, 4).Return(nil, nil)
-	moveFactory.On("newCaptureEnPassantMove", board, 3, 3, 4, 4).Return(nil, nil)
+	moveFactory := &MockMoveFactory{}
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
+	moveFactory.On("newRevealEnPassantMove", board, &Point{3, 3}, &Point{3, 5}, &Point{3, 4}).Return(nil, nil)
+	moveFactory.On("newCaptureEnPassantMove", board, &Point{3, 3}, &Point{4, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	pawn, err := newPawn("white", false, 0, 1)
 	assert.Nil(t, err)
 
-	moves := pawn.moves(board, 3, 3)
+	moves := pawn.moves(board, &Point{3, 3})
 	assert.Len(t, moves, 3)
 
 	board.AssertExpectations(t)
@@ -131,25 +128,38 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 }
 
 func Test_Knight_Moves(t *testing.T) {
-	board := &mockBoard{}
-	board.On("getPiece", 2, 3).Return(nil, nil)
-	board.On("getPiece", 3, 2).Return(nil, nil)
-	board.On("getPiece", 0, 3).Return(nil, nil)
-	board.On("getPiece", 3, 0).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
+	board := &MockBoard{}
+    moveFactory := &MockMoveFactory{}
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 1, 1, 2, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 3, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 0, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 3, 0).Return(nil, nil)
+    inPoints := []*Point{
+        {2, 3},
+        {3, 2},
+        {0, 3},
+        {3, 0},
+    }
+
+    outPoints := []*Point{
+        {-1, 2},
+        {2, -1},
+        {0, -1},
+        {-1, 0},
+    }
+
+    for _, p := range inPoints {
+        board.On("getPiece", p).Return(nil, nil)
+        moveFactory.On("newSimpleMove", board, &Point{1, 1}, p).Return(nil, nil)
+    }
+
+    for _, p := range outPoints {
+        board.On("getPiece", p).Return(nil, errors.New(""))
+    }
+
 	moveFactoryInstance = moveFactory
 
 	knight, err := newKnight("white")
 	assert.Nil(t, err)
 
-	moves := knight.moves(board, 1, 1)
+	moves := knight.moves(board, &Point{1, 1})
 	assert.Len(t, moves, 4)
 
 	board.AssertExpectations(t)
@@ -157,35 +167,43 @@ func Test_Knight_Moves(t *testing.T) {
 }
 
 func Test_Bishop_Moves(t *testing.T) {
-	board := &mockBoard{}
-	board.On("getPiece", 2, 2).Return(nil, nil)
-	board.On("getPiece", 3, 3).Return(nil, nil)
-	board.On("getPiece", 4, 4).Return(nil, nil)
-	board.On("getPiece", 5, 5).Return(nil, nil)
-	board.On("getPiece", 6, 6).Return(nil, nil)
-	board.On("getPiece", 7, 7).Return(nil, nil)
-	board.On("getPiece", 0, 2).Return(nil, nil)
-	board.On("getPiece", 2, 0).Return(nil, nil)
-	board.On("getPiece", 0, 0).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
+	board := &MockBoard{}
+    moveFactory := &MockMoveFactory{}
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 1, 1, 2, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 3, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 4, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 5, 5).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 6, 6).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 7, 7).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 0, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 2, 0).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 0, 0).Return(nil, nil)
+    inPoints := []*Point{
+        {2, 2},
+        {3, 3},
+        {4, 4},
+        {5, 5},
+        {6, 6},
+        {7, 7},
+        {0, 2},
+        {2, 0},
+        {0, 0},
+    }
+
+    outPoints := []*Point{
+        {8, 8},
+        {-1, 3},
+        {3, -1},
+        {-1, -1},
+    }
+
+    for _, p := range inPoints {
+        board.On("getPiece", p).Return(nil, nil)
+        moveFactory.On("newSimpleMove", board, &Point{1, 1}, p).Return(nil, nil)
+    }
+
+    for _, p := range outPoints {
+        board.On("getPiece", p).Return(nil, errors.New(""))
+    }
+
 	moveFactoryInstance = moveFactory
 
 	bishop, err := newBishop("white")
 	assert.Nil(t, err)
 
-	moves := bishop.moves(board, 1, 1)
+	moves := bishop.moves(board, &Point{1, 1})
 	assert.Len(t, moves, 9)
 
 	board.AssertExpectations(t)
@@ -193,45 +211,48 @@ func Test_Bishop_Moves(t *testing.T) {
 }
 
 func Test_Rook_Moves(t *testing.T) {
-	board := &mockBoard{}
-	board.On("getPiece", 2, 1).Return(nil, nil)
-	board.On("getPiece", 3, 1).Return(nil, nil)
-	board.On("getPiece", 4, 1).Return(nil, nil)
-	board.On("getPiece", 5, 1).Return(nil, nil)
-	board.On("getPiece", 6, 1).Return(nil, nil)
-	board.On("getPiece", 7, 1).Return(nil, nil)
-	board.On("getPiece", 1, 2).Return(nil, nil)
-	board.On("getPiece", 1, 3).Return(nil, nil)
-	board.On("getPiece", 1, 4).Return(nil, nil)
-	board.On("getPiece", 1, 5).Return(nil, nil)
-	board.On("getPiece", 1, 6).Return(nil, nil)
-	board.On("getPiece", 1, 7).Return(nil, nil)
-	board.On("getPiece", 0, 1).Return(nil, nil)
-	board.On("getPiece", 1, 0).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
+	board := &MockBoard{}
+	moveFactory := &MockMoveFactory{}
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 1, 1, 2, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 3, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 4, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 5, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 6, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 7, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 5).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 6).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 7).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 0, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 0).Return(nil, nil)
+    inPoints := []*Point{
+        {2, 1},
+        {3, 1},
+        {4, 1},
+        {5, 1},
+        {6, 1},
+        {7, 1},
+        {1, 2},
+        {1, 3},
+        {1, 4},
+        {1, 5},
+        {1, 6},
+        {1, 7},
+        {0, 1},
+        {1, 0},
+    }
+
+    outPoints := []*Point{
+        {8, 1},
+        {1, 8},
+        {1, -1},
+        {-1, 1},
+    }
+
+    for _, p := range inPoints {
+        board.On("getPiece", p).Return(nil, nil)
+        moveFactory.On("newSimpleMove", board, &Point{1, 1}, p).Return(nil, nil)
+    }
+
+    for _, p := range outPoints {
+        board.On("getPiece", p).Return(nil, errors.New(""))
+    }
+
 	moveFactoryInstance = moveFactory
 
 	rook, err := newRook("white", false)
 	assert.Nil(t, err)
 
-	moves := rook.moves(board, 1, 1)
+	moves := rook.moves(board, &Point{1, 1})
 	assert.Len(t, moves, 14)
 
 	board.AssertExpectations(t)
@@ -239,63 +260,61 @@ func Test_Rook_Moves(t *testing.T) {
 }
 
 func Test_Queen_Moves(t *testing.T) {
-	board := &mockBoard{}
-	board.On("getPiece", 2, 2).Return(nil, nil)
-	board.On("getPiece", 3, 3).Return(nil, nil)
-	board.On("getPiece", 4, 4).Return(nil, nil)
-	board.On("getPiece", 5, 5).Return(nil, nil)
-	board.On("getPiece", 6, 6).Return(nil, nil)
-	board.On("getPiece", 7, 7).Return(nil, nil)
-	board.On("getPiece", 0, 2).Return(nil, nil)
-	board.On("getPiece", 2, 0).Return(nil, nil)
-	board.On("getPiece", 0, 0).Return(nil, nil)
-	board.On("getPiece", 2, 1).Return(nil, nil)
-	board.On("getPiece", 3, 1).Return(nil, nil)
-	board.On("getPiece", 4, 1).Return(nil, nil)
-	board.On("getPiece", 5, 1).Return(nil, nil)
-	board.On("getPiece", 6, 1).Return(nil, nil)
-	board.On("getPiece", 7, 1).Return(nil, nil)
-	board.On("getPiece", 1, 2).Return(nil, nil)
-	board.On("getPiece", 1, 3).Return(nil, nil)
-	board.On("getPiece", 1, 4).Return(nil, nil)
-	board.On("getPiece", 1, 5).Return(nil, nil)
-	board.On("getPiece", 1, 6).Return(nil, nil)
-	board.On("getPiece", 1, 7).Return(nil, nil)
-	board.On("getPiece", 0, 1).Return(nil, nil)
-	board.On("getPiece", 1, 0).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
+	board := &MockBoard{}
+	moveFactory := &MockMoveFactory{}
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 1, 1, 2, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 3, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 4, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 5, 5).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 6, 6).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 7, 7).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 0, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 2, 0).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 0, 0).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 2, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 3, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 4, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 5, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 6, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 7, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 5).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 6).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 7).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 0, 1).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 1, 1, 1, 0).Return(nil, nil)
+    inPoints := []*Point{
+        {2, 2},
+        {3, 3},
+        {4, 4},
+        {5, 5},
+        {6, 6},
+        {7, 7},
+        {0, 2},
+        {2, 0},
+        {0, 0},
+        {2, 1},
+        {3, 1},
+        {4, 1},
+        {5, 1},
+        {6, 1},
+        {7, 1},
+        {1, 2},
+        {1, 3},
+        {1, 4},
+        {1, 5},
+        {1, 6},
+        {1, 7},
+        {0, 1},
+        {1, 0},
+    }
+
+    outPoints := []*Point{
+        {8, 8},
+        {-1, 3},
+        {3, -1},
+        {-1, -1},
+        {8, 1},
+        {1, 8},
+        {1, -1},
+        {-1, 1},
+    }
+
+    for _, p := range inPoints {
+        board.On("getPiece", p).Return(nil, nil)
+        moveFactory.On("newSimpleMove", board, &Point{1, 1}, p).Return(nil, nil)
+    }
+
+    for _, p := range outPoints {
+        board.On("getPiece", p).Return(nil, errors.New(""))
+    }
+
 	moveFactoryInstance = moveFactory
 
 	queen, err := newQueen("white")
 	assert.Nil(t, err)
 
-	moves := queen.moves(board, 1, 1)
+	moves := queen.moves(board, &Point{1, 1})
 	assert.Len(t, moves, 23)
 
 	board.AssertExpectations(t)
@@ -303,35 +322,43 @@ func Test_Queen_Moves(t *testing.T) {
 }
 
 func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
-	board := &mockBoard{}
-	board.On("getPiece", 2, 2).Return(nil, nil)
-	board.On("getPiece", 3, 2).Return(nil, nil)
-	board.On("getPiece", 4, 2).Return(nil, nil)
-	board.On("getPiece", 2, 3).Return(nil, nil)
-	board.On("getPiece", 4, 3).Return(nil, nil)
-	board.On("getPiece", 2, 4).Return(nil, nil)
-	board.On("getPiece", 3, 4).Return(nil, nil)
-	board.On("getPiece", 4, 4).Return(nil, nil)
-	board.On("getPiece", 5, 3).Return(nil, nil)
-	board.On("getPiece", 1, 3).Return(nil, nil)
-	board.On("getPiece", 2, 3).Return(nil, nil)
-	board.On("getPiece", 4, 3).Return(nil, nil)
-	board.On("getPiece", 5, 3).Return(nil, nil)
-	board.On("getPiece", 6, 3).Return(nil, nil)
+	board := &MockBoard{}
+	moveFactory := &MockMoveFactory{}
+
+    inPoints := []*Point{
+        {2, 2},
+        {3, 2},
+        {4, 2},
+        {2, 3},
+        {4, 3},
+        {2, 4},
+        {3, 4},
+        {4, 4},
+        {5, 3},
+        {1, 3},
+        {2, 3},
+        {4, 3},
+        {5, 3},
+        {6, 3},
+    }
+
+    for _, p := range inPoints {
+        board.On("getPiece", p).Return(nil, nil)
+    }
+
 	board.On("xLen").Return(8)
 	board.On("yLen").Return(8)
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 3, 3, 2, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 3, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 4, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 2, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 4, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 2, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 4, 4).Return(nil, nil)
-	moveFactory.On("newCastleMove", board, 3, 3, 0, 3, 2, 3, 3, 3).Return(nil, nil)
-	moveFactory.On("newCastleMove", board, 3, 3, 7, 3, 6, 3, 5, 3).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{2, 2}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 2}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{4, 2}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{2, 3}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{4, 3}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{2, 4}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{4, 4}).Return(nil, nil)
+	moveFactory.On("newCastleMove", board, &Point{3, 3}, &Point{0, 3}, &Point{2, 3}, &Point{3, 3}).Return(nil, nil)
+	moveFactory.On("newCastleMove", board, &Point{3, 3}, &Point{7, 3}, &Point{6, 3}, &Point{5, 3}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	king, err := newKing("white", false, 0, 1)
@@ -339,10 +366,10 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 
 	rook, err := newRook("white", false)
 	assert.Nil(t, err)
-	board.On("getPiece", 0, 3).Return(rook, nil)
-	board.On("getPiece", 7, 3).Return(rook, nil)
+	board.On("getPiece", &Point{0, 3}).Return(rook, nil)
+	board.On("getPiece", &Point{7, 3}).Return(rook, nil)
 
-	moves := king.moves(board, 3, 3)
+	moves := king.moves(board, &Point{3, 3})
 	assert.Len(t, moves, 10)
 
 	board.AssertExpectations(t)
@@ -350,35 +377,41 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 }
 
 func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
-	board := &mockBoard{}
-	board.On("getPiece", 2, 2).Return(nil, nil)
-	board.On("getPiece", 3, 2).Return(nil, nil)
-	board.On("getPiece", 4, 2).Return(nil, nil)
-	board.On("getPiece", 2, 3).Return(nil, nil)
-	board.On("getPiece", 4, 3).Return(nil, nil)
-	board.On("getPiece", 2, 4).Return(nil, nil)
-	board.On("getPiece", 3, 4).Return(nil, nil)
-	board.On("getPiece", 4, 4).Return(nil, nil)
-	board.On("xLen").Return(8)
-	board.On("yLen").Return(8)
+	board := &MockBoard{}
+	moveFactory := &MockMoveFactory{}
 
-	moveFactory := &mockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, 3, 3, 2, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 3, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 4, 2).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 2, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 4, 3).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 2, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 3, 4).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, 3, 3, 4, 4).Return(nil, nil)
+    inPoints := []*Point{
+        {2, 2},
+        {3, 2},
+        {4, 2},
+        {2, 3},
+        {4, 3},
+        {2, 4},
+        {3, 4},
+        {4, 4},
+    }
+
+    for _, p := range inPoints {
+        board.On("getPiece", p).Return(nil, nil)
+    }
+
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{2, 2}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 2}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{4, 2}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{2, 3}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{4, 3}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{2, 4}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{4, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	king, err := newKing("white", true, 0, 1)
 	assert.Nil(t, err)
 
-	moves := king.moves(board, 3, 3)
+	moves := king.moves(board, &Point{3, 3})
 	assert.Len(t, moves, 8)
 
 	board.AssertExpectations(t)
 	moveFactory.AssertExpectations(t)
 }
+

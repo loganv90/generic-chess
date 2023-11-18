@@ -7,11 +7,11 @@ import (
 )
 
 func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
-	move1 := &mockMove{}
+	move1 := &MockMove{}
 	move1.On("execute").Return(nil)
 	move1.On("undo").Return(nil)
 
-	move2 := &mockMove{}
+	move2 := &MockMove{}
 	move2.On("execute").Return(nil)
 	move2.On("undo").Return(nil)
 
@@ -55,15 +55,15 @@ func Test_SimpleInvoker_UndoAndRedoWithNoMoves(t *testing.T) {
 }
 
 func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
-	move1 := &mockMove{}
+	move1 := &MockMove{}
 	move1.On("execute").Return(nil)
 	move1.On("undo").Return(nil)
 
-	move2 := &mockMove{}
+	move2 := &MockMove{}
 	move2.On("execute").Return(nil)
 	move2.On("undo").Return(nil)
 
-	move3 := &mockMove{}
+	move3 := &MockMove{}
 	move3.On("execute").Return(nil)
 	move3.On("undo").Return(nil)
 

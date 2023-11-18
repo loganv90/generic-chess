@@ -1,25 +1,24 @@
 package chess
 
-type action struct {
-	b     board
-	xFrom int
-	yFrom int
-	xTo   int
-	yTo   int
+type Action struct {
+	b Board
+    fromLocation *Point
+    toLocation *Point
 }
 
-func (a *action) getAction() *action {
+func (a *Action) getAction() *Action {
 	return a
 }
 
-type enPassantCapture struct {
-	enPassant     *enPassant
-	capturedPiece piece
+type EnPassantCapture struct {
+	enPassant     *EnPassant
+	capturedPiece Piece
 }
 
-func getMoveFromSlice(moves []move, xTo int, yTo int) move {
+func getMoveFromSlice(moves []Move, toLocation *Point) Move {
 	for _, m := range moves {
-		if action := m.getAction(); action.xTo == xTo && action.yTo == yTo {
+        actionToLocation := m.getAction().toLocation
+        if actionToLocation.equals(toLocation) {
 			return m
 		}
 	}
@@ -27,32 +26,26 @@ func getMoveFromSlice(moves []move, xTo int, yTo int) move {
 	return nil
 }
 
-var moveFactoryInstance = moveFactory(&concreteMoveFactory{})
+var moveFactoryInstance = MoveFactory(&ConcreteMoveFactory{})
 
-type moveFactory interface {
-	newSimpleMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*simpleMove, error)
-	newRevealEnPassantMove(b board, xFrom int, yFrom int, xTo int, yTo int, xTarget int, yTarget int) (*revealEnPassantMove, error)
-	newCaptureEnPassantMove(b board, xFrom int, yFrom int, xTo int, yTo int) (*captureEnPassantMove, error)
-	newCastleMove(b board, xFrom int, yFrom int, xTo int, yTo int, xToKing int, yToKing int, xToRook int, yToRook int) (*castleMove, error)
+type MoveFactory interface {
+	newSimpleMove(b Board, fromLocation *Point, toLocation *Point) (*SimpleMove, error)
+	newRevealEnPassantMove(b Board, fromLocation *Point, toLocation *Point, target *Point) (*RevealEnPassantMove, error)
+	newCaptureEnPassantMove(b Board, fromLocation *Point, toLocation *Point) (*CaptureEnPassantMove, error)
+	newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point) (*CastleMove, error)
 }
 
-type concreteMoveFactory struct{}
+type ConcreteMoveFactory struct{}
 
-func (f *concreteMoveFactory) newSimpleMove(
-	b board,
-	xFrom int,
-	yFrom int,
-	xTo int,
-	yTo int,
-) (*simpleMove, error) {
-	piece, err := b.getPiece(xFrom, yFrom)
+func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation *Point, toLocation *Point) (*SimpleMove, error) {
+	piece, err := b.getPiece(fromLocation)
 	if err != nil {
 		return nil, err
 	}
 
 	newPiece := piece.movedCopy()
 
-	capturedPiece, err := b.getPiece(xTo, yTo)
+	capturedPiece, err := b.getPiece(toLocation)
 	if err != nil {
 		return nil, err
 	}
@@ -62,13 +55,11 @@ func (f *concreteMoveFactory) newSimpleMove(
 		return nil, err
 	}
 
-	return &simpleMove{
-		action{
-			b:     b,
-			xFrom: xFrom,
-			yFrom: yFrom,
-			xTo:   xTo,
-			yTo:   yTo,
+	return &SimpleMove{
+		Action{
+			b: b,
+            fromLocation: fromLocation,
+            toLocation: toLocation,
 		},
 		piece,
 		newPiece,
@@ -77,22 +68,15 @@ func (f *concreteMoveFactory) newSimpleMove(
 	}, nil
 }
 
-func (f *concreteMoveFactory) newRevealEnPassantMove(b board,
-	xFrom int,
-	yFrom int,
-	xTo int,
-	yTo int,
-	xTarget int,
-	yTarget int,
-) (*revealEnPassantMove, error) {
-	piece, err := b.getPiece(xFrom, yFrom)
+func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation *Point, toLocation *Point, target *Point) (*RevealEnPassantMove, error) {
+	piece, err := b.getPiece(fromLocation)
 	if err != nil {
 		return nil, err
 	}
 
 	newPiece := piece.movedCopy()
 
-	capturedPiece, err := b.getPiece(xTo, yTo)
+	capturedPiece, err := b.getPiece(toLocation)
 	if err != nil {
 		return nil, err
 	}
@@ -102,20 +86,16 @@ func (f *concreteMoveFactory) newRevealEnPassantMove(b board,
 		return nil, err
 	}
 
-	newEn := &enPassant{
-		xTarget: xTarget,
-		yTarget: yTarget,
-		xPiece:  xTo,
-		yPiece:  yTo,
+	newEn := &EnPassant{
+        target: target,
+        pieceLocation: toLocation,
 	}
 
-	return &revealEnPassantMove{
-		action{
+	return &RevealEnPassantMove{
+		Action{
 			b:     b,
-			xFrom: xFrom,
-			yFrom: yFrom,
-			xTo:   xTo,
-			yTo:   yTo,
+            fromLocation: fromLocation,
+            toLocation: toLocation,
 		},
 		piece,
 		newPiece,
@@ -125,21 +105,15 @@ func (f *concreteMoveFactory) newRevealEnPassantMove(b board,
 	}, nil
 }
 
-func (f *concreteMoveFactory) newCaptureEnPassantMove(
-	b board,
-	xFrom int,
-	yFrom int,
-	xTo int,
-	yTo int,
-) (*captureEnPassantMove, error) {
-	piece, err := b.getPiece(xFrom, yFrom)
+func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Point, toLocation *Point) (*CaptureEnPassantMove, error) {
+	piece, err := b.getPiece(fromLocation)
 	if err != nil {
 		return nil, err
 	}
 
 	newPiece := piece.movedCopy()
 
-	capturedPiece, err := b.getPiece(xTo, yTo)
+	capturedPiece, err := b.getPiece(toLocation)
 	if err != nil {
 		return nil, err
 	}
@@ -149,27 +123,25 @@ func (f *concreteMoveFactory) newCaptureEnPassantMove(
 		return nil, err
 	}
 
-	encs := []*enPassantCapture{}
+	encs := []*EnPassantCapture{}
 
-	for _, enPassant := range b.possibleEnPassants(piece.getColor(), xTo, yTo) {
-		capturedPiece, err := b.getPiece(enPassant.xPiece, enPassant.yPiece)
+	for _, enPassant := range b.possibleEnPassants(piece.getColor(), toLocation) {
+		capturedPiece, err := b.getPiece(enPassant.pieceLocation)
 		if err != nil {
 			return nil, err
 		}
 
-		encs = append(encs, &enPassantCapture{
+		encs = append(encs, &EnPassantCapture{
 			enPassant,
 			capturedPiece,
 		})
 	}
 
-	return &captureEnPassantMove{
-		action{
+	return &CaptureEnPassantMove{
+		Action{
 			b:     b,
-			xFrom: xFrom,
-			yFrom: yFrom,
-			xTo:   xTo,
-			yTo:   yTo,
+            fromLocation: fromLocation,
+            toLocation: toLocation,
 		},
 		piece,
 		newPiece,
@@ -179,25 +151,15 @@ func (f *concreteMoveFactory) newCaptureEnPassantMove(
 	}, nil
 }
 
-func (f *concreteMoveFactory) newCastleMove(
-	b board,
-	xFrom int,
-	yFrom int,
-	xTo int,
-	yTo int,
-	xToKing int,
-	yToKing int,
-	xToRook int,
-	yToRook int,
-) (*castleMove, error) {
-	king, err := b.getPiece(xFrom, yFrom)
+func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point) (*CastleMove, error) {
+	king, err := b.getPiece(fromLocation)
 	if err != nil {
 		return nil, err
 	}
 
 	newKing := king.movedCopy()
 
-	rook, err := b.getPiece(xTo, yTo)
+	rook, err := b.getPiece(toLocation)
 	if err != nil {
 		return nil, err
 	}
@@ -209,48 +171,43 @@ func (f *concreteMoveFactory) newCastleMove(
 		return nil, err
 	}
 
-	return &castleMove{
-		action{
-			b:     b,
-			xFrom: xFrom,
-			yFrom: yFrom,
-			xTo:   xTo,
-			yTo:   yTo,
+	return &CastleMove{
+		Action{
+			b: b,
+            fromLocation: fromLocation,
+            toLocation: toLocation,
 		},
 		king,
 		newKing,
-		xToKing,
-		yToKing,
+        toKingLocation,
 		rook,
 		newRook,
-		xToRook,
-		yToRook,
+        toRookLocation,
 		en,
 	}, nil
-
 }
 
-type move interface {
+type Move interface {
 	execute() error
 	undo() error
-	getAction() *action
+	getAction() *Action
 }
 
-type simpleMove struct {
-	action
-	piece         piece
-	newPiece      piece
-	capturedPiece piece
-	en            *enPassant
+type SimpleMove struct {
+	Action
+	piece         Piece
+	newPiece      Piece
+	capturedPiece Piece
+	en            *EnPassant
 }
 
-func (s *simpleMove) execute() error {
-	err := s.b.setPiece(s.xFrom, s.yFrom, nil)
+func (s *SimpleMove) execute() error {
+	err := s.b.setPiece(s.fromLocation, nil)
 	if err != nil {
 		return err
 	}
 
-	err = s.b.setPiece(s.xTo, s.yTo, s.newPiece)
+	err = s.b.setPiece(s.toLocation, s.newPiece)
 	if err != nil {
 		return err
 	}
@@ -261,13 +218,13 @@ func (s *simpleMove) execute() error {
 	return nil
 }
 
-func (s *simpleMove) undo() error {
-	err := s.b.setPiece(s.xFrom, s.yFrom, s.piece)
+func (s *SimpleMove) undo() error {
+	err := s.b.setPiece(s.fromLocation, s.piece)
 	if err != nil {
 		return err
 	}
 
-	err = s.b.setPiece(s.xTo, s.yTo, s.capturedPiece)
+	err = s.b.setPiece(s.toLocation, s.capturedPiece)
 	if err != nil {
 		return err
 	}
@@ -278,22 +235,22 @@ func (s *simpleMove) undo() error {
 	return nil
 }
 
-type revealEnPassantMove struct {
-	action
-	piece         piece
-	newPiece      piece
-	capturedPiece piece
-	en            *enPassant
-	newEn         *enPassant
+type RevealEnPassantMove struct {
+	Action
+	piece         Piece
+	newPiece      Piece
+	capturedPiece Piece
+	en            *EnPassant
+	newEn         *EnPassant
 }
 
-func (r *revealEnPassantMove) execute() error {
-	err := r.b.setPiece(r.xFrom, r.yFrom, nil)
+func (r *RevealEnPassantMove) execute() error {
+	err := r.b.setPiece(r.fromLocation, nil)
 	if err != nil {
 		return err
 	}
 
-	err = r.b.setPiece(r.xTo, r.yTo, r.newPiece)
+	err = r.b.setPiece(r.toLocation, r.newPiece)
 	if err != nil {
 		return err
 	}
@@ -304,13 +261,13 @@ func (r *revealEnPassantMove) execute() error {
 	return nil
 }
 
-func (r *revealEnPassantMove) undo() error {
-	err := r.b.setPiece(r.xFrom, r.yFrom, r.piece)
+func (r *RevealEnPassantMove) undo() error {
+	err := r.b.setPiece(r.fromLocation, r.piece)
 	if err != nil {
 		return err
 	}
 
-	err = r.b.setPiece(r.xTo, r.yTo, r.capturedPiece)
+	err = r.b.setPiece(r.toLocation, r.capturedPiece)
 	if err != nil {
 		return err
 	}
@@ -321,28 +278,28 @@ func (r *revealEnPassantMove) undo() error {
 	return nil
 }
 
-type captureEnPassantMove struct {
-	action
-	piece         piece
-	newPiece      piece
-	capturedPiece piece
-	en            *enPassant
-	encs          []*enPassantCapture
+type CaptureEnPassantMove struct {
+	Action
+	piece         Piece
+	newPiece      Piece
+	capturedPiece Piece
+	en            *EnPassant
+	encs          []*EnPassantCapture
 }
 
-func (c *captureEnPassantMove) execute() error {
-	err := c.b.setPiece(c.xFrom, c.yFrom, nil)
+func (c *CaptureEnPassantMove) execute() error {
+	err := c.b.setPiece(c.fromLocation, nil)
 	if err != nil {
 		return err
 	}
 
-	err = c.b.setPiece(c.xTo, c.yTo, c.newPiece)
+	err = c.b.setPiece(c.toLocation, c.newPiece)
 	if err != nil {
 		return err
 	}
 
 	for _, enc := range c.encs {
-		err = c.b.setPiece(enc.enPassant.xPiece, enc.enPassant.yPiece, nil)
+        err = c.b.setPiece(enc.enPassant.pieceLocation, nil)
 		if err != nil {
 			return err
 		}
@@ -354,19 +311,19 @@ func (c *captureEnPassantMove) execute() error {
 	return nil
 }
 
-func (c *captureEnPassantMove) undo() error {
-	err := c.b.setPiece(c.xFrom, c.yFrom, c.piece)
+func (c *CaptureEnPassantMove) undo() error {
+	err := c.b.setPiece(c.fromLocation, c.piece)
 	if err != nil {
 		return err
 	}
 
-	err = c.b.setPiece(c.xTo, c.yTo, c.capturedPiece)
+	err = c.b.setPiece(c.toLocation, c.capturedPiece)
 	if err != nil {
 		return err
 	}
 
 	for _, enc := range c.encs {
-		err = c.b.setPiece(enc.enPassant.xPiece, enc.enPassant.yPiece, enc.capturedPiece)
+        err = c.b.setPiece(enc.enPassant.pieceLocation, enc.capturedPiece)
 		if err != nil {
 			return err
 		}
@@ -378,36 +335,34 @@ func (c *captureEnPassantMove) undo() error {
 	return nil
 }
 
-type castleMove struct {
-	action
-	king    piece
-	newKing piece
-	xToKing int
-	yToKing int
-	rook    piece
-	newRook piece
-	xToRook int
-	yToRook int
-	en      *enPassant
+type CastleMove struct {
+	Action
+	king    Piece
+	newKing Piece
+    toKingLocation *Point
+	rook    Piece
+	newRook Piece
+    toRookLocation *Point
+	en      *EnPassant
 }
 
-func (c *castleMove) execute() error {
-	err := c.b.setPiece(c.xFrom, c.yFrom, nil)
+func (c *CastleMove) execute() error {
+	err := c.b.setPiece(c.fromLocation, nil)
 	if err != nil {
 		return err
 	}
 
-	err = c.b.setPiece(c.xTo, c.yTo, nil)
+	err = c.b.setPiece(c.toLocation, nil)
 	if err != nil {
 		return err
 	}
 
-	err = c.b.setPiece(c.xToRook, c.yToRook, c.newRook)
+	err = c.b.setPiece(c.toRookLocation, c.newRook)
 	if err != nil {
 		return err
 	}
 
-	err = c.b.setPiece(c.xToKing, c.yToKing, c.newKing)
+	err = c.b.setPiece(c.toKingLocation, c.newKing)
 	if err != nil {
 		return err
 	}
@@ -419,23 +374,23 @@ func (c *castleMove) execute() error {
 
 }
 
-func (c *castleMove) undo() error {
-	err := c.b.setPiece(c.xFrom, c.yFrom, c.king)
+func (c *CastleMove) undo() error {
+	err := c.b.setPiece(c.fromLocation, c.king)
 	if err != nil {
 		return err
 	}
 
-	err = c.b.setPiece(c.xTo, c.yTo, c.rook)
+	err = c.b.setPiece(c.toLocation, c.rook)
 	if err != nil {
 		return err
 	}
 
-	err = c.b.setPiece(c.xToRook, c.yToRook, nil)
+	err = c.b.setPiece(c.toRookLocation, nil)
 	if err != nil {
 		return err
 	}
 
-	err = c.b.setPiece(c.xToKing, c.yToKing, nil)
+	err = c.b.setPiece(c.toKingLocation, nil)
 	if err != nil {
 		return err
 	}
