@@ -2,7 +2,7 @@ package chess
 
 import "fmt"
 
-type State struct {
+type BoardState struct {
     Squares [][]*SquareData
     Turn string
 	Check bool
@@ -10,12 +10,23 @@ type State struct {
 }
 
 type SquareData struct {
-    Color string
-    Piece string
+    C string
+    P string
+}
+
+type PieceState struct {
+    Moves []*MoveData
+    Turn bool
+}
+
+type MoveData struct {
+    X int
+    Y int
 }
 
 type Game interface {
-	Execute(xFrom int, yFrom int, xTo int, yTo int) (*State, error)
+	Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardState, error)
+    View(x int, y int) (*PieceState, error)
 	Undo() error
 	Redo() error
 	Print() string
@@ -46,7 +57,7 @@ type SimpleGame struct {
 	i Invoker
 }
 
-func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*State, error) {
+func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardState, error) {
     fromLocation := &Point{xFrom, yFrom}
     toLocation := &Point{xTo, yTo}
 
@@ -61,12 +72,38 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*State, er
 		return nil, err
 	}
 
-	return &State{
+	return &BoardState{
         Squares: s.b.squares(),
         Turn: s.b.turn(),
 		Check: false,
 		Mate:  false,
 	}, nil
+}
+
+func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
+    location := &Point{x, y}
+
+    piece, err := s.b.getPiece(location)
+    if err != nil || piece == nil {
+        return &PieceState{
+            Moves: []*MoveData{},
+            Turn: false,
+        }, nil
+    }
+
+    moves := s.b.moves(location)
+    moveDatas := make([]*MoveData, len(moves))
+    for i, m := range moves {
+        moveDatas[i] = &MoveData{
+            X: m.getAction().toLocation.x,
+            Y: m.getAction().toLocation.y,
+        }
+    }
+
+    return &PieceState{
+        Moves: moveDatas,
+        Turn: s.b.turn() == piece.getColor(),
+    }, nil
 }
 
 func (s *SimpleGame) Undo() error {

@@ -336,7 +336,7 @@ func (s *SimpleBoard) print() string {
 	var builder strings.Builder
 	var cellWidth int = 12
 
-	builder.WriteString(fmt.Sprintf("Player: %s\n", s.players[s.currentPlayer]))
+	builder.WriteString(fmt.Sprintf("Player: %s\n", s.turn()))
 	builder.WriteString(fmt.Sprintf("Check:  %t\n", false))
 	builder.WriteString(fmt.Sprintf("Mate:   %t\n", false))
 	for y, row := range s.pieces {
@@ -386,8 +386,8 @@ func (s *SimpleBoard) squares() [][]*SquareData {
             piece := s.pieces[y][x]
             if piece != nil {
                 squaresRow = append(squaresRow, &SquareData{
-                    Piece: piece.print(),
-                    Color: piece.getColor(),
+                    P: piece.print(),
+                    C: piece.getColor(),
                 })
             } else {
                 squaresRow = append(squaresRow, &SquareData{})
