@@ -357,8 +357,8 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{2, 4}).Return(nil, nil)
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{4, 4}).Return(nil, nil)
-	moveFactory.On("newCastleMove", board, &Point{3, 3}, &Point{0, 3}, &Point{2, 3}, &Point{3, 3}).Return(nil, nil)
-	moveFactory.On("newCastleMove", board, &Point{3, 3}, &Point{7, 3}, &Point{6, 3}, &Point{5, 3}).Return(nil, nil)
+	moveFactory.On("newCastleMove", board, &Point{3, 3}, &Point{0, 3}, &Point{2, 3}, &Point{3, 3}, []*Point{}).Return(nil, nil)
+	moveFactory.On("newCastleMove", board, &Point{3, 3}, &Point{7, 3}, &Point{6, 3}, &Point{5, 3}, []*Point{{4, 3}, {5, 3}}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
 	king, err := newKing("white", false, 0, 1)

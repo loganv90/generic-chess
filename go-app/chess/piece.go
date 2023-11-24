@@ -442,6 +442,7 @@ func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
 	}
 
 	for _, castle := range k.castles {
+        vulnerableLocations := []*Point{}
         currentLocation := fromLocation.add(&castle.Point)
 
 		rookFound := false
@@ -538,7 +539,32 @@ func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
             continue
         }
 
-		castleMove, err := moveFactoryInstance.newCastleMove(b, fromLocation, currentLocation, &Point{xToKing, yToKing}, &Point{xToRook, yToRook})
+        if xToKing > fromLocation.x {
+            for x := fromLocation.x + 1; x < xToKing; x++ {
+                vulnerableLocations = append(vulnerableLocations, &Point{x, fromLocation.y})
+            }
+        } else if xToKing < fromLocation.x {
+            for x := fromLocation.x - 1; x > xToKing; x-- {
+                vulnerableLocations = append(vulnerableLocations, &Point{x, fromLocation.y})
+            }
+        } else if yToKing > fromLocation.y {
+            for y := fromLocation.y + 1; y < yToKing; y++ {
+                vulnerableLocations = append(vulnerableLocations, &Point{fromLocation.x, y})
+            }
+        } else if yToKing < fromLocation.y {
+            for y := fromLocation.y - 1; y > yToKing; y-- {
+                vulnerableLocations = append(vulnerableLocations, &Point{fromLocation.x, y})
+            }
+        }
+
+		castleMove, err := moveFactoryInstance.newCastleMove(
+            b,
+            fromLocation,
+            currentLocation,
+            &Point{xToKing, yToKing},
+            &Point{xToRook, yToRook},
+            vulnerableLocations,
+        )
 		if err == nil {
 			*moves = append(*moves, castleMove)
 		}

@@ -32,7 +32,7 @@ type MoveFactory interface {
 	newSimpleMove(b Board, fromLocation *Point, toLocation *Point) (*SimpleMove, error)
 	newRevealEnPassantMove(b Board, fromLocation *Point, toLocation *Point, target *Point) (*RevealEnPassantMove, error)
 	newCaptureEnPassantMove(b Board, fromLocation *Point, toLocation *Point) (*CaptureEnPassantMove, error)
-	newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point) (*CastleMove, error)
+	newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point, newVulnerables []*Point) (*CastleMove, error)
 }
 
 type ConcreteMoveFactory struct{}
@@ -55,6 +55,11 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation *Point, toLoca
 		return nil, err
 	}
 
+    vulnerables, err := b.getVulnerables(piece.getColor())
+    if err != nil {
+        return nil, err
+    }
+
 	return &SimpleMove{
 		Action{
 			b: b,
@@ -65,6 +70,7 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation *Point, toLoca
 		newPiece,
 		capturedPiece,
 		en,
+        vulnerables,
 	}, nil
 }
 
@@ -86,6 +92,11 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation *Poin
 		return nil, err
 	}
 
+    vulnerables, err := b.getVulnerables(piece.getColor())
+    if err != nil {
+        return nil, err
+    }
+
 	newEn := &EnPassant{
         target: target,
         pieceLocation: toLocation,
@@ -102,6 +113,7 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation *Poin
 		capturedPiece,
 		en,
 		newEn,
+        vulnerables,
 	}, nil
 }
 
@@ -122,6 +134,11 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Poi
 	if err != nil {
 		return nil, err
 	}
+    
+    vulnerables, err := b.getVulnerables(piece.getColor())
+    if err != nil {
+        return nil, err
+    }
 
 	encs := []*EnPassantCapture{}
 
@@ -148,10 +165,11 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Poi
 		capturedPiece,
 		en,
 		encs,
+        vulnerables,
 	}, nil
 }
 
-func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point) (*CastleMove, error) {
+func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point, newVulnerables []*Point) (*CastleMove, error) {
 	king, err := b.getPiece(fromLocation)
 	if err != nil {
 		return nil, err
@@ -171,6 +189,11 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLoca
 		return nil, err
 	}
 
+    vulnerables, err := b.getVulnerables(king.getColor())
+    if err != nil {
+        return nil, err
+    }
+
 	return &CastleMove{
 		Action{
 			b: b,
@@ -184,6 +207,8 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLoca
 		newRook,
         toRookLocation,
 		en,
+        vulnerables,
+        newVulnerables,
 	}, nil
 }
 
@@ -199,6 +224,7 @@ type SimpleMove struct {
 	newPiece      Piece
 	capturedPiece Piece
 	en            *EnPassant
+    vulnerables   []*Point
 }
 
 func (s *SimpleMove) execute() error {
@@ -212,6 +238,13 @@ func (s *SimpleMove) execute() error {
 		return err
 	}
 
+    newVulnerables := []*Point{}
+    kingLocation, err := s.b.getKingLocation(s.piece.getColor())
+    if err == nil {
+        newVulnerables = append(newVulnerables, kingLocation)
+    }
+
+    s.b.setVulnerables(s.piece.getColor(), newVulnerables)
 	s.b.clrEnPassant(s.piece.getColor())
 	s.b.increment()
 
@@ -229,6 +262,7 @@ func (s *SimpleMove) undo() error {
 		return err
 	}
 
+    s.b.setVulnerables(s.piece.getColor(), s.vulnerables)
 	s.b.setEnPassant(s.piece.getColor(), s.en)
 	s.b.decrement()
 
@@ -242,6 +276,7 @@ type RevealEnPassantMove struct {
 	capturedPiece Piece
 	en            *EnPassant
 	newEn         *EnPassant
+    vulnerables   []*Point
 }
 
 func (r *RevealEnPassantMove) execute() error {
@@ -255,6 +290,13 @@ func (r *RevealEnPassantMove) execute() error {
 		return err
 	}
 
+    newVulnerables := []*Point{}
+    kingLocation, err := r.b.getKingLocation(r.piece.getColor())
+    if err == nil {
+        newVulnerables = append(newVulnerables, kingLocation)
+    }
+
+    r.b.setVulnerables(r.piece.getColor(), newVulnerables)
 	r.b.setEnPassant(r.piece.getColor(), r.newEn)
 	r.b.increment()
 
@@ -272,6 +314,7 @@ func (r *RevealEnPassantMove) undo() error {
 		return err
 	}
 
+    r.b.setVulnerables(r.piece.getColor(), r.vulnerables)
 	r.b.setEnPassant(r.piece.getColor(), r.en)
 	r.b.decrement()
 
@@ -285,6 +328,7 @@ type CaptureEnPassantMove struct {
 	capturedPiece Piece
 	en            *EnPassant
 	encs          []*EnPassantCapture
+    vulnerables   []*Point
 }
 
 func (c *CaptureEnPassantMove) execute() error {
@@ -305,6 +349,13 @@ func (c *CaptureEnPassantMove) execute() error {
 		}
 	}
 
+    newVulnerables := []*Point{}
+    kingLocation, err := c.b.getKingLocation(c.piece.getColor())
+    if err == nil {
+        newVulnerables = append(newVulnerables, kingLocation)
+    }
+
+    c.b.setVulnerables(c.piece.getColor(), newVulnerables)
 	c.b.clrEnPassant(c.piece.getColor())
 	c.b.increment()
 
@@ -329,6 +380,7 @@ func (c *CaptureEnPassantMove) undo() error {
 		}
 	}
 
+    c.b.setVulnerables(c.piece.getColor(), c.vulnerables)
 	c.b.setEnPassant(c.piece.getColor(), c.en)
 	c.b.decrement()
 
@@ -344,6 +396,8 @@ type CastleMove struct {
 	newRook Piece
     toRookLocation *Point
 	en      *EnPassant
+    vulnerables   []*Point
+    newVulnerables []*Point
 }
 
 func (c *CastleMove) execute() error {
@@ -367,11 +421,16 @@ func (c *CastleMove) execute() error {
 		return err
 	}
 
+    kingLocation, err := c.b.getKingLocation(c.king.getColor())
+    if err == nil {
+        c.newVulnerables = append(c.newVulnerables, kingLocation)
+    }
+
+    c.b.setVulnerables(c.king.getColor(), c.newVulnerables)
 	c.b.clrEnPassant(c.king.getColor())
 	c.b.increment()
 
 	return nil
-
 }
 
 func (c *CastleMove) undo() error {
@@ -395,8 +454,10 @@ func (c *CastleMove) undo() error {
 		return err
 	}
 
+    c.b.setVulnerables(c.king.getColor(), c.vulnerables)
 	c.b.setEnPassant(c.king.getColor(), c.en)
 	c.b.decrement()
 
 	return nil
 }
+

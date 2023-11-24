@@ -72,11 +72,13 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardStat
 		return nil, err
 	}
 
+    _, check, checkmate, stalemate := s.b.allMoves(s.b.turn())
+
 	return &BoardState{
         Squares: s.b.squares(),
         Turn: s.b.turn(),
-		Check: false,
-		Mate:  false,
+		Check: check,
+		Mate:  checkmate || stalemate,
 	}, nil
 }
 
