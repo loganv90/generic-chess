@@ -1,5 +1,6 @@
 package chess
 
+
 import (
 	"testing"
 
@@ -26,83 +27,64 @@ func (m *MockBoard) setPiece(location *Point, piece Piece) error {
 	return args.Error(0)
 }
 
-func (m *MockBoard) getEnPassant(color string) (*EnPassant, error) {
-	args := m.Called(color)
-	return args.Get(0).(*EnPassant), args.Error(1)
-}
-
-func (m *MockBoard) getKingLocation(color string) (*Point, error) {
-    args := m.Called(color)
-    return args.Get(0).(*Point), args.Error(1)
-}
-
-func (m *MockBoard) setKingLocation(color string, location *Point) {
-    m.Called(color, location)
-}
-
 func (m *MockBoard) getVulnerables(color string) ([]*Point, error) {
     args := m.Called(color)
     return args.Get(0).([]*Point), args.Error(1)
 }
 
-func (m *MockBoard) setVulnerables(color string, vulnerables []*Point) {
-    m.Called(color, vulnerables)
+func (m *MockBoard) setVulnerables(color string, vulnerables []*Point) error {
+    args := m.Called(color, vulnerables)
+    return args.Error(0)
 }
 
-func (m *MockBoard) setEnPassant(color string, enPassant *EnPassant) {
-	m.Called(color, enPassant)
+func (m *MockBoard) getEnPassant(color string) (*EnPassant, error) {
+	args := m.Called(color)
+	return args.Get(0).(*EnPassant), args.Error(1)
 }
 
-func (m *MockBoard) clrEnPassant(color string) {
-	m.Called(color)
+func (m *MockBoard) setEnPassant(color string, enPassant *EnPassant) error {
+    args := m.Called(color, enPassant)
+    return args.Error(0)
 }
 
-func (m *MockBoard) possibleEnPassants(color string, target *Point) []*EnPassant {
-	args := m.Called(color, target)
-	return args.Get(0).([]*EnPassant)
+func (m *MockBoard) possibleEnPassant(color string, location *Point) ([]*EnPassant, error) {
+    args := m.Called(color, location)
+    return args.Get(0).([]*EnPassant), args.Error(1)
 }
 
-func (m *MockBoard) moves(location *Point) []Move {
-	args := m.Called(location)
-	return args.Get(0).([]Move)
-}
-
-func (m *MockBoard) allMoves(color string) ([]Move, bool, bool, bool) {
+func (m *MockBoard) clearEnPassant(color string) error {
     args := m.Called(color)
-    return args.Get(0).([]Move), args.Bool(1), args.Bool(2), args.Bool(3)
+    return args.Error(0)
 }
 
-func (m *MockBoard) increment() {
-	m.Called()
+func (m *MockBoard) PotentialMoves(fromLocation *Point) ([]Move, error) {
+    args := m.Called(fromLocation)
+    return args.Get(0).([]Move), args.Error(1)
 }
 
-func (m *MockBoard) decrement() {
-	m.Called()
+func (m *MockBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
+    args := m.Called(fromLocation)
+    return args.Get(0).([]Move), args.Error(1)
 }
 
-func (m *MockBoard) xLen() int {
-	args := m.Called()
-	return args.Int(0)
+func (m *MockBoard) CalculateMoves(color string) error {
+    args := m.Called(color)
+    return args.Error(0)
 }
 
-func (m *MockBoard) yLen() int {
-	args := m.Called()
-	return args.Int(0)
+func (m *MockBoard) Size() *Point {
+    args := m.Called()
+    return args.Get(0).(*Point)
 }
 
-func (m *MockBoard) print() string {
-	args := m.Called()
-	return args.String(0)
-}
-
-func (m *MockBoard) turn() string {
+func (m *MockBoard) Print() string {
     args := m.Called()
     return args.String(0)
 }
 
-func (m *MockBoard) squares() [][]*SquareData {
+func (m *MockBoard) State() ([][]*SquareData, bool, bool, bool) {
     args := m.Called()
-    return args.Get(0).([][]*SquareData)
+    return args.Get(0).([][]*SquareData), args.Bool(1), args.Bool(2), args.Bool(3)
 }
 
 func (m *MockBoard) pointOutOfBounds(p *Point) bool {
@@ -116,10 +98,7 @@ func (m *MockBoard) pointOnPromotionSquare(p *Point) bool {
 }
 
 func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
-	s, err := newSimpleBoard(
-		[]string{"white", "black"},
-		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-	)
+    s, err := createSimpleBoardWithDefaultPieceLocations()
 	assert.Nil(t, err)
 
 	for y := 2; y <= 5; y++ {
@@ -182,76 +161,109 @@ func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
 	}
 }
 
-func Test_allMoves_default(t *testing.T) {
-    s, err := newSimpleBoard(
-        []string{"white", "black"},
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    )
+func Test_CalculateMoves_default(t *testing.T) {
+    s, err := createSimpleBoardWithDefaultPieceLocations()
     assert.Nil(t, err)
 
-    moves, check, checkmate, stalemate := s.allMoves("white")
+    s.CalculateMoves("white")
+    _, check, checkmate, stalemate := s.State()
 
-    assert.Equal(t, 20, len(moves))
+    moveCount := 0
+    for _, m := range s.moveMap {
+        moveCount += len(m)
+    }
+
+    assert.Equal(t, 20, moveCount)
     assert.False(t, check)
     assert.False(t, checkmate)
     assert.False(t, stalemate)
 }
 
-func Test_allMoves_check(t *testing.T) {
-    s, err := newSimpleBoard(
-        []string{"white", "black"},
-        "K6q/7k/8/8/8/8/8/8 w KQkq - 0 1",
-    )
+func Test_CalculateMoves_check(t *testing.T) {
+    s, err := newSimpleBoard(&Point{8, 8})
     assert.Nil(t, err)
 
-    moves, check, checkmate, stalemate := s.allMoves("white")
+    s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
+    s.setPiece(&Point{0, 1}, newQueen("black"))
+    s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
 
-    assert.Equal(t, 2, len(moves))
+    s.CalculateMoves("white")
+    _, check, checkmate, stalemate := s.State()
+
+    moveCount := 0
+    for _, m := range s.moveMap {
+        moveCount += len(m)
+    }
+
+    assert.Equal(t, 1, moveCount)
     assert.True(t, check)
     assert.False(t, checkmate)
     assert.False(t, stalemate)
 }
 
-func Test_allMoves_checkmate(t *testing.T) {
-    s, err := newSimpleBoard(
-        []string{"white", "black"},
-        "K6q/7r/7k/8/8/8/8/8 w KQkq - 0 1",
-    )
+func Test_CalculateMoves_checkmate(t *testing.T) {
+    s, err := newSimpleBoard(&Point{8, 8})
     assert.Nil(t, err)
 
-    moves, check, checkmate, stalemate := s.allMoves("white")
+    s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
+    s.setPiece(&Point{0, 1}, newQueen("black"))
+    s.setPiece(&Point{0, 2}, newKing("black", false, 0, -1))
 
-    assert.Equal(t, 0, len(moves))
+    s.CalculateMoves("white")
+    _, check, checkmate, stalemate := s.State()
+
+    moveCount := 0
+    for _, m := range s.moveMap {
+        moveCount += len(m)
+    }
+
+    assert.Equal(t, 0, moveCount)
     assert.True(t, check)
     assert.True(t, checkmate)
     assert.False(t, stalemate)
 }
 
-func Test_allMoves_stalemate(t *testing.T) {
-    s, err := newSimpleBoard(
-        []string{"white", "black"},
-        "K7/2qk4/8/8/8/8/8/8 w KQkq - 0 1",
-    )
+func Test_CalculateMoves_stalemate(t *testing.T) {
+    s, err := newSimpleBoard(&Point{8, 8})
     assert.Nil(t, err)
 
-    moves, check, checkmate, stalemate := s.allMoves("white")
+    s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
+    s.setPiece(&Point{1, 2}, newQueen("black"))
+    s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
 
-    assert.Equal(t, 0, len(moves))
+    s.CalculateMoves("white")
+    _, check, checkmate, stalemate := s.State()
+
+    moveCount := 0
+    for _, m := range s.moveMap {
+        moveCount += len(m)
+    }
+
+    assert.Equal(t, 0, moveCount)
     assert.False(t, check)
     assert.False(t, checkmate)
     assert.True(t, stalemate)
 }
 
-func Test_allMoves_noCastleThroughCheck(t *testing.T) {
-    s, err := newSimpleBoard(
-        []string{"white", "black"},
-        "2q4k/8/8/8/8/8/P7/R3K3 w KQkq - 0 1",
-    )
+func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
+    s, err := newSimpleBoard(&Point{8, 8})
     assert.Nil(t, err)
 
-    moves, check, checkmate, stalemate := s.allMoves("white")
+    s.setPiece(&Point{4, 0}, newKing("white", false, 0, 1))
+    s.setPiece(&Point{0, 0}, newRook("white", false))
+    s.setPiece(&Point{3, 7}, newRook("black", false))
+    s.setPiece(&Point{4, 7}, newKing("black", false, 0, -1))
 
-    assert.Equal(t, 10, len(moves))
+    s.CalculateMoves("white")
+    _, check, checkmate, stalemate := s.State()
+
+
+    moveCount := 0
+    for _, m := range s.moveMap {
+        moveCount += len(m)
+    }
+
+    assert.Equal(t, 13, moveCount)
     assert.False(t, check)
     assert.False(t, checkmate)
     assert.False(t, stalemate)

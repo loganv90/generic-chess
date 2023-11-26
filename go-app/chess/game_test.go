@@ -13,9 +13,6 @@ func Test_NewSimpleGame_EnPassant(t *testing.T) {
 
 	actualPrintedBoard := game.Print()
 	expectedPrintedBoard := strings.Trim(`
-Player: white
-Check:  false
-Mate:   false
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
 | R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |
@@ -57,9 +54,6 @@ Mate:   false
 
 	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
-Player: black
-Check:  false
-Mate:   false
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
 | R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |
@@ -101,9 +95,6 @@ Mate:   false
 
 	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
-Player: white
-Check:  false
-Mate:   false
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
 | R black    |            | B black    | Q black    | K black    | B black    | N black    | R black    |
@@ -151,9 +142,6 @@ Mate:   false
 
 	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
-Player: black
-Check:  false
-Mate:   false
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
 | R black    |            | B black    | Q black    | K black    | B black    | N black    | R black    |
@@ -207,9 +195,6 @@ Mate:   false
 
 	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
-Player: white
-Check:  false
-Mate:   false
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
 |            |            | K black    | R black    |            | B black    | N black    | R black    |
@@ -251,9 +236,6 @@ Mate:   false
 
 	actualPrintedBoard = game.Print()
 	expectedPrintedBoard = strings.Trim(`
-Player: black
-Check:  false
-Mate:   false
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
 |            |            | K black    | R black    |            | B black    | N black    | R black    |

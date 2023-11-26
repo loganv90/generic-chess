@@ -3,215 +3,74 @@ package chess
 import (
 	"fmt"
 	"strings"
-	"unicode"
 )
 
-type Point struct {
-    x int
-    y int
-}
-
-func (p *Point) equals(other *Point) bool {
-    return p.x == other.x && p.y == other.y
-}
-
-func (p *Point) add(other *Point) *Point {
-    return &Point{p.x + other.x, p.y + other.y}
-}
-
-type EnPassant struct {
-    target *Point
-    pieceLocation *Point
-}
-
-type PieceLocations struct {
-    ownPieceLocations []*Point
-    enemyPieceLocations []*Point
-}
-
+/*
+Responsible for:
+- keeping track of the pieces on the board
+- keeping track of availalbe moves for all pieces
+*/
 type Board interface {
+    // these are for the move
 	getPiece(location *Point) (Piece, error)
 	setPiece(location *Point, piece Piece) error
-    getKingLocation(color string) (*Point, error)
-    setKingLocation(color string, location *Point)
-    getVulnerables(color string) ([]*Point, error)
-    setVulnerables(color string, locations []*Point)
-	getEnPassant(color string) (*EnPassant, error)
-	setEnPassant(color string, enPassant *EnPassant)
-	clrEnPassant(color string)
-    possibleEnPassants(color string, target *Point) []*EnPassant
-	moves(location *Point) []Move
-    allMoves(color string) ([]Move, bool, bool, bool)
-    increment()
-    decrement()
-    xLen() int
-	yLen() int
-	print() string
-    turn() string
-    squares() [][]*SquareData
+    getVulnerables(color string) ([]*Point, error) // if these locations are attacked, the player is in check
+    setVulnerables(color string, locations []*Point) error
+	getEnPassant(color string) (*EnPassant, error) // if these locations are attacked, a piece is captured en passant
+	setEnPassant(color string, enPassant *EnPassant) error
+    possibleEnPassant(color string, location *Point) ([]*EnPassant, error)
+    clearEnPassant(color string) error
+
+    // these are for the game
+    PotentialMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece without considering other pieces
+    ValidMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece using the moveMap
+    CalculateMoves(color string) error // calcutes moves assuming it is the color's turn and sets moveMap and state
+    Size() *Point
+	Print() string
+    State() ([][]*SquareData, bool, bool, bool)
+
+    // misc
     pointOutOfBounds(p *Point) bool
     pointOnPromotionSquare(p *Point) bool
 }
 
-func newSimpleBoard(players []string, fen string) (*SimpleBoard, error) {
-	if len(players) < 2 {
-		return nil, fmt.Errorf("not enough players")
-	}
+func newSimpleBoard(size *Point) (*SimpleBoard, error) {
+    if size.x <= 0 || size.y <= 0 {
+        return nil, fmt.Errorf("invalid board size")
+    }
 
-	fenSplit := strings.Split(fen, " ")
-	if len(fenSplit) != 6 {
-		return nil, fmt.Errorf("invalid fen")
-	}
-
-	pieces := createPiecesFromFen(fenSplit[0])
-
-    kingLocationMap := map[string]*Point{}
-    for y, row := range pieces {
-        for x, piece := range row {
-            if piece != nil {
-                if _, ok := piece.(*King); ok {
-                    kingLocationMap[piece.getColor()] = &Point{x, y}
-                }
-            }
-        }
+    pieces := make([][]Piece, size.y)
+    for p := range pieces {
+        pieces[p] = make([]Piece, size.x)
     }
 
 	return &SimpleBoard{
-		currentPlayer: 0,
-		players:       players,
-		pieces:        pieces,
-        kingLocationMap: kingLocationMap,
-		enPassantMap:  map[string]*EnPassant{},
+        size: size,
+		pieces: pieces,
+        kingLocationMap: map[string]*Point{},
+        pieceLocationsMap: map[string][]*Point{},
+		enPassantMap: map[string]*EnPassant{},
         vulnerablesMap: map[string][]*Point{},
+        moveMap: map[Point][]Move{},
+        check: false,
+        checkmate: false,
+        stalemate: false,
 	}, nil
 }
 
-func createPiecesFromFen(fenRows string) [][]Piece {
-	fenRowsSplit := strings.Split(fenRows, "/")
-	pieceRows := [][]Piece{}
-
-	for _, row := range fenRowsSplit {
-		pieces := []Piece{}
-
-		for _, char := range row {
-			if unicode.IsDigit(char) {
-				for i := 0; i < int(char-'0'); i++ {
-					pieces = append(pieces, nil)
-				}
-			} else {
-				pieces = append(pieces, createPieceFromChar(char))
-			}
-		}
-
-		pieceRows = append(pieceRows, pieces)
-	}
-
-	return pieceRows
-}
-
-func createPieceFromChar(char rune) Piece {
-	switch char {
-	case 'r':
-		if rook, err := newRook("black", false); err != nil {
-			return nil
-		} else {
-			return rook
-		}
-	case 'n':
-		if knight, err := newKnight("black"); err != nil {
-			return nil
-		} else {
-			return knight
-		}
-	case 'b':
-		if bishop, err := newBishop("black"); err != nil {
-			return nil
-		} else {
-			return bishop
-		}
-	case 'q':
-		if queen, err := newQueen("black"); err != nil {
-			return nil
-		} else {
-			return queen
-		}
-	case 'k':
-		if king, err := newKing("black", false, 0, 1); err != nil {
-			return nil
-		} else {
-			return king
-		}
-	case 'p':
-		if pawn, err := newPawn("black", false, 0, 1); err != nil {
-			return nil
-		} else {
-			return pawn
-		}
-	case 'R':
-		if rook, err := newRook("white", false); err != nil {
-			return nil
-		} else {
-			return rook
-		}
-	case 'N':
-		if knight, err := newKnight("white"); err != nil {
-			return nil
-		} else {
-			return knight
-		}
-	case 'B':
-		if bishop, err := newBishop("white"); err != nil {
-			return nil
-		} else {
-			return bishop
-		}
-	case 'Q':
-		if queen, err := newQueen("white"); err != nil {
-			return nil
-		} else {
-			return queen
-		}
-	case 'K':
-		if king, err := newKing("white", false, 0, -1); err != nil {
-			return nil
-		} else {
-			return king
-		}
-	case 'P':
-		if pawn, err := newPawn("white", false, 0, -1); err != nil {
-			return nil
-		} else {
-			return pawn
-		}
-	default:
-		return nil
-	}
-}
-
 type SimpleBoard struct {
-	currentPlayer int
-	players       []string
-	pieces        [][]Piece
+    size *Point
+	pieces [][]Piece
     kingLocationMap map[string]*Point
-	enPassantMap  map[string]*EnPassant
-    vulnerablesMap map[string][]*Point // locations that should not be attacked by enemy pieces (for castling)
+    pieceLocationsMap map[string][]*Point
+	enPassantMap map[string]*EnPassant
+    vulnerablesMap map[string][]*Point
+    moveMap map[Point][]Move
+    check bool
+    checkmate bool
+    stalemate bool
 }
 
-func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {
-    if p.y < 0 || p.y >= len(s.pieces) || p.x < 0 || p.x >= len(s.pieces[p.y]) {
-        return true
-    }
-    return false
-}
-
-func (s *SimpleBoard) pointOnPromotionSquare(p *Point) bool {
-    if p.y == 0 || p.y == len(s.pieces)-1 || p.x == 0 || p.x == len(s.pieces[p.y])-1 {
-        return true
-    }
-    return false
-}
-
-// TODO - keep track of pieces by color and keep them updated in the get/set piece methods
 func (s *SimpleBoard) getPiece(location *Point) (Piece, error) {
     if s.pointOutOfBounds(location) {
         return nil, fmt.Errorf("point out of bounds")
@@ -225,39 +84,62 @@ func (s *SimpleBoard) setPiece(location *Point, p Piece) error {
         return fmt.Errorf("point out of bounds")
     }
 
-    if _, ok := p.(*King); ok {
-        s.setKingLocation(p.getColor(), location)
+    oldPiece, err := s.getPiece(location)
+    if err != nil && oldPiece != nil {
+        if pieceLocations, ok := s.pieceLocationsMap[oldPiece.getColor()]; ok {
+            removeIndex := -1
+            for i, pieceLocation := range pieceLocations {
+                if pieceLocation.equals(location) {
+                    removeIndex = i
+                    break
+                }
+            }
+            if removeIndex == -1 {
+                return nil
+            }
+
+            pieceLocations[removeIndex] = pieceLocations[len(pieceLocations)-1]
+            pieceLocations[len(pieceLocations)-1] = nil
+            pieceLocations = pieceLocations[:len(pieceLocations)-1]
+            s.pieceLocationsMap[oldPiece.getColor()] = pieceLocations
+        }
     }
 
 	s.pieces[location.y][location.x] = p
+    if p != nil {
+        if pieceLocations, ok := s.pieceLocationsMap[p.getColor()]; ok {
+            pieceLocations = append(pieceLocations, location)
+            s.pieceLocationsMap[p.getColor()] = pieceLocations
+        } else {
+            s.pieceLocationsMap[p.getColor()] = []*Point{location}
+        }
 
-	return nil
-}
-
-func (s *SimpleBoard) getKingLocation(color string) (*Point, error) {
-    kingLocation, ok := s.kingLocationMap[color]
-    if !ok {
-        return nil, fmt.Errorf("king location not found")
+        if _, ok := p.(*King); ok {
+            s.kingLocationMap[p.getColor()] = location
+        }
     }
 
-    return kingLocation, nil
-}
-
-func (s *SimpleBoard) setKingLocation(color string, location *Point) {
-    s.kingLocationMap[color] = location
+    return nil
 }
 
 func (s *SimpleBoard) getVulnerables(color string) ([]*Point, error) {
-    vulnerables, ok := s.vulnerablesMap[color]
-    if !ok {
-        return nil, nil
-    }
+    vulnerables, okVulnerables := s.vulnerablesMap[color]
+    kingLocation, okKingLocation := s.kingLocationMap[color]
 
-    return vulnerables, nil
+    if okVulnerables && okKingLocation {
+        return append(vulnerables, kingLocation), nil
+    } else if okVulnerables {
+        return vulnerables, nil
+    } else if okKingLocation {
+        return []*Point{kingLocation}, nil
+    } else {
+        return []*Point{}, nil
+    }
 }
 
-func (s *SimpleBoard) setVulnerables(color string, locations []*Point) {
+func (s *SimpleBoard) setVulnerables(color string, locations []*Point) error {
     s.vulnerablesMap[color] = locations
+    return nil
 }
 
 func (s *SimpleBoard) getEnPassant(color string) (*EnPassant, error) {
@@ -269,89 +151,106 @@ func (s *SimpleBoard) getEnPassant(color string) (*EnPassant, error) {
 	return en, nil
 }
 
-func (s *SimpleBoard) setEnPassant(color string, enPassant *EnPassant) {
+func (s *SimpleBoard) setEnPassant(color string, enPassant *EnPassant) error {
 	s.enPassantMap[color] = enPassant
+    return nil
 }
 
-func (s *SimpleBoard) clrEnPassant(color string) {
-	delete(s.enPassantMap, color)
-}
-
-func (s *SimpleBoard) possibleEnPassants(color string, target *Point) []*EnPassant {
-	ens := []*EnPassant{}
+func (s *SimpleBoard) possibleEnPassant(color string, target *Point) ([]*EnPassant, error) {
+    enPassants := []*EnPassant{}
 
 	for k, v := range s.enPassantMap {
 		if k != color && target.equals(v.target) {
-			ens = append(ens, v)
+            enPassants = append(enPassants, v)
 		}
 	}
 
-	return ens
+    return enPassants, nil
 }
 
-func (s *SimpleBoard) moves(location *Point) []Move {
-	piece := s.pieces[location.y][location.x]
+func (s *SimpleBoard) clearEnPassant(color string) error {
+    delete(s.enPassantMap, color)
+    return nil
+}
 
-    if piece != nil {
-        return piece.moves(s, location)
+// TODO - we want the moves assuming empty board
+func (s *SimpleBoard) PotentialMoves(fromLocation *Point) ([]Move, error) {
+    return []Move{}, nil
+}
+
+func (s *SimpleBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
+    moves, ok := s.moveMap[*fromLocation]
+    if !ok {
+        return []Move{}, nil
     }
 
-    return []Move{}
+    return moves, nil
 }
 
-// TODO - get the pieces from maps instead of iterating over the board
-func (s *SimpleBoard) allMoves(color string) ([]Move, bool, bool, bool) {
-    moves := []Move{}
-    pieceLocations := s.getPieceLocations(color)
-    check := s.isInCheck(color, pieceLocations.enemyPieceLocations)
+func (s *SimpleBoard) CalculateMoves(color string) error {
+    s.moveMap = map[Point][]Move{}
+    s.check = false
+    s.checkmate = false
+    s.stalemate = false
 
-    for _, ownPieceLocation := range pieceLocations.ownPieceLocations {
+    ownPieceLocations, ok := s.pieceLocationsMap[color]
+    if !ok {
+        return fmt.Errorf("no pieces found for color %s", color)
+    }
+
+    enemyPieceLocations := []*Point{}
+    for k, v := range s.pieceLocationsMap {
+        if k != color {
+            enemyPieceLocations = append(enemyPieceLocations, v...)
+        }
+    }
+
+    s.check = s.isInCheck(color, enemyPieceLocations)
+
+    for _, ownPieceLocation := range ownPieceLocations {
         piece, err := s.getPiece(ownPieceLocation)
         if piece == nil || err != nil {
             continue
         }
-
-        pieceMoves := piece.moves(s, ownPieceLocation)
-        for _, move := range pieceMoves {
-            boardCopy := s.copy()
+        
+        moves := piece.moves(s, ownPieceLocation)
+        for _, move := range moves {
+            boardCopy, err := s.copy()
+            if err != nil {
+                continue
+            }
             move.getAction().b = boardCopy
-            move.execute()
 
-            if boardCopy.isInCheck(color, pieceLocations.enemyPieceLocations) {
+            move.execute()
+            if boardCopy.isInCheck(color, enemyPieceLocations) {
                 continue
             }
 
-            moves = append(moves, move)
+            move.getAction().b = s
+            s.moveMap[*ownPieceLocation] = append(s.moveMap[*ownPieceLocation], move)
         }
     }
 
-    checkmate := check && len(moves) == 0
-    stalemate := !check && len(moves) == 0
+    s.checkmate = s.check && len(s.moveMap) == 0
+    s.stalemate = !s.check && len(s.moveMap) == 0
 
-    return moves, check, checkmate, stalemate
+    return nil
 }
 
 func (s *SimpleBoard) isInCheck(color string, ememyPieceLocations []*Point) bool {
     vulnerableLocations, err := s.getVulnerables(color)
     if err == nil {
         for _, vulnerableLocation := range vulnerableLocations {
-            if s.isSquareAttacked(vulnerableLocation, ememyPieceLocations) {
+            if s.isLocationAttacked(vulnerableLocation, ememyPieceLocations) {
                 return true
             }
-        }
-    }
-
-    kingLocation, err := s.getKingLocation(color)
-    if err == nil {
-        if s.isSquareAttacked(kingLocation, ememyPieceLocations) {
-            return true
         }
     }
 
     return false
 }
 
-func (s *SimpleBoard) isSquareAttacked(squareLocation *Point, pieceLocations []*Point) bool {
+func (s *SimpleBoard) isLocationAttacked(location *Point, pieceLocations []*Point) bool {
     for _, pieceLocation := range pieceLocations {
         piece, err := s.getPiece(pieceLocation)
         if piece == nil || err != nil {
@@ -360,7 +259,7 @@ func (s *SimpleBoard) isSquareAttacked(squareLocation *Point, pieceLocations []*
 
         moves := piece.moves(s, pieceLocation)
         for _, move := range moves {
-            if move.getAction().toLocation.equals(squareLocation) {
+            if move.getAction().toLocation.equals(location) {
                 return true
             }
         }
@@ -369,58 +268,16 @@ func (s *SimpleBoard) isSquareAttacked(squareLocation *Point, pieceLocations []*
     return false
 }
 
-func (s *SimpleBoard) getPieceLocations(color string) *PieceLocations {
-    ownPieceLocations := []*Point{}
-    enemyPieceLocations := []*Point{}
-
-    for y, row := range s.pieces {
-        for x, piece := range row {
-            if piece == nil {
-                continue
-            }
-
-            if piece.getColor() == color {
-                ownPieceLocations = append(ownPieceLocations, &Point{x, y})
-            } else {
-                enemyPieceLocations = append(enemyPieceLocations, &Point{x, y})
-            }
-        }
-    }
-
-    return &PieceLocations{
-        ownPieceLocations: ownPieceLocations,
-        enemyPieceLocations: enemyPieceLocations,
-    }
+func (s *SimpleBoard) Size() *Point {
+    return s.size
 }
 
-func (s *SimpleBoard) increment() {
-	s.currentPlayer = (s.currentPlayer + 1) % len(s.players)
-}
-
-func (s *SimpleBoard) decrement() {
-	s.currentPlayer = (s.currentPlayer - 1) % len(s.players)
-}
-
-func (s *SimpleBoard) xLen() int {
-    if s.yLen() <= 0 {
-        return 0
-    }
-	return len(s.pieces[0])
-}
-
-func (s *SimpleBoard) yLen() int {
-	return len(s.pieces)
-}
-
-func (s *SimpleBoard) print() string {
+func (s *SimpleBoard) Print() string {
 	var builder strings.Builder
 	var cellWidth int = 12
 
-	builder.WriteString(fmt.Sprintf("Player: %s\n", s.turn()))
-	builder.WriteString(fmt.Sprintf("Check:  %t\n", false))
-	builder.WriteString(fmt.Sprintf("Mate:   %t\n", false))
 	for y, row := range s.pieces {
-		builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*s.xLen()-1)))
+		builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*s.size.x-1)))
 		for x := range row {
 			builder.WriteString(fmt.Sprintf("|%s%2dx ", strings.Repeat(" ", cellWidth-4), x))
 		}
@@ -448,16 +305,12 @@ func (s *SimpleBoard) print() string {
 		}
 		builder.WriteString("|\n")
 	}
-	builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*s.xLen()-1)))
+	builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*s.size.x-1)))
 
 	return builder.String()
 }
 
-func (s *SimpleBoard) turn() string {
-    return s.players[s.currentPlayer]
-}
-
-func (s *SimpleBoard) squares() [][]*SquareData {
+func (s *SimpleBoard) State() ([][]*SquareData, bool, bool, bool) {
     squares := [][]*SquareData{}
 
     for y, row := range s.pieces {
@@ -476,36 +329,44 @@ func (s *SimpleBoard) squares() [][]*SquareData {
         squares = append(squares, squaresRow)
     }
 
-    return squares
+    return squares, s.check, s.checkmate, s.stalemate
 }
 
-func (s *SimpleBoard) copy() *SimpleBoard {
-    pieces := [][]Piece{}
-    for _, row := range s.pieces {
-        piecesRow := []Piece{}
-        for _, piece := range row {
-            piecesRow = append(piecesRow, piece)
+func (s *SimpleBoard) copy() (*SimpleBoard, error) {
+    simpleBoard, err := newSimpleBoard(s.size)
+    if err != nil {
+        return nil, err
+    }
+
+    for y, row := range s.pieces {
+        for x := range row {
+            piece := s.pieces[y][x]
+            if piece != nil {
+                simpleBoard.setPiece(&Point{x, y}, piece.copy())
+            }
         }
-        pieces = append(pieces, piecesRow)
     }
 
-    enPassantMap := map[string]*EnPassant{}
+    for k, v := range s.kingLocationMap {
+        simpleBoard.kingLocationMap[k] = v
+    }
+
     for k, v := range s.enPassantMap {
-        enPassantMap[k] = v
+        simpleBoard.enPassantMap[k] = v
     }
 
-    players := []string{}
-    for _, player := range s.players {
-        players = append(players, player)
+    for k, v := range s.vulnerablesMap {
+        simpleBoard.vulnerablesMap[k] = v
     }
 
-    return &SimpleBoard{
-        currentPlayer: s.currentPlayer,
-        players: players,
-        pieces: pieces,
-        kingLocationMap: s.kingLocationMap,
-        enPassantMap: enPassantMap,
-        vulnerablesMap: s.vulnerablesMap,
-    }
+    return simpleBoard, nil
+}
+
+func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {
+    return p.y < 0 || p.y >= s.size.y || p.x < 0 || p.x >= s.size.x
+}
+
+func (s *SimpleBoard) pointOnPromotionSquare(p *Point) bool {
+    return false
 }
 

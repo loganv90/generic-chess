@@ -1,7 +1,5 @@
 package chess
 
-import "fmt"
-
 type CastleDirection struct {
 	Point
 	kingOffset *Point
@@ -18,7 +16,8 @@ func (a *Allegiant) getColor() string {
 
 type Piece interface {
 	getColor() string
-	movedCopy() Piece
+	copy() Piece
+    setMoved() error
 	moves(Board, *Point) []Move
 	print() string
 }
@@ -84,7 +83,7 @@ func addSimple(
 	}
 }
 
-func newPawn(color string, moved bool, xDir int, yDir int) (*Pawn, error) {
+func newPawn(color string, moved bool, xDir int, yDir int) *Pawn {
     var forward1 *Point
     var forward2 *Point
     var captures []*Point
@@ -104,7 +103,7 @@ func newPawn(color string, moved bool, xDir int, yDir int) (*Pawn, error) {
 			{-1, yDir},
 		}
 	} else {
-		return nil, fmt.Errorf("invalid direction")
+        panic("invalid direction")
 	}
 
 	return &Pawn{
@@ -113,7 +112,7 @@ func newPawn(color string, moved bool, xDir int, yDir int) (*Pawn, error) {
 		forward1,
 		forward2,
 		captures,
-	}, nil
+	}
 }
 
 type Pawn struct {
@@ -128,14 +127,19 @@ func (a *Pawn) print() string {
 	return "P"
 }
 
-func (a *Pawn) movedCopy() Piece {
+func (a *Pawn) copy() Piece {
 	return &Pawn{
 		Allegiant{a.color},
-		true,
+		a.moved,
 		a.forward1,
 		a.forward2,
 		a.captures,
 	}
+}
+
+func (a *Pawn) setMoved() error {
+    a.moved = true
+    return nil
 }
 
 func (a *Pawn) moves(b Board, fromLocation *Point) []Move {
@@ -189,7 +193,7 @@ func (a *Pawn) addCaptures(b Board, fromLocation *Point, moves *[]Move) {
 
 		if piece, err := b.getPiece(toLocation); err != nil {
 			continue
-		} else if len(b.possibleEnPassants(a.color, toLocation)) > 0 {
+        } else if ens, err := b.possibleEnPassant(a.color, toLocation); err == nil && len(ens) > 0 {
 			captureEnPassantMove, err := moveFactoryInstance.newCaptureEnPassantMove(b, fromLocation, toLocation)
 			if err == nil {
 				*moves = append(*moves, captureEnPassantMove)
@@ -214,10 +218,10 @@ var knightSimples = []*Point{
 	{-2, -1},
 }
 
-func newKnight(color string) (*Knight, error) {
+func newKnight(color string) *Knight {
 	return &Knight{
 		Allegiant{color},
-	}, nil
+	}
 }
 
 type Knight struct {
@@ -228,10 +232,14 @@ func (n *Knight) print() string {
 	return "N"
 }
 
-func (n *Knight) movedCopy() Piece {
+func (n *Knight) copy() Piece {
 	return &Knight{
 		Allegiant{n.color},
 	}
+}
+
+func (n *Knight) setMoved() error {
+    return nil
 }
 
 func (n *Knight) moves(b Board, fromLocation *Point) []Move {
@@ -253,10 +261,10 @@ var bishopDirections = []*Point{
 	{-1, -1},
 }
 
-func newBishop(color string) (*Bishop, error) {
+func newBishop(color string) *Bishop {
 	return &Bishop{
 		Allegiant{color},
-	}, nil
+	}
 }
 
 type Bishop struct {
@@ -267,10 +275,14 @@ func (s *Bishop) print() string {
 	return "B"
 }
 
-func (s *Bishop) movedCopy() Piece {
+func (s *Bishop) copy() Piece {
 	return &Bishop{
 		Allegiant{s.color},
 	}
+}
+
+func (s *Bishop) setMoved() error {
+    return nil
 }
 
 func (s *Bishop) moves(b Board, fromLocation *Point) []Move {
@@ -292,11 +304,11 @@ var rookDirections = []*Point{
 	{0, -1},
 }
 
-func newRook(color string, moved bool) (*Rook, error) {
+func newRook(color string, moved bool) *Rook {
 	return &Rook{
 		Allegiant{color},
 		moved,
-	}, nil
+	}
 }
 
 type Rook struct {
@@ -308,11 +320,16 @@ func (r *Rook) print() string {
 	return "R"
 }
 
-func (r *Rook) movedCopy() Piece {
+func (r *Rook) copy() Piece {
 	return &Rook{
 		Allegiant{r.color},
 		true,
 	}
+}
+
+func (r *Rook) setMoved() error {
+    r.moved = true
+    return nil
 }
 
 func (r *Rook) moves(b Board, fromLocation *Point) []Move {
@@ -338,10 +355,10 @@ var queenDirections = []*Point{
 	{-1, -1},
 }
 
-func newQueen(color string) (*Queen, error) {
+func newQueen(color string) *Queen {
 	return &Queen{
 		Allegiant{color},
-	}, nil
+	}
 }
 
 type Queen struct {
@@ -352,10 +369,14 @@ func (q *Queen) print() string {
 	return "Q"
 }
 
-func (q *Queen) movedCopy() Piece {
+func (q *Queen) copy() Piece {
 	return &Queen{
 		Allegiant{q.color},
 	}
+}
+
+func (q *Queen) setMoved() error {
+    return nil
 }
 
 func (q *Queen) moves(b Board, fromLocation *Point) []Move {
@@ -381,7 +402,7 @@ var kingSimples = []*Point{
 	{-1, -1},
 }
 
-func newKing(color string, moved bool, xDir int, yDir int) (*King, error) {
+func newKing(color string, moved bool, xDir int, yDir int) *King {
 	var castles []*CastleDirection
 
 	if xDir == 1 || xDir == -1 {
@@ -395,14 +416,14 @@ func newKing(color string, moved bool, xDir int, yDir int) (*King, error) {
 			{Point{-1, 0}, &Point{2, 0}, &Point{3, 0}},
 		}
 	} else {
-		return nil, fmt.Errorf("invalid direction")
+        panic("invalid direction")
 	}
 
 	return &King{
 		Allegiant{color},
 		moved,
 		castles,
-	}, nil
+	}
 }
 
 type King struct {
@@ -415,12 +436,17 @@ func (k *King) print() string {
 	return "K"
 }
 
-func (k *King) movedCopy() Piece {
+func (k *King) copy() Piece {
 	return &King{
 		Allegiant{k.color},
-		true,
+		k.moved,
 		k.castles,
 	}
+}
+
+func (k *King) setMoved() error {
+    k.moved = true
+    return nil
 }
 
 func (k *King) moves(b Board, fromLocation *Point) []Move {
@@ -476,27 +502,27 @@ func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
 		if castle.kingOffset.x > 0 {
 			xToKing = castle.kingOffset.x
 		} else if castle.kingOffset.x < 0 {
-			xToKing = b.xLen() - 1 + castle.kingOffset.x
+			xToKing = b.Size().x - 1 + castle.kingOffset.x
 		}
 		if castle.kingOffset.y > 0 {
 			yToKing = castle.kingOffset.y
 		} else if castle.kingOffset.y < 0 {
-			yToKing = b.yLen() - 1 + castle.kingOffset.y
+			yToKing = b.Size().y - 1 + castle.kingOffset.y
 		}
 		if castle.rookOffset.x > 0 {
 			xToRook = castle.rookOffset.x
 		} else if castle.rookOffset.x < 0 {
-			xToRook = b.xLen() - 1 + castle.rookOffset.x
+			xToRook = b.Size().x - 1 + castle.rookOffset.x
 		}
 		if castle.rookOffset.y > 0 {
 			yToRook = castle.rookOffset.y
 		} else if castle.rookOffset.y < 0 {
-			yToRook = b.yLen() - 1 + castle.rookOffset.y
+			yToRook = b.Size().y - 1 + castle.rookOffset.y
 		}
-        if xToKing < 0 || xToKing >= b.xLen() || yToKing < 0 || yToKing >= b.yLen() {
+        if xToKing < 0 || xToKing >= b.Size().x || yToKing < 0 || yToKing >= b.Size().y {
             continue
         }
-        if xToRook < 0 || xToRook >= b.xLen() || yToRook < 0 || yToRook >= b.yLen() {
+        if xToRook < 0 || xToRook >= b.Size().x || yToRook < 0 || yToRook >= b.Size().y {
             continue
         }
 

@@ -15,17 +15,6 @@ type EnPassantCapture struct {
 	capturedPiece Piece
 }
 
-func getMoveFromSlice(moves []Move, toLocation *Point) Move {
-	for _, m := range moves {
-        actionToLocation := m.getAction().toLocation
-        if actionToLocation.equals(toLocation) {
-			return m
-		}
-	}
-
-	return nil
-}
-
 var moveFactoryInstance = MoveFactory(&ConcreteMoveFactory{})
 
 type MoveFactory interface {
@@ -43,7 +32,8 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation *Point, toLoca
 		return nil, err
 	}
 
-	newPiece := piece.movedCopy()
+	newPiece := piece.copy()
+    newPiece.setMoved()
 
 	capturedPiece, err := b.getPiece(toLocation)
 	if err != nil {
@@ -80,7 +70,8 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation *Poin
 		return nil, err
 	}
 
-	newPiece := piece.movedCopy()
+	newPiece := piece.copy()
+    newPiece.setMoved()
 
 	capturedPiece, err := b.getPiece(toLocation)
 	if err != nil {
@@ -123,7 +114,8 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Poi
 		return nil, err
 	}
 
-	newPiece := piece.movedCopy()
+	newPiece := piece.copy()
+    newPiece.setMoved()
 
 	capturedPiece, err := b.getPiece(toLocation)
 	if err != nil {
@@ -141,18 +133,20 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Poi
     }
 
 	encs := []*EnPassantCapture{}
+    possibleEnPassant, err := b.possibleEnPassant(piece.getColor(), toLocation)
+    if err == nil {
+        for _, enPassant := range possibleEnPassant {
+            capturedPiece, err := b.getPiece(enPassant.pieceLocation)
+            if err != nil {
+                return nil, err
+            }
 
-	for _, enPassant := range b.possibleEnPassants(piece.getColor(), toLocation) {
-		capturedPiece, err := b.getPiece(enPassant.pieceLocation)
-		if err != nil {
-			return nil, err
-		}
-
-		encs = append(encs, &EnPassantCapture{
-			enPassant,
-			capturedPiece,
-		})
-	}
+            encs = append(encs, &EnPassantCapture{
+                enPassant,
+                capturedPiece,
+            })
+        }
+    }
 
 	return &CaptureEnPassantMove{
 		Action{
@@ -175,14 +169,16 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLoca
 		return nil, err
 	}
 
-	newKing := king.movedCopy()
+	newKing := king.copy()
+    newKing.setMoved()
 
 	rook, err := b.getPiece(toLocation)
 	if err != nil {
 		return nil, err
 	}
 
-	newRook := rook.movedCopy()
+	newRook := rook.copy()
+    newRook.setMoved()
 
 	en, err := b.getEnPassant(king.getColor())
 	if err != nil {
@@ -238,15 +234,8 @@ func (s *SimpleMove) execute() error {
 		return err
 	}
 
-    newVulnerables := []*Point{}
-    kingLocation, err := s.b.getKingLocation(s.piece.getColor())
-    if err == nil {
-        newVulnerables = append(newVulnerables, kingLocation)
-    }
-
-    s.b.setVulnerables(s.piece.getColor(), newVulnerables)
-	s.b.clrEnPassant(s.piece.getColor())
-	s.b.increment()
+    s.b.setVulnerables(s.piece.getColor(), []*Point{})
+	s.b.clearEnPassant(s.piece.getColor())
 
 	return nil
 }
@@ -264,7 +253,6 @@ func (s *SimpleMove) undo() error {
 
     s.b.setVulnerables(s.piece.getColor(), s.vulnerables)
 	s.b.setEnPassant(s.piece.getColor(), s.en)
-	s.b.decrement()
 
 	return nil
 }
@@ -290,15 +278,8 @@ func (r *RevealEnPassantMove) execute() error {
 		return err
 	}
 
-    newVulnerables := []*Point{}
-    kingLocation, err := r.b.getKingLocation(r.piece.getColor())
-    if err == nil {
-        newVulnerables = append(newVulnerables, kingLocation)
-    }
-
-    r.b.setVulnerables(r.piece.getColor(), newVulnerables)
+    r.b.setVulnerables(r.piece.getColor(), []*Point{})
 	r.b.setEnPassant(r.piece.getColor(), r.newEn)
-	r.b.increment()
 
 	return nil
 }
@@ -316,7 +297,6 @@ func (r *RevealEnPassantMove) undo() error {
 
     r.b.setVulnerables(r.piece.getColor(), r.vulnerables)
 	r.b.setEnPassant(r.piece.getColor(), r.en)
-	r.b.decrement()
 
 	return nil
 }
@@ -349,15 +329,8 @@ func (c *CaptureEnPassantMove) execute() error {
 		}
 	}
 
-    newVulnerables := []*Point{}
-    kingLocation, err := c.b.getKingLocation(c.piece.getColor())
-    if err == nil {
-        newVulnerables = append(newVulnerables, kingLocation)
-    }
-
-    c.b.setVulnerables(c.piece.getColor(), newVulnerables)
-	c.b.clrEnPassant(c.piece.getColor())
-	c.b.increment()
+    c.b.setVulnerables(c.piece.getColor(), []*Point{})
+	c.b.clearEnPassant(c.piece.getColor())
 
 	return nil
 }
@@ -382,7 +355,6 @@ func (c *CaptureEnPassantMove) undo() error {
 
     c.b.setVulnerables(c.piece.getColor(), c.vulnerables)
 	c.b.setEnPassant(c.piece.getColor(), c.en)
-	c.b.decrement()
 
 	return nil
 }
@@ -421,14 +393,8 @@ func (c *CastleMove) execute() error {
 		return err
 	}
 
-    kingLocation, err := c.b.getKingLocation(c.king.getColor())
-    if err == nil {
-        c.newVulnerables = append(c.newVulnerables, kingLocation)
-    }
-
     c.b.setVulnerables(c.king.getColor(), c.newVulnerables)
-	c.b.clrEnPassant(c.king.getColor())
-	c.b.increment()
+	c.b.clearEnPassant(c.king.getColor())
 
 	return nil
 }
@@ -456,7 +422,6 @@ func (c *CastleMove) undo() error {
 
     c.b.setVulnerables(c.king.getColor(), c.vulnerables)
 	c.b.setEnPassant(c.king.getColor(), c.en)
-	c.b.decrement()
 
 	return nil
 }
