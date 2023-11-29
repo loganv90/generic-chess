@@ -15,10 +15,14 @@ const boardStyle: React.CSSProperties = {
 
 const ChessBoard = ({
     handleMove,
-    handleView
+    handleView,
+    handleUndo,
+    handleRedo,
 }: {
     handleMove: (xFrom: number, yFrom: number, xTo: number, yTo: number) => void,
-    handleView: (x: number, y: number) => void
+    handleView: (x: number, y: number) => void,
+    handleUndo: () => void,
+    handleRedo: () => void,
 }): JSX.Element => {
     const invoker = useRef(new SimpleInvoker())
     const board = useRef(new Board())
@@ -42,12 +46,14 @@ const ChessBoard = ({
         invoker.current.undo()
         setSquares(s => [...s])
         clearSelect()
+        handleUndo()
     }
 
     const redoMove = (): void => {
         invoker.current.redo()
         setSquares(s => [...s])
         clearSelect()
+        handleRedo()
     }
 
     const clickSquare = (x: number, y: number): void => {

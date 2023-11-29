@@ -9,7 +9,7 @@ Responsible for:
 */
 type Game interface {
     // these are for the hub
-	Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardState, error) // called when a player tries to make a move
+	Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardData, error) // called when a player tries to make a move
     View(xFrom int, yFrom int) (*PieceState, error) // show valid moves to current player and show all moves to others
 	Undo() error
 	Redo() error
@@ -43,7 +43,7 @@ type SimpleGame struct {
     players []string
 }
 
-func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardState, error) {
+func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardData, error) {
     fromLocation := &Point{xFrom, yFrom}
     toLocation := &Point{xTo, yTo}
 
@@ -63,14 +63,10 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardStat
     }
 
     s.increment()
-    squares, check, checkmate, stalemate := s.b.State()
 
-    return &BoardState{
-        Squares: squares,
-        Turn: s.turn(),
-        Check: check,
-        Mate: checkmate || stalemate,
-    }, nil
+    boardData := s.b.State()
+
+    return boardData, nil
 }
 
 func getMoveFromSlice(moves []Move, toLocation *Point) Move {

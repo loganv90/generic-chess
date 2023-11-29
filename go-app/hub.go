@@ -6,6 +6,11 @@ import (
     "go-app/chess"
 )
 
+type Message struct {
+    Type string
+    Data json.RawMessage
+}
+
 type MoveData struct {
     XFrom int
     YFrom int
@@ -91,32 +96,18 @@ func (h *Hub) broadcastMessage(message []byte) {
     }
 }
 
-func (h *Hub) handleMessage(c *Client, message []byte) {
-    var jsonMessage map[string]json.RawMessage
-    err := json.Unmarshal(message, &jsonMessage)
+func (h *Hub) handleMessage(c *Client, unmarshalledMessage []byte) {
+    var message *Message
+    err := json.Unmarshal(unmarshalledMessage, &message)
     if err != nil {
         fmt.Println("error unmarshalling message")
         return
     }
 
-    var messageTitle string
-    err = json.Unmarshal(jsonMessage["title"], &messageTitle)
-    if err != nil {
-        fmt.Println("error unmarshalling message title")
-        return
-    }
-
-    var messageData json.RawMessage
-    err = json.Unmarshal(jsonMessage["data"], &messageData)
-    if err != nil {
-        fmt.Println("error unmarshalling message data")
-        return
-    }
-
-    if messageTitle == "move" {
-        h.handleMoveMessage(messageData)
-    } else if messageTitle == "view" {
-        h.handleViewMessage(messageData)
+    if message.Type == "move" {
+        h.handleMoveMessage(message.Data)
+    } else if message.Type == "view" {
+        h.handleViewMessage(message.Data)
     } else {
         fmt.Println("unknown message type")
     }
@@ -184,23 +175,45 @@ func (h *Hub) handleViewMessage(messageData json.RawMessage) {
     fmt.Println(pieceState)
 }
 
-func (h *Hub) createBoardStateMessage(state *chess.BoardState) ([]byte, error) {
-    message, err := json.Marshal(state)
+func (h *Hub) createBoardStateMessage(state *chess.BoardData) ([]byte, error) {
+    marshalledState, err := json.Marshal(state)
     if err != nil {
         fmt.Println("error marshalling board state")
         return nil, err
     }
 
-    return message, nil
+    message := Message{
+        Type: "BoardState",
+        Data: marshalledState,
+    }
+
+    marshalledMessage, err := json.Marshal(message)
+    if err != nil {
+        fmt.Println("error marshalling board state")
+        return nil, err
+    }
+
+    return marshalledMessage, nil
 }
 
 func (h *Hub) createPieceStateMessage(state *chess.PieceState) ([]byte, error) {
-    message, err := json.Marshal(state)
+    marshalledState, err := json.Marshal(state)
     if err != nil {
         fmt.Println("error marshalling piece state")
         return nil, err
     }
 
-    return message, nil
+    message := Message{
+        Type: "PieceState",
+        Data: marshalledState,
+    }
+
+    marshalledMessage, err := json.Marshal(message)
+    if err != nil {
+        fmt.Println("error marshalling piece state")
+        return nil, err
+    }
+
+    return marshalledMessage, nil
 }
 

@@ -1,15 +1,18 @@
 package chess
 
-type BoardState struct {
-    Squares [][]*SquareData
+type BoardData struct {
+    Pieces []*PieceData
     Turn string
-	Check bool
-	Mate  bool
+    Check bool
+    Checkmate bool
+    Stalemate bool
 }
 
-type SquareData struct {
-    C string
-    P string
+type PieceData struct {
+    T string // Type
+    C string // Color
+    X int // X position
+    Y int // Y position
 }
 
 type PieceState struct {

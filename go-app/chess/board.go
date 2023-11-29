@@ -27,7 +27,7 @@ type Board interface {
     CalculateMoves(color string) error // calcutes moves assuming it is the color's turn and sets moveMap and state
     Size() *Point
 	Print() string
-    State() ([][]*SquareData, bool, bool, bool)
+    State() *BoardData
 
     // misc
     pointOutOfBounds(p *Point) bool
@@ -52,6 +52,7 @@ func newSimpleBoard(size *Point) (*SimpleBoard, error) {
 		enPassantMap: map[string]*EnPassant{},
         vulnerablesMap: map[string][]*Point{},
         moveMap: map[Point][]Move{},
+        playerToMove: "",
         check: false,
         checkmate: false,
         stalemate: false,
@@ -66,6 +67,7 @@ type SimpleBoard struct {
 	enPassantMap map[string]*EnPassant
     vulnerablesMap map[string][]*Point
     moveMap map[Point][]Move
+    playerToMove string
     check bool
     checkmate bool
     stalemate bool
@@ -173,7 +175,7 @@ func (s *SimpleBoard) clearEnPassant(color string) error {
     return nil
 }
 
-// TODO - we want the moves assuming empty board
+// TODO - we want the moves assuming empty board when not payer's turn for premoves
 func (s *SimpleBoard) PotentialMoves(fromLocation *Point) ([]Move, error) {
     return []Move{}, nil
 }
@@ -233,6 +235,8 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
 
     s.checkmate = s.check && len(s.moveMap) == 0
     s.stalemate = !s.check && len(s.moveMap) == 0
+
+    s.playerToMove = color
 
     return nil
 }
@@ -310,26 +314,30 @@ func (s *SimpleBoard) Print() string {
 	return builder.String()
 }
 
-func (s *SimpleBoard) State() ([][]*SquareData, bool, bool, bool) {
-    squares := [][]*SquareData{}
+func (s *SimpleBoard) State() *BoardData {
+    pieces := []*PieceData{}
 
     for y, row := range s.pieces {
-        squaresRow := []*SquareData{}
         for x := range row {
             piece := s.pieces[y][x]
             if piece != nil {
-                squaresRow = append(squaresRow, &SquareData{
-                    P: piece.print(),
+                pieces = append(pieces, &PieceData{
+                    T: piece.print(),
                     C: piece.getColor(),
+                    X: x,
+                    Y: y,
                 })
-            } else {
-                squaresRow = append(squaresRow, &SquareData{})
             }
         }
-        squares = append(squares, squaresRow)
     }
 
-    return squares, s.check, s.checkmate, s.stalemate
+    return &BoardData{
+        Pieces: pieces,
+        Turn: s.playerToMove,
+        Check: s.check,
+        Checkmate: s.checkmate,
+        Stalemate: s.stalemate,
+    }
 }
 
 func (s *SimpleBoard) copy() (*SimpleBoard, error) {
@@ -366,6 +374,7 @@ func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {
     return p.y < 0 || p.y >= s.size.y || p.x < 0 || p.x >= s.size.x
 }
 
+// TODO - implement pawn promotions
 func (s *SimpleBoard) pointOnPromotionSquare(p *Point) bool {
     return false
 }

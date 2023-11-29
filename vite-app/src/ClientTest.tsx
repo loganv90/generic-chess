@@ -2,34 +2,31 @@ import { useState, useEffect } from 'react'
 import useWebSocket from 'react-use-websocket'
 import ChessBoard from './components/ChessBoard'
 
+type Message = {
+    Type: string,
+    Data: any
+}
 
-const CreateMoveData = (xFrom: number, yFrom: number, xTo: number, yTo: number) : string => {
-    return JSON.stringify({
-        title: 'move',
-        data: {
+const createMoveData = (xFrom: number, yFrom: number, xTo: number, yTo: number) : Message => {
+    return {
+        Type: 'move',
+        Data: {
             xFrom: xFrom,
             yFrom: yFrom,
             xTo: xTo,
             yTo: yTo,
         }
-    })
+    }
 }
 
-const CreateViewData = (x: number, y: number) : string => {
-    return JSON.stringify({
-        title: 'view',
-        data: {
+const createViewData = (x: number, y: number) : Message => {
+    return {
+        Type: 'view',
+        Data: {
             x: x,
             y: y,
         }
-    })
-}
-
-const createJsonMessage = (message: string) : string => {
-    return JSON.stringify({
-        type: 'message',
-        data: message
-    })
+    }
 }
 
 const baseUrl = '/ws'
@@ -53,39 +50,41 @@ const ClientTest = () => {
 
 
 const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
-    const [message, setMessage] = useState('')
     const [socketUrl] = useState(`ws://localhost:8080${urlExtension}`)
     const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(socketUrl)
+    // setTimeout(() => {
+    //     getWebSocket()?.close()
+    // }, 5000)
     
     useEffect(() => {
         console.log(lastMessage)
     }, [lastMessage])
 
-    // setTimeout(() => {
-    //     getWebSocket()?.close()
-    // }, 5000)
-
     const handleMove = (xFrom: number, yFrom: number, xTo: number, yTo: number): void => {
-        const moveData = CreateMoveData(xFrom, yFrom, xTo, yTo)
-        sendMessage(moveData)
+        const moveData = createMoveData(xFrom, yFrom, xTo, yTo)
+        sendMessage(JSON.stringify(moveData))
     }
 
     const handleView = (x: number, y: number): void => {
-        const viewData = CreateViewData(x, y)
-        sendMessage(viewData)
+        const viewData = createViewData(x, y)
+        sendMessage(JSON.stringify(viewData))
+    }
+
+    const handleUndo = (): void => {
+        console.log('undo')
+    }
+
+    const handleRedo = (): void => {
+        console.log('redo')
     }
 
     return (
-        <>
-            <input
-                type="text"
-                onChange={(e) => setMessage(e.target.value)}
-            />
-            <button
-                onClick={() => sendMessage(createJsonMessage(message))}
-            />
-            <ChessBoard handleMove={handleMove} handleView={handleView} />
-        </>
+        <ChessBoard
+            handleMove={handleMove}
+            handleView={handleView}
+            handleUndo={handleUndo}
+            handleRedo={handleRedo}
+        />
     )
 }
 
