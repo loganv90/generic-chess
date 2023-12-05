@@ -54,7 +54,7 @@ func (h *Hub) run() {
     for {
         select {
         case client := <-h.register:
-            h.clients[client] = true
+            h.handleClientJoin(client)
         case client := <-h.unregister:
             if _, ok := h.clients[client]; ok {
                 delete(h.clients, client)
@@ -87,13 +87,29 @@ func (h *Hub) full() bool {
 
 func (h *Hub) broadcastMessage(message []byte) {
     for client := range h.clients {
-        select {
-        case client.send <- message:
-        default:
-            close(client.send)
-            delete(h.clients, client)
-        }
+        h.sendMessage(client, message)
     }
+}
+
+func (h *Hub) sendMessage(client *Client, message []byte) {
+    select {
+    case client.send <- message:
+    default:
+        close(client.send)
+        delete(h.clients, client)
+    }
+}
+
+func (h *Hub) handleClientJoin(c *Client) {
+    h.clients[c] = true
+
+    message, err := h.createBoardStateMessage()
+    if err != nil {
+        fmt.Println("error creating state message")
+        return
+    }
+
+    h.sendMessage(c, message)
 }
 
 func (h *Hub) handleMessage(c *Client, unmarshalledMessage []byte) {
@@ -121,9 +137,7 @@ func (h *Hub) handleMoveMessage(messageData json.RawMessage) {
         return
     }
 
-    fmt.Println("printing move data", moveData)
-
-    boardState, err := h.game.Execute(
+    err = h.game.Execute(
         moveData.XFrom,
         moveData.YFrom,
         moveData.XTo,
@@ -134,15 +148,13 @@ func (h *Hub) handleMoveMessage(messageData json.RawMessage) {
         return
     }
 
-    message, err := h.createBoardStateMessage(boardState)
+    message, err := h.createBoardStateMessage()
     if err != nil {
         fmt.Println("error creating state message")
         return
     }
 
     h.broadcastMessage(message)
-    fmt.Println(h.game.Print())
-    fmt.Println(boardState)
 }
 
 func (h *Hub) handleViewMessage(messageData json.RawMessage) {
@@ -152,8 +164,6 @@ func (h *Hub) handleViewMessage(messageData json.RawMessage) {
         fmt.Println("error unmarshalling view data")
         return
     }
-
-    fmt.Println("printing view data", viewData)
 
     pieceState, err := h.game.View(
         viewData.X,
@@ -171,11 +181,15 @@ func (h *Hub) handleViewMessage(messageData json.RawMessage) {
     }
 
     h.broadcastMessage(message)
-    fmt.Println(h.game.Print())
-    fmt.Println(pieceState)
 }
 
-func (h *Hub) createBoardStateMessage(state *chess.BoardData) ([]byte, error) {
+func (h *Hub) createBoardStateMessage() ([]byte, error) {
+    state, err := h.game.State()
+    if err != nil {
+        fmt.Println("error getting board state")
+        return nil, err
+    }
+
     marshalledState, err := json.Marshal(state)
     if err != nil {
         fmt.Println("error marshalling board state")

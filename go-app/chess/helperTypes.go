@@ -1,6 +1,8 @@
 package chess
 
 type BoardData struct {
+    XSize int
+    YSize int
     Pieces []*PieceData
     Turn string
     Check bool
@@ -16,6 +18,8 @@ type PieceData struct {
 }
 
 type PieceState struct {
+    X int
+    Y int
     Moves []*MoveData
     Turn bool
 }

@@ -7,6 +7,23 @@ type Message = {
     Data: any
 }
 
+type PieceData = {
+    T: string,
+    C: string,
+    X: number,
+    Y: number,
+}
+
+type BoardData = {
+    XSize: number,
+    YSize: number,
+    Pieces: PieceData[],
+    Turn: string,
+    Check: boolean,
+    Checkmate: boolean,
+    Stalemate: boolean,
+}
+
 const createMoveData = (xFrom: number, yFrom: number, xTo: number, yTo: number) : Message => {
     return {
         Type: 'move',
@@ -55,9 +72,28 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
     // setTimeout(() => {
     //     getWebSocket()?.close()
     // }, 5000)
+    const [boardData, setBoardData] = useState<BoardData>({
+        XSize: 0,
+        YSize: 0,
+        Pieces: [],
+        Turn: '',
+        Check: false,
+        Checkmate: false,
+        Stalemate: false,
+    })
     
     useEffect(() => {
         console.log(lastMessage)
+        const message = JSON.parse(lastMessage?.data || '{}') as Message
+
+        if (message.Type === 'BoardState') {
+            const boardData = message.Data as BoardData
+            setBoardData(boardData)
+        } else if (message.Type === 'view') {
+            console.log('view')
+        } else {
+            console.log('unknown message')
+        }
     }, [lastMessage])
 
     const handleMove = (xFrom: number, yFrom: number, xTo: number, yTo: number): void => {
@@ -80,6 +116,7 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
 
     return (
         <ChessBoard
+            boardData={boardData}
             handleMove={handleMove}
             handleView={handleView}
             handleUndo={handleUndo}

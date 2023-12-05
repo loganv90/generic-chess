@@ -5,6 +5,7 @@ import { Board } from '../utils/chess/Board'
 import { SimpleInvoker } from '../utils/chess/Invoker'
 import { Square } from '../utils/chess/Square'
 import { Move } from '../utils/chess/Move'
+import { BoardData } from '../utils/chess/BoardData'
 
 const boardStyle: React.CSSProperties = {
     display: 'flex',
@@ -14,16 +15,19 @@ const boardStyle: React.CSSProperties = {
 }
 
 const ChessBoard = ({
+    boardData,
     handleMove,
     handleView,
     handleUndo,
     handleRedo,
 }: {
+    boardData: BoardData,
     handleMove: (xFrom: number, yFrom: number, xTo: number, yTo: number) => void,
     handleView: (x: number, y: number) => void,
     handleUndo: () => void,
     handleRedo: () => void,
 }): JSX.Element => {
+    console.log(boardData)
     const invoker = useRef(new SimpleInvoker())
     const board = useRef(new Board())
     const [squares, setSquares] = useState<Square[][]>(board.current.squares)

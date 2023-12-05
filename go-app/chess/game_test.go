@@ -49,7 +49,7 @@ func Test_NewSimpleGame_EnPassant(t *testing.T) {
 	`, " \t\n") + "\n"
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
-	_, err = game.Execute(4, 6, 4, 4) // white pawn advance
+	err = game.Execute(4, 6, 4, 4) // white pawn advance
 	assert.Nil(t, err)
 
 	actualPrintedBoard = game.Print()
@@ -90,7 +90,7 @@ func Test_NewSimpleGame_EnPassant(t *testing.T) {
 	`, " \t\n") + "\n"
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
-	_, err = game.Execute(1, 0, 2, 2) // black knight advance
+	err = game.Execute(1, 0, 2, 2) // black knight advance
 	assert.Nil(t, err)
 
 	actualPrintedBoard = game.Print()
@@ -131,13 +131,13 @@ func Test_NewSimpleGame_EnPassant(t *testing.T) {
 	`, " \t\n") + "\n"
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
-	_, err = game.Execute(4, 4, 4, 3) // white pawn advance
+	err = game.Execute(4, 4, 4, 3) // white pawn advance
 	assert.Nil(t, err)
 
-	_, err = game.Execute(3, 1, 3, 3) // black pawn advance
+	err = game.Execute(3, 1, 3, 3) // black pawn advance
 	assert.Nil(t, err)
 
-	_, err = game.Execute(4, 3, 3, 2) // white pawn capture en passant
+	err = game.Execute(4, 3, 3, 2) // white pawn capture en passant
 	assert.Nil(t, err)
 
 	actualPrintedBoard = game.Print()
@@ -178,19 +178,19 @@ func Test_NewSimpleGame_EnPassant(t *testing.T) {
 	`, " \t\n") + "\n"
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
-	_, err = game.Execute(2, 0, 6, 4) // black bishop advance
+	err = game.Execute(2, 0, 6, 4) // black bishop advance
 	assert.Nil(t, err)
 
-	_, err = game.Execute(5, 7, 1, 3) // white bishop advance
+	err = game.Execute(5, 7, 1, 3) // white bishop advance
 	assert.Nil(t, err)
 
-	_, err = game.Execute(3, 0, 3, 1) // white queen advance
+	err = game.Execute(3, 0, 3, 1) // white queen advance
 	assert.Nil(t, err)
 
-	_, err = game.Execute(6, 7, 5, 5) // white knight advance
+	err = game.Execute(6, 7, 5, 5) // white knight advance
 	assert.Nil(t, err)
 
-	_, err = game.Execute(4, 0, 0, 0) // black castle
+	err = game.Execute(4, 0, 0, 0) // black castle
 	assert.Nil(t, err)
 
 	actualPrintedBoard = game.Print()
@@ -231,7 +231,7 @@ func Test_NewSimpleGame_EnPassant(t *testing.T) {
 	`, " \t\n") + "\n"
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
-	_, err = game.Execute(4, 7, 7, 7) // white castle
+	err = game.Execute(4, 7, 7, 7) // white castle
 	assert.Nil(t, err)
 
 	actualPrintedBoard = game.Print()

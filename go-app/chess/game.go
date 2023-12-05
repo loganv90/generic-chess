@@ -9,7 +9,8 @@ Responsible for:
 */
 type Game interface {
     // these are for the hub
-	Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardData, error) // called when a player tries to make a move
+	Execute(xFrom int, yFrom int, xTo int, yTo int) error // called when a player tries to make a move
+    State() (*BoardData, error) // called to get the game state
     View(xFrom int, yFrom int) (*PieceState, error) // show valid moves to current player and show all moves to others
 	Undo() error
 	Redo() error
@@ -43,30 +44,31 @@ type SimpleGame struct {
     players []string
 }
 
-func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) (*BoardData, error) {
+func (s *SimpleGame) State() (*BoardData, error) {
+    return s.b.State(), nil
+}
+
+func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int) error {
     fromLocation := &Point{xFrom, yFrom}
     toLocation := &Point{xTo, yTo}
 
     moves, err := s.b.ValidMoves(fromLocation)
     if err != nil {
-        return nil, err
+        return err
     }
 
     move := getMoveFromSlice(moves, toLocation)
     if move == nil {
-        return nil, fmt.Errorf("move not possible")
+        return fmt.Errorf("move not possible")
     }
 
     err = s.i.execute(move)
     if err != nil {
-        return nil, err
+        return err
     }
 
     s.increment()
-
-    boardData := s.b.State()
-
-    return boardData, nil
+    return nil
 }
 
 func getMoveFromSlice(moves []Move, toLocation *Point) Move {
@@ -86,6 +88,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     piece, err := s.b.getPiece(location)
     if err != nil || piece == nil {
         return &PieceState{
+            X: x,
+            Y: y,
             Moves: []*MoveData{},
             Turn: false,
         }, nil
@@ -95,6 +99,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         moves, err := s.b.ValidMoves(location)
         if err != nil {
             return &PieceState{
+                X: x,
+                Y: y,
                 Moves: []*MoveData{},
                 Turn: false,
             }, nil
@@ -109,6 +115,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         }
 
         return &PieceState{
+            X: x,
+            Y: y,
             Moves: moveDatas,
             Turn: true,
         }, nil
@@ -116,6 +124,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         moves, err := s.b.PotentialMoves(location)
         if err != nil {
             return &PieceState{
+                X: x,
+                Y: y,
                 Moves: []*MoveData{},
                 Turn: false,
             }, nil
@@ -130,6 +140,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         }
 
         return &PieceState{
+            X: x,
+            Y: y,
             Moves: moveDatas,
             Turn: false,
         }, nil

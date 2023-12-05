@@ -332,6 +332,8 @@ func (s *SimpleBoard) State() *BoardData {
     }
 
     return &BoardData{
+        XSize: s.size.x,
+        YSize: s.size.y,
         Pieces: pieces,
         Turn: s.playerToMove,
         Check: s.check,
