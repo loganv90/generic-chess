@@ -7,21 +7,20 @@ type Message = {
     Data: any
 }
 
-type PieceData = {
-    T: string,
-    C: string,
-    X: number,
-    Y: number,
-}
-
 type BoardData = {
     XSize: number,
     YSize: number,
-    Pieces: PieceData[],
+    Pieces: { T: string, C: string, X: number, Y: number }[],
     Turn: string,
     Check: boolean,
     Checkmate: boolean,
     Stalemate: boolean,
+}
+
+type MoveData = {
+    X: number,
+    Y: number,
+    Moves: { X: number, Y: number }[],
 }
 
 const createMoveData = (xFrom: number, yFrom: number, xTo: number, yTo: number) : Message => {
@@ -65,13 +64,13 @@ const ClientTest = () => {
     )
 }
 
-
 const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
     const [socketUrl] = useState(`ws://localhost:8080${urlExtension}`)
     const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(socketUrl)
     // setTimeout(() => {
     //     getWebSocket()?.close()
     // }, 5000)
+
     const [boardData, setBoardData] = useState<BoardData>({
         XSize: 0,
         YSize: 0,
@@ -81,7 +80,13 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
         Checkmate: false,
         Stalemate: false,
     })
-    
+
+    const [moveData, setMoveData] = useState<MoveData>({
+        X: -1,
+        Y: -1,
+        Moves: [],
+    })
+
     useEffect(() => {
         console.log(lastMessage)
         const message = JSON.parse(lastMessage?.data || '{}') as Message
@@ -89,8 +94,9 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
         if (message.Type === 'BoardState') {
             const boardData = message.Data as BoardData
             setBoardData(boardData)
-        } else if (message.Type === 'view') {
-            console.log('view')
+        } else if (message.Type === 'PieceState') {
+            const moveData = message.Data as MoveData
+            setMoveData(moveData)
         } else {
             console.log('unknown message')
         }
@@ -117,12 +123,14 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
     return (
         <ChessBoard
             boardData={boardData}
-            handleMove={handleMove}
-            handleView={handleView}
-            handleUndo={handleUndo}
-            handleRedo={handleRedo}
+            moveData={moveData}
+            move={handleMove}
+            view={handleView}
+            undo={handleUndo}
+            redo={handleRedo}
         />
     )
 }
 
 export default ClientTest
+export type { BoardData, MoveData }

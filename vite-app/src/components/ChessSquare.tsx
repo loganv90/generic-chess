@@ -1,7 +1,6 @@
 import React from 'react'
 import ChessPiece from './ChessPiece'
-import { Square } from '../utils/chess/Square'
-import { Piece } from '../utils/chess/Piece'
+import { SquareData } from './ChessBoard'
 
 const squareStyle: React.CSSProperties = {
     display: 'flex',
@@ -13,23 +12,21 @@ const squareStyle: React.CSSProperties = {
 
 const ChessSquare = ({
     square,
-    isSelected,
-    isDestination,
+    selected,
+    destination,
     clickSquare
 }:{
-    square: Square,
-    isSelected: boolean,
-    isDestination: boolean,
-    clickSquare: (x: number, y: number) => void
+    square: SquareData,
+    selected: boolean,
+    destination: boolean,
+    clickSquare: (id: string, x: number, y: number) => void
 }): JSX.Element => {
-    const piece: Piece | null = square.getPiece()
-
     const getSquareColor = (): string => {
-        if (isSelected) {
+        if (selected) {
             return 'red'
-        } else if (isDestination) {
+        } else if (destination) {
             return 'blue'
-        } else if (square.isLight) {
+        } else if (square.light) {
             return 'lightGrey'
         } else {
             return 'darkGrey'
@@ -39,9 +36,9 @@ const ChessSquare = ({
     return (
         <div
             style={{...squareStyle, backgroundColor: getSquareColor()}}
-            onClick={() => clickSquare(square.x, square.y)}
+            onClick={() => clickSquare(square.id, square.x, square.y)}
         >
-            {piece && <ChessPiece piece={piece} />}
+            <ChessPiece type={square.type} color={square.color} />
         </div>
     )
 }

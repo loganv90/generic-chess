@@ -1,11 +1,7 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import ChessSquare from './ChessSquare'
 import ChessActionBar from './ChessActionBar'
-import { Board } from '../utils/chess/Board'
-import { SimpleInvoker } from '../utils/chess/Invoker'
-import { Square } from '../utils/chess/Square'
-import { Move } from '../utils/chess/Move'
-import { BoardData } from '../utils/chess/BoardData'
+import { BoardData, MoveData } from '../ClientTest.tsx'
 
 const boardStyle: React.CSSProperties = {
     display: 'flex',
@@ -14,79 +10,116 @@ const boardStyle: React.CSSProperties = {
     height: '500px',
 }
 
+type SquareData = {
+    x: number,
+    y: number,
+    id: string,
+    light: boolean,
+    type: string,
+    color: string,
+}
+
+const createSquares = (boardData: BoardData): SquareData[][] => {
+    const squares: SquareData[][] = []
+    
+    for (let y = 0; y < boardData.YSize; y++) {
+        squares.push([])
+        for (let x = 0; x < boardData.XSize; x++) {
+            squares[y].push({
+                x: x,
+                y: y,
+                id: `${x},${y}`,
+                light: (x + y) % 2 === 0,
+                type: '',
+                color: '',
+            })
+        }
+    }
+
+    boardData.Pieces.forEach(p => {
+        squares[p.Y][p.X].type = p.T
+        squares[p.Y][p.X].color = p.C
+    })
+
+    return squares
+}
+
+const createDestinations = (moveData: MoveData): Set<string> => {
+    const destinations = new Set<string>()
+
+    moveData.Moves.forEach(m => destinations.add(`${m.X},${m.Y}`))
+
+    return destinations
+}
+
+const createSelected = (moveData: MoveData): string => {
+    return `${moveData.X},${moveData.Y}`
+}
+
 const ChessBoard = ({
     boardData,
-    handleMove,
-    handleView,
-    handleUndo,
-    handleRedo,
+    moveData,
+    move,
+    view,
+    undo,
+    redo,
 }: {
     boardData: BoardData,
-    handleMove: (xFrom: number, yFrom: number, xTo: number, yTo: number) => void,
-    handleView: (x: number, y: number) => void,
-    handleUndo: () => void,
-    handleRedo: () => void,
+    moveData: MoveData,
+    move: (xFrom: number, yFrom: number, xTo: number, yTo: number) => void,
+    view: (x: number, y: number) => void,
+    undo: () => void,
+    redo: () => void,
 }): JSX.Element => {
-    console.log(boardData)
-    const invoker = useRef(new SimpleInvoker())
-    const board = useRef(new Board())
-    const [squares, setSquares] = useState<Square[][]>(board.current.squares)
-    const [selected, setSelected] = useState<{x: number, y: number}>({x: -1, y: -1})
-    const [moves, setMoves] = useState<Move[]>([])
+    const [squares, setSquares] = useState<SquareData[][]>(createSquares(boardData))
+    const [destinations, setDestinations] = useState<Set<string>>(createDestinations(moveData))
+    const [selected, setSelected] = useState<string>(createSelected(moveData))
 
-    const clearSelect = (): void => {
-        setMoves([])
-        setSelected({x: -1, y: -1})
-    }
+    useEffect(() => {
+        setSquares(createSquares(boardData))
+    }, [boardData])
 
-    const executeMove = (move: Move): void => {
-        invoker.current.execute(move)
-        setSquares(s => [...s])
-        clearSelect()
-        handleMove(move.xFrom, move.yFrom, move.xTo, move.yTo)
-    }
+    useEffect(() => {
+        setDestinations(createDestinations(moveData))
+        setSelected(createSelected(moveData))
+    }, [moveData])
 
     const undoMove = (): void => {
-        invoker.current.undo()
         setSquares(s => [...s])
-        clearSelect()
-        handleUndo()
+        undo()
     }
 
     const redoMove = (): void => {
-        invoker.current.redo()
         setSquares(s => [...s])
-        clearSelect()
-        handleRedo()
+        redo()
     }
 
-    const clickSquare = (x: number, y: number): void => {
-        const sameSquare = selected.x === x && selected.y === y
-        if (sameSquare) {
-            clearSelect()
+    const clickSquare = (id: string, x: number, y: number): void => {
+        if (selected === id) {
+            setSelected('-1,-1')
+            setDestinations(new Set<string>())
             return
         }
 
-        const move = moves.find(m => m.xTo === x && m.yTo === y)
-        if (move) {
-            executeMove(move)
+        if (destinations.has(id)) {
+            move(moveData.X, moveData.Y, x, y)
+            setSelected('-1,-1')
+            setDestinations(new Set<string>())
             return
         }
 
-        setMoves(board.current.getMoves(x, y))
-        handleView(x, y)
-        setSelected({x, y})
+        view(x, y)
     }
- 
+
     return (
         <div>
             <div style={boardStyle}>
-                {squares.map((r) => r.map((s) =>
+                {squares.map((row) => row.map((s) => 
                     <ChessSquare
                         key={s.id}
                         square={s}
-                        isSelected={selected.x === s.x && selected.y === s.y}
-                        isDestination={moves.some(m => m.xTo === s.x && m.yTo === s.y)}
+                        selected={selected === s.id}
+                        destination={destinations.has(s.id)}
                         clickSquare={clickSquare}
                     />
                 ))}
@@ -97,3 +130,4 @@ const ChessBoard = ({
 }
 
 export default ChessBoard
+export type { SquareData }
