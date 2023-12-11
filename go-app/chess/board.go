@@ -28,10 +28,6 @@ type Board interface {
     Size() *Point
 	Print() string
     State() *BoardData
-
-    // misc
-    pointOutOfBounds(p *Point) bool
-    pointOnPromotionSquare(p *Point) bool
 }
 
 func newSimpleBoard(size *Point) (*SimpleBoard, error) {
@@ -175,7 +171,7 @@ func (s *SimpleBoard) clearEnPassant(color string) error {
     return nil
 }
 
-// TODO - we want the moves assuming empty board when not payer's turn for premoves
+// TODO we want the moves assuming empty board when not payer's turn for premoves
 func (s *SimpleBoard) PotentialMoves(fromLocation *Point) ([]Move, error) {
     return []Move{}, nil
 }
@@ -374,10 +370,5 @@ func (s *SimpleBoard) copy() (*SimpleBoard, error) {
 
 func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {
     return p.y < 0 || p.y >= s.size.y || p.x < 0 || p.x >= s.size.x
-}
-
-// TODO - implement pawn promotions
-func (s *SimpleBoard) pointOnPromotionSquare(p *Point) bool {
-    return false
 }
 

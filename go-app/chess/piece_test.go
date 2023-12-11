@@ -41,7 +41,6 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
 	board := &MockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
 	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]*EnPassant{}, nil)
-    board.On("pointOnPromotionSquare", mock.Anything).Return(false)
 
 	moveFactory := &MockMoveFactory{}
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
@@ -61,7 +60,6 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
 	board := &MockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
 	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]*EnPassant{}, nil)
-    board.On("pointOnPromotionSquare", mock.Anything).Return(false)
 
 	moveFactory := &MockMoveFactory{}
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
@@ -81,8 +79,9 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
 	board.On("getPiece", &Point{2, 4}).Return(nil, nil)
 	board.On("getPiece", &Point{3, 4}).Return(nil, nil)
 	board.On("getPiece", &Point{3, 5}).Return(nil, nil)
+    board.On("getPiece", &Point{3, 6}).Return(nil, nil)
+    board.On("getPiece", &Point{4, 5}).Return(nil, nil)
 	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]*EnPassant{}, nil)
-    board.On("pointOnPromotionSquare", mock.Anything).Return(false)
 
 	moveFactory := &MockMoveFactory{}
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
@@ -108,14 +107,37 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 	board.On("getPiece", &Point{3, 4}).Return(nil, nil)
 	board.On("getPiece", &Point{3, 5}).Return(nil, nil)
 	board.On("getPiece", &Point{4, 4}).Return(nil, nil)
+    board.On("getPiece", &Point{3, 6}).Return(nil, nil)
+    board.On("getPiece", &Point{4, 5}).Return(nil, nil)
 	board.On("possibleEnPassant", "white", &Point{4, 4}).Return([]*EnPassant{{&Point{4, 4}, &Point{3, 4}}}, nil)
 	board.On("possibleEnPassant", "white", &Point{2, 4}).Return([]*EnPassant{}, nil)
-    board.On("pointOnPromotionSquare", mock.Anything).Return(false)
 
 	moveFactory := &MockMoveFactory{}
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
 	moveFactory.On("newRevealEnPassantMove", board, &Point{3, 3}, &Point{3, 5}, &Point{3, 4}).Return(nil, nil)
 	moveFactory.On("newCaptureEnPassantMove", board, &Point{3, 3}, &Point{4, 4}).Return(nil, nil)
+	moveFactoryInstance = moveFactory
+
+	pawn := newPawn("white", false, 0, 1)
+
+	moves := pawn.moves(board, &Point{3, 3})
+	assert.Len(t, moves, 3)
+
+	board.AssertExpectations(t)
+	moveFactory.AssertExpectations(t)
+}
+
+func Test_Pawn_Moves_Promotion(t *testing.T) {
+	board := &MockBoard{}
+	board.On("getPiece", &Point{3, 4}).Return(nil, nil)
+	board.On("getPiece", &Point{3, 5}).Return(nil, errors.New(""))
+    board.On("getPiece", &Point{4, 4}).Return(nil, nil)
+    board.On("getPiece", &Point{2, 4}).Return(nil, nil)
+	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]*EnPassant{}, nil)
+
+	moveFactory := &MockMoveFactory{}
+	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 4}).Return(nil, nil)
+    moveFactory.On("newPromotionMoves", mock.Anything, mock.Anything).Return([]*PromotionMove{nil, nil, nil}, nil)
 	moveFactoryInstance = moveFactory
 
 	pawn := newPawn("white", false, 0, 1)

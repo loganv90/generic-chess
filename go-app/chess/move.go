@@ -22,6 +22,7 @@ type MoveFactory interface {
 	newRevealEnPassantMove(b Board, fromLocation *Point, toLocation *Point, target *Point) (*RevealEnPassantMove, error)
 	newCaptureEnPassantMove(b Board, fromLocation *Point, toLocation *Point) (*CaptureEnPassantMove, error)
 	newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point, newVulnerables []*Point) (*CastleMove, error)
+    newPromotionMoves(move Move, promotionPieces []Piece) ([]*PromotionMove, error)
 }
 
 type ConcreteMoveFactory struct{}
@@ -51,7 +52,7 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation *Point, toLoca
     }
 
 	return &SimpleMove{
-		Action{
+		&Action{
 			b: b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -94,7 +95,7 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation *Poin
 	}
 
 	return &RevealEnPassantMove{
-		Action{
+		&Action{
 			b:     b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -149,7 +150,7 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Poi
     }
 
 	return &CaptureEnPassantMove{
-		Action{
+		&Action{
 			b:     b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -191,7 +192,7 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLoca
     }
 
 	return &CastleMove{
-		Action{
+		&Action{
 			b: b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -208,19 +209,41 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLoca
 	}, nil
 }
 
+func (f *ConcreteMoveFactory) newPromotionMoves(move Move, promotionPieces []Piece) ([]*PromotionMove, error) {
+    action := move.getAction()
+
+    promotionMoves := []*PromotionMove{}
+    for _, promotionPiece := range promotionPieces {
+        promotionMove := &PromotionMove{
+            Action: action,
+            baseMove: move,
+            promotionPiece: promotionPiece,
+        }
+
+        promotionMoves = append(promotionMoves, promotionMove)
+    }
+
+    return promotionMoves, nil
+}
+
 type Move interface {
 	execute() error
 	undo() error
 	getAction() *Action
+    getNewPiece() Piece
 }
 
 type SimpleMove struct {
-	Action
+    *Action
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
 	en            *EnPassant
     vulnerables   []*Point
+}
+
+func (s *SimpleMove) getNewPiece() Piece {
+    return s.newPiece
 }
 
 func (s *SimpleMove) execute() error {
@@ -258,13 +281,17 @@ func (s *SimpleMove) undo() error {
 }
 
 type RevealEnPassantMove struct {
-	Action
+	*Action
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
 	en            *EnPassant
 	newEn         *EnPassant
     vulnerables   []*Point
+}
+
+func (r *RevealEnPassantMove) getNewPiece() Piece {
+    return r.newPiece
 }
 
 func (r *RevealEnPassantMove) execute() error {
@@ -302,13 +329,17 @@ func (r *RevealEnPassantMove) undo() error {
 }
 
 type CaptureEnPassantMove struct {
-	Action
+	*Action
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
 	en            *EnPassant
 	encs          []*EnPassantCapture
     vulnerables   []*Point
+}
+
+func (c *CaptureEnPassantMove) getNewPiece() Piece {
+    return c.newPiece
 }
 
 func (c *CaptureEnPassantMove) execute() error {
@@ -360,7 +391,7 @@ func (c *CaptureEnPassantMove) undo() error {
 }
 
 type CastleMove struct {
-	Action
+	*Action
 	king    Piece
 	newKing Piece
     toKingLocation *Point
@@ -370,6 +401,10 @@ type CastleMove struct {
 	en      *EnPassant
     vulnerables   []*Point
     newVulnerables []*Point
+}
+
+func (c *CastleMove) getNewPiece() Piece {
+    return c.newKing
 }
 
 func (c *CastleMove) execute() error {
@@ -423,6 +458,30 @@ func (c *CastleMove) undo() error {
     c.b.setVulnerables(c.king.getColor(), c.vulnerables)
 	c.b.setEnPassant(c.king.getColor(), c.en)
 
+	return nil
+}
+
+type PromotionMove struct {
+    *Action
+    baseMove Move
+    promotionPiece Piece
+}
+
+func (p *PromotionMove) getNewPiece() Piece {
+    return p.promotionPiece
+}
+
+func (p *PromotionMove) execute() error {
+    p.baseMove.execute()
+    p.b.setPiece(p.toLocation, p.promotionPiece)
+
+	return nil
+}
+
+func (p *PromotionMove) undo() error {
+    p.b.setPiece(p.toLocation, p.baseMove.getNewPiece())
+    p.baseMove.undo()
+    
 	return nil
 }
 

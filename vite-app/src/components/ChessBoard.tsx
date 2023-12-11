@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import ChessSquare from './ChessSquare'
-import ChessActionBar from './ChessActionBar'
 import { BoardData, MoveData } from '../ClientTest.tsx'
 
 const boardStyle: React.CSSProperties = {
@@ -44,10 +43,10 @@ const createSquares = (boardData: BoardData): SquareData[][] => {
     return squares
 }
 
-const createDestinations = (moveData: MoveData): Set<string> => {
-    const destinations = new Set<string>()
+const createDestinations = (moveData: MoveData): Map<string, boolean> => {
+    const destinations = new Map<string, boolean>()
 
-    moveData.Moves.forEach(m => destinations.add(`${m.X},${m.Y}`))
+    moveData.Moves.forEach(m => destinations.set(`${m.X},${m.Y}`, m.P))
 
     return destinations
 }
@@ -61,18 +60,14 @@ const ChessBoard = ({
     moveData,
     move,
     view,
-    undo,
-    redo,
 }: {
     boardData: BoardData,
     moveData: MoveData,
-    move: (xFrom: number, yFrom: number, xTo: number, yTo: number) => void,
+    move: (xFrom: number, yFrom: number, xTo: number, yTo: number, promotion: string) => void,
     view: (x: number, y: number) => void,
-    undo: () => void,
-    redo: () => void,
 }): JSX.Element => {
     const [squares, setSquares] = useState<SquareData[][]>(createSquares(boardData))
-    const [destinations, setDestinations] = useState<Set<string>>(createDestinations(moveData))
+    const [destinations, setDestinations] = useState<Map<string, boolean>>(createDestinations(moveData))
     const [selected, setSelected] = useState<string>(createSelected(moveData))
 
     useEffect(() => {
@@ -84,47 +79,40 @@ const ChessBoard = ({
         setSelected(createSelected(moveData))
     }, [moveData])
 
-    const undoMove = (): void => {
-        setSquares(s => [...s])
-        undo()
-    }
-
-    const redoMove = (): void => {
-        setSquares(s => [...s])
-        redo()
-    }
-
     const clickSquare = (id: string, x: number, y: number): void => {
         if (selected === id) {
             setSelected('-1,-1')
-            setDestinations(new Set<string>())
+            setDestinations(new Map<string, boolean>())
             return
         }
 
-        if (destinations.has(id)) {
-            move(moveData.X, moveData.Y, x, y)
-            setSelected('-1,-1')
-            setDestinations(new Set<string>())
+        if (!destinations.has(id)) {
+            view(x, y)
             return
         }
 
-        view(x, y)
+        if (destinations.get(id)) {
+            move(moveData.X, moveData.Y, x, y, 'N') // TODO allow the user to select a promotion piece
+        } else {
+            move(moveData.X, moveData.Y, x, y, '')
+        }
+
+        setSelected('-1,-1')
+        setDestinations(new Map<string, boolean>())
+        return
     }
 
     return (
-        <div>
-            <div style={boardStyle}>
-                {squares.map((row) => row.map((s) => 
-                    <ChessSquare
-                        key={s.id}
-                        square={s}
-                        selected={selected === s.id}
-                        destination={destinations.has(s.id)}
-                        clickSquare={clickSquare}
-                    />
-                ))}
-            </div>
-            <ChessActionBar undo={undoMove} redo={redoMove} />
+        <div style={boardStyle}>
+            {squares.map((row) => row.map((s) => 
+                <ChessSquare
+                    key={s.id}
+                    square={s}
+                    selected={selected === s.id}
+                    destination={destinations.has(s.id)}
+                    clickSquare={clickSquare}
+                />
+            ))}
         </div>
     )
 }

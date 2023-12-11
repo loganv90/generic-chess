@@ -16,6 +16,7 @@ type MoveData struct {
     YFrom int
     XTo int
     YTo int
+    Promotion string
 }
 
 type ViewData struct {
@@ -142,6 +143,7 @@ func (h *Hub) handleMoveMessage(messageData json.RawMessage) {
         moveData.YFrom,
         moveData.XTo,
         moveData.YTo,
+        moveData.Promotion,
     )
     if err != nil {
         fmt.Println("error executing move")

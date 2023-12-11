@@ -87,16 +87,6 @@ func (m *MockBoard) State() *BoardData {
     return args.Get(0).(*BoardData)
 }
 
-func (m *MockBoard) pointOutOfBounds(p *Point) bool {
-    args := m.Called(p)
-    return args.Bool(0)
-}
-
-func (m *MockBoard) pointOnPromotionSquare(p *Point) bool {
-    args := m.Called(p)
-    return args.Bool(0)
-}
-
 func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
     s, err := createSimpleBoardWithDefaultPieceLocations()
 	assert.Nil(t, err)
@@ -261,13 +251,35 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
     s.CalculateMoves("white")
     boardData := s.State()
 
-
     moveCount := 0
     for _, m := range s.moveMap {
         moveCount += len(m)
     }
 
     assert.Equal(t, 13, moveCount)
+    assert.Equal(t, "white", boardData.Turn)
+    assert.False(t, boardData.Check)
+    assert.False(t, boardData.Checkmate)
+    assert.False(t, boardData.Stalemate)
+}
+
+func Test_CalculateMoves_promotion(t *testing.T) {
+    s, err := newSimpleBoard(&Point{8, 8})
+    assert.Nil(t, err)
+
+    s.setPiece(&Point{7, 6}, newPawn("white", true, 0, 1))
+    s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
+    s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
+
+    s.CalculateMoves("white")
+    boardData := s.State()
+
+    moveCount := 0
+    for _, m := range s.moveMap {
+        moveCount += len(m)
+    }
+
+    assert.Equal(t, 7, moveCount)
     assert.Equal(t, "white", boardData.Turn)
     assert.False(t, boardData.Check)
     assert.False(t, boardData.Checkmate)

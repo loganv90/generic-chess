@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import useWebSocket from 'react-use-websocket'
 import ChessBoard from './components/ChessBoard'
+import ChessActionBar from './components/ChessActionBar'
 
 type Message = {
     Type: string,
-    Data: any
+    Data: any,
 }
 
 type BoardData = {
@@ -20,10 +21,10 @@ type BoardData = {
 type MoveData = {
     X: number,
     Y: number,
-    Moves: { X: number, Y: number }[],
+    Moves: { X: number, Y: number, P: boolean }[],
 }
 
-const createMoveData = (xFrom: number, yFrom: number, xTo: number, yTo: number) : Message => {
+const createMoveMessage = (xFrom: number, yFrom: number, xTo: number, yTo: number, promotion: string) : Message => {
     return {
         Type: 'move',
         Data: {
@@ -31,17 +32,32 @@ const createMoveData = (xFrom: number, yFrom: number, xTo: number, yTo: number) 
             yFrom: yFrom,
             xTo: xTo,
             yTo: yTo,
+            promotion: promotion,
         }
     }
 }
 
-const createViewData = (x: number, y: number) : Message => {
+const createViewMessage = (x: number, y: number) : Message => {
     return {
         Type: 'view',
         Data: {
             x: x,
             y: y,
         }
+    }
+}
+
+const createUndoMessage = () : Message => {
+    return {
+        Type: 'undo',
+        Data: {}
+    }
+}
+
+const createRedoMessage = () : Message => {
+    return {
+        Type: 'redo',
+        Data: {}
     }
 }
 
@@ -102,33 +118,39 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
         }
     }, [lastMessage])
 
-    const handleMove = (xFrom: number, yFrom: number, xTo: number, yTo: number): void => {
-        const moveData = createMoveData(xFrom, yFrom, xTo, yTo)
-        sendMessage(JSON.stringify(moveData))
+    const handleMove = (xFrom: number, yFrom: number, xTo: number, yTo: number, promotion: string): void => {
+        const moveMessage = createMoveMessage(xFrom, yFrom, xTo, yTo, promotion)
+        sendMessage(JSON.stringify(moveMessage))
     }
 
     const handleView = (x: number, y: number): void => {
-        const viewData = createViewData(x, y)
-        sendMessage(JSON.stringify(viewData))
+        const viewMessage = createViewMessage(x, y)
+        sendMessage(JSON.stringify(viewMessage))
     }
 
     const handleUndo = (): void => {
-        console.log('undo')
+        const undoMessage = createUndoMessage()
+        sendMessage(JSON.stringify(undoMessage))
     }
 
     const handleRedo = (): void => {
-        console.log('redo')
+        const redoMessage = createRedoMessage()
+        sendMessage(JSON.stringify(redoMessage))
     }
 
     return (
-        <ChessBoard
-            boardData={boardData}
-            moveData={moveData}
-            move={handleMove}
-            view={handleView}
-            undo={handleUndo}
-            redo={handleRedo}
-        />
+        <>
+            <ChessBoard
+                boardData={boardData}
+                moveData={moveData}
+                move={handleMove}
+                view={handleView}
+            />
+            <ChessActionBar
+                undo={handleUndo}
+                redo={handleRedo}
+            />
+        </>
     )
 }
 

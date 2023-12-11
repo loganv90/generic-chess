@@ -25,8 +25,9 @@ type PieceState struct {
 }
 
 type MoveData struct {
-    X int
-    Y int
+    X int // X position
+    Y int // Y position
+    P bool // is promotion move
 }
 
 type Point struct {
