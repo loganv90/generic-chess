@@ -63,7 +63,7 @@ const ChessBoard = ({
 }: {
     boardData: BoardData,
     moveData: MoveData,
-    move: (xFrom: number, yFrom: number, xTo: number, yTo: number, promotion: string) => void,
+    move: (xFrom: number, yFrom: number, xTo: number, yTo: number) => void,
     view: (x: number, y: number) => void,
 }): JSX.Element => {
     const [squares, setSquares] = useState<SquareData[][]>(createSquares(boardData))
@@ -92,9 +92,9 @@ const ChessBoard = ({
         }
 
         if (destinations.get(id)) {
-            move(moveData.X, moveData.Y, x, y, 'N') // TODO allow the user to select a promotion piece
+            move(moveData.X, moveData.Y, x, y)
         } else {
-            move(moveData.X, moveData.Y, x, y, '')
+            move(moveData.X, moveData.Y, x, y)
         }
 
         setSelected('-1,-1')

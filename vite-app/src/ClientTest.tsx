@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import useWebSocket from 'react-use-websocket'
 import ChessBoard from './components/ChessBoard'
-import ChessActionBar from './components/ChessActionBar'
 
 type Message = {
     Type: string,
@@ -83,9 +82,7 @@ const ClientTest = () => {
 const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
     const [socketUrl] = useState(`ws://localhost:8080${urlExtension}`)
     const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(socketUrl)
-    // setTimeout(() => {
-    //     getWebSocket()?.close()
-    // }, 5000)
+    const [promotionPiece, setPromotionPiece] = useState('Q')
 
     const [boardData, setBoardData] = useState<BoardData>({
         XSize: 0,
@@ -118,8 +115,8 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
         }
     }, [lastMessage])
 
-    const handleMove = (xFrom: number, yFrom: number, xTo: number, yTo: number, promotion: string): void => {
-        const moveMessage = createMoveMessage(xFrom, yFrom, xTo, yTo, promotion)
+    const handleMove = (xFrom: number, yFrom: number, xTo: number, yTo: number): void => {
+        const moveMessage = createMoveMessage(xFrom, yFrom, xTo, yTo, promotionPiece)
         sendMessage(JSON.stringify(moveMessage))
     }
 
@@ -138,6 +135,10 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
         sendMessage(JSON.stringify(redoMessage))
     }
 
+    const handlePromotionPiece = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+        setPromotionPiece(e.target.value)
+    }
+
     return (
         <>
             <ChessBoard
@@ -146,10 +147,23 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
                 move={handleMove}
                 view={handleView}
             />
-            <ChessActionBar
-                undo={handleUndo}
-                redo={handleRedo}
-            />
+            <div style={{textAlign: "left"}}>
+                <br />
+                <label htmlFor="pieces">Default promotion piece: </label>
+                <select name="pieces" value={promotionPiece} onChange={handlePromotionPiece} >
+                  <option value="Q">Queen</option>
+                  <option value="R">Rook</option>
+                  <option value="B">Bishop</option>
+                  <option value="N">Knight</option>
+                </select>
+                <br />
+                <label htmlFor="redo">Undo move: </label>
+                <button name="undo" onClick={handleUndo} />
+                <br />
+                <label htmlFor="redo">Redo move: </label>
+                <button name="redo" onClick={handleRedo} />
+                <br />
+            </div>
         </>
     )
 }
