@@ -27,9 +27,9 @@ const ChessSquare = ({
         } else if (destination) {
             return 'blue'
         } else if (square.light) {
-            return 'lightGrey'
+            return '#304030'
         } else {
-            return 'darkGrey'
+            return '#306010'
         }
     }
 

@@ -1,8 +1,57 @@
 import React from 'react'
 
-const pieceStyle: React.CSSProperties = {
+const divStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
+    margin: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+}
+
+const imgStyle: React.CSSProperties = {
+    imageRendering: 'pixelated',
+    objectFit: 'contain',
+    width: 'calc(100% - 8px)',
+    height: 'calc(100% - 8px)',
+}
+
+const getImgSrc = (type: string, color: string): string => {
+    if (color === 'white') {
+        switch (type) {
+            case 'P':
+                return '/src/assets/wp.png'
+            case 'R':
+                return '/src/assets/wr.png'
+            case 'N':
+                return '/src/assets/wn.png'
+            case 'B':
+                return '/src/assets/wb.png'
+            case 'Q':
+                return '/src/assets/wq.png'
+            case 'K':
+                return '/src/assets/wk.png'
+            default:
+                return ''
+        }
+    } else {
+        switch (type) {
+            case 'P':
+                return '/src/assets/bp.png'
+            case 'R':
+                return '/src/assets/br.png'
+            case 'N':
+                return '/src/assets/bn.png'
+            case 'B':
+                return '/src/assets/bb.png'
+            case 'Q':
+                return '/src/assets/bq.png'
+            case 'K':
+                return '/src/assets/bk.png'
+            default:
+                return ''
+        }
+    }
 }
 
 const ChessPiece = ({
@@ -12,19 +61,10 @@ const ChessPiece = ({
     type: string,
     color: string,
 }): JSX.Element => {
-    const getPieceColor = (): string => {
-        if (color === 'white') {
-            return 'white'
-        } else {
-            return 'black'
-        }
-    }
-
+    const imgSrc = getImgSrc(type, color)
     return (
-        <div
-            style={{...pieceStyle, color: getPieceColor()}}
-        >
-            {type}
+        <div style={divStyle} >
+            {imgSrc ? <img src={imgSrc} style={imgStyle} /> : type + color}
         </div>
     )
 }

@@ -150,18 +150,18 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
             <div style={{textAlign: "left"}}>
                 <br />
                 <label htmlFor="pieces">Default promotion piece: </label>
-                <select name="pieces" value={promotionPiece} onChange={handlePromotionPiece} >
+                <select id="pieces" name="pieces" value={promotionPiece} onChange={handlePromotionPiece} >
                   <option value="Q">Queen</option>
                   <option value="R">Rook</option>
                   <option value="B">Bishop</option>
                   <option value="N">Knight</option>
                 </select>
                 <br />
-                <label htmlFor="redo">Undo move: </label>
-                <button name="undo" onClick={handleUndo} />
+                <label htmlFor="undo">Undo move: </label>
+                <button id="undo" name="undo" onClick={handleUndo} />
                 <br />
                 <label htmlFor="redo">Redo move: </label>
-                <button name="redo" onClick={handleRedo} />
+                <button id="redo" name="redo" onClick={handleRedo} />
                 <br />
             </div>
         </>
