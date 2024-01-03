@@ -107,6 +107,7 @@ const ChessBoard = ({
             {squares.map((row) => row.map((s) => 
                 <ChessSquare
                     key={s.id}
+                    sizePercent={`${100 / Math.max(boardData.YSize, boardData.XSize)}%`}
                     square={s}
                     selected={selected === s.id}
                     destination={destinations.has(s.id)}

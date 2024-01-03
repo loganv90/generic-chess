@@ -6,16 +6,16 @@ const squareStyle: React.CSSProperties = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    width: '12.5%',
-    height: '12.5%',
 }
 
 const ChessSquare = ({
+    sizePercent,
     square,
     selected,
     destination,
     clickSquare
 }:{
+    sizePercent: string,
     square: SquareData,
     selected: boolean,
     destination: boolean,
@@ -27,15 +27,15 @@ const ChessSquare = ({
         } else if (destination) {
             return 'blue'
         } else if (square.light) {
-            return '#304030'
-        } else {
             return '#306010'
+        } else {
+            return '#304030'
         }
     }
 
     return (
         <div
-            style={{...squareStyle, backgroundColor: getSquareColor()}}
+            style={{...squareStyle, backgroundColor: getSquareColor(), width: sizePercent, height: sizePercent}}
             onClick={() => clickSquare(square.id, square.x, square.y)}
         >
             <ChessPiece type={square.type} color={square.color} />

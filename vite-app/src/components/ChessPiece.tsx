@@ -3,7 +3,6 @@ import React from 'react'
 const divStyle: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    margin: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -12,8 +11,8 @@ const divStyle: React.CSSProperties = {
 const imgStyle: React.CSSProperties = {
     imageRendering: 'pixelated',
     objectFit: 'contain',
-    width: 'calc(100% - 8px)',
-    height: 'calc(100% - 8px)',
+    width: '80%',
+    height: '80%',
 }
 
 const getImgSrc = (type: string, color: string): string => {
@@ -34,7 +33,7 @@ const getImgSrc = (type: string, color: string): string => {
             default:
                 return ''
         }
-    } else {
+    } else if (color === 'black') {
         switch (type) {
             case 'P':
                 return '/src/assets/bp.png'
@@ -51,6 +50,8 @@ const getImgSrc = (type: string, color: string): string => {
             default:
                 return ''
         }
+    } else {
+        return ''
     }
 }
 
