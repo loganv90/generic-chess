@@ -37,6 +37,26 @@ func NewSimpleGame() (Game, error) {
 	}, nil
 }
 
+func NewSimpleFourPlayerGame() (Game, error) {
+    b, err := createSimpleFourPlayerBoardWithDefaultPieceLocations()
+    if err != nil {
+        return nil, err
+    }
+    b.CalculateMoves("white")
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    if err != nil {
+        return nil, err
+    }
+
+    return &SimpleGame{
+        b: b,
+        i: i,
+        currentPlayer: 0,
+        players: []string{"white", "red", "black", "blue"},
+    }, nil
+}
+
 type SimpleGame struct {
 	b Board
 	i Invoker
