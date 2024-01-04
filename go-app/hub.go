@@ -34,7 +34,7 @@ type Hub struct {
     game chess.Game
 }
 
-func newHub() *Hub {
+func newTwoPlayerHub() *Hub {
     game, err := chess.NewSimpleGame()
     if err != nil {
         panic(err)
@@ -47,6 +47,23 @@ func newHub() *Hub {
         unregister: make(chan *Client),
         send:       make(chan *ClientMessage),
         capacity:   2,
+        game:       game,
+    }
+}
+
+func newFourPlayerHub() *Hub {
+    game, err := chess.NewSimpleFourPlayerGame()
+    if err != nil {
+        panic(err)
+    }
+
+    return &Hub{
+        clients:    make(map[*Client]bool),
+        broadcast:  make(chan []byte),
+        register:   make(chan *Client),
+        unregister: make(chan *Client),
+        send:       make(chan *ClientMessage),
+        capacity:   4,
         game:       game,
     }
 }

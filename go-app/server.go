@@ -20,6 +20,7 @@ var upgrader = websocket.Upgrader{
 }
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyz")
+
 func randomString(n int) string {
     b := make([]rune, n)
     for i := range b {
@@ -28,47 +29,75 @@ func randomString(n int) string {
     return string(b)
 }
 
+func createRoomId(hubs map[string]*Hub) (string, error) {
+    var roomId string
+    attempts := 0
+    attemptsLimit := 10
+    for {
+        roomId = randomString(roomIdLength)
+        if _, ok := hubs[roomId]; !ok {
+            break
+        }
+        attempts++
+        if attempts > attemptsLimit {
+            return "", fmt.Errorf("couldn't create game")
+        }
+    }
+    return roomId, nil
+}
+
+func startClient(c *gin.Context, hub *Hub, conn *websocket.Conn) {
+    conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+    if err != nil {
+        return
+    }
+
+    client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+    client.hub.register <- client
+
+    go client.readLoop()
+    go client.writeLoop()
+}
+
 func main() {
     var hubs = make(map[string]*Hub)
 
 	router := gin.Default()
-    router.GET("/ws", func(c *gin.Context) {
-        var roomId string
-        attempts := 0
-        attemptsLimit := 10
-        for {
-            roomId = randomString(roomIdLength)
-            if _, ok := hubs[roomId]; !ok {
-                break
-            }
-            attempts++
-            if attempts > attemptsLimit {
-                fmt.Println("couldn't create game")
-                return
-            }
-        }
-        fmt.Println("new connection, new game, gameId: ", roomId)
-
-        conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+    router.GET("/ws/two", func(c *gin.Context) {
+        roomId, err := createRoomId(hubs)
         if err != nil {
+            fmt.Println("couldn't create game")
             return
         }
-
-        hub := newHub()
+        hub := newTwoPlayerHub()
         hubs[roomId] = hub
         go func() {
             hub.run()
             fmt.Println("shutting down hub")
             delete(hubs, roomId)
         }()
+        fmt.Println("new connection, new game, gameId: ", roomId)
 
-        client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-        client.hub.register <- client
-
-        go client.readLoop()
-        go client.writeLoop()
+        startClient(c, hub, nil)
     })
-    router.GET("/ws/:gameId", func(c *gin.Context) {
+    router.GET("/ws/four", func(c *gin.Context) {
+        roomId, err := createRoomId(hubs)
+        if err != nil {
+            fmt.Println("couldn't create game")
+            return
+        }
+        hub := newFourPlayerHub()
+        hubs[roomId] = hub
+        go func() {
+            hub.run()
+            fmt.Println("shutting down hub")
+            delete(hubs, roomId)
+        }()
+        fmt.Println("new connection, new game, gameId: ", roomId)
+
+        startClient(c, hub, nil)
+    })
+    router.GET("/ws/join/:gameId", func(c *gin.Context) {
         hub, ok := hubs[c.Param("gameId")]
         if !ok {
             fmt.Println("couldn't find game")
@@ -80,16 +109,7 @@ func main() {
         }
         fmt.Println("new connection, existing game, gameId: ", c.Param("gameId"))
 
-		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-		if err != nil {
-			return
-		}
-
-        client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-        client.hub.register <- client
-
-        go client.readLoop()
-        go client.writeLoop()
+        startClient(c, hub, nil)
 	})
 	router.Run(":8080")
 }
