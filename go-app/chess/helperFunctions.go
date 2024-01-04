@@ -131,6 +131,46 @@ func createSimpleFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error
     simpleBoard.setPiece(&Point{13, 9}, newKnight(color4))
     simpleBoard.setPiece(&Point{13, 10}, newRook(color4, false))
 
+    simpleBoard.disableLocation(&Point{0, 0})
+    simpleBoard.disableLocation(&Point{0, 1})
+    simpleBoard.disableLocation(&Point{0, 2})
+    simpleBoard.disableLocation(&Point{1, 0})
+    simpleBoard.disableLocation(&Point{1, 1})
+    simpleBoard.disableLocation(&Point{1, 2})
+    simpleBoard.disableLocation(&Point{2, 0})
+    simpleBoard.disableLocation(&Point{2, 1})
+    simpleBoard.disableLocation(&Point{2, 2})
+
+    simpleBoard.disableLocation(&Point{0, 11})
+    simpleBoard.disableLocation(&Point{0, 12})
+    simpleBoard.disableLocation(&Point{0, 13})
+    simpleBoard.disableLocation(&Point{1, 11})
+    simpleBoard.disableLocation(&Point{1, 12})
+    simpleBoard.disableLocation(&Point{1, 13})
+    simpleBoard.disableLocation(&Point{2, 11})
+    simpleBoard.disableLocation(&Point{2, 12})
+    simpleBoard.disableLocation(&Point{2, 13})
+
+    simpleBoard.disableLocation(&Point{11, 0})
+    simpleBoard.disableLocation(&Point{11, 1})
+    simpleBoard.disableLocation(&Point{11, 2})
+    simpleBoard.disableLocation(&Point{12, 0})
+    simpleBoard.disableLocation(&Point{12, 1})
+    simpleBoard.disableLocation(&Point{12, 2})
+    simpleBoard.disableLocation(&Point{13, 0})
+    simpleBoard.disableLocation(&Point{13, 1})
+    simpleBoard.disableLocation(&Point{13, 2})
+
+    simpleBoard.disableLocation(&Point{11, 11})
+    simpleBoard.disableLocation(&Point{11, 12})
+    simpleBoard.disableLocation(&Point{11, 13})
+    simpleBoard.disableLocation(&Point{12, 11})
+    simpleBoard.disableLocation(&Point{12, 12})
+    simpleBoard.disableLocation(&Point{12, 13})
+    simpleBoard.disableLocation(&Point{13, 11})
+    simpleBoard.disableLocation(&Point{13, 12})
+    simpleBoard.disableLocation(&Point{13, 13})
+
     return simpleBoard, nil
 }
 

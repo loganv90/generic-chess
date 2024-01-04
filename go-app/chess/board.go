@@ -14,6 +14,7 @@ type Board interface {
     // these are for the move
 	getPiece(location *Point) (Piece, error)
 	setPiece(location *Point, piece Piece) error
+    disableLocation(location *Point) error
     getVulnerables(color string) ([]*Point, error) // if these locations are attacked, the player is in check
     setVulnerables(color string, locations []*Point) error
 	getEnPassant(color string) (*EnPassant, error) // if these locations are attacked, a piece is captured en passant
@@ -43,6 +44,7 @@ func newSimpleBoard(size *Point) (*SimpleBoard, error) {
 	return &SimpleBoard{
         size: size,
 		pieces: pieces,
+        disabledLocations: map[Point]bool{},
         kingLocationMap: map[string]*Point{},
         pieceLocationsMap: map[string][]*Point{},
 		enPassantMap: map[string]*EnPassant{},
@@ -58,6 +60,7 @@ func newSimpleBoard(size *Point) (*SimpleBoard, error) {
 type SimpleBoard struct {
     size *Point
 	pieces [][]Piece
+    disabledLocations map[Point]bool
     kingLocationMap map[string]*Point
     pieceLocationsMap map[string][]*Point
 	enPassantMap map[string]*EnPassant
@@ -117,6 +120,11 @@ func (s *SimpleBoard) setPiece(location *Point, p Piece) error {
         }
     }
 
+    return nil
+}
+
+func (s *SimpleBoard) disableLocation(location *Point) error {
+    s.disabledLocations[*location] = true
     return nil
 }
 
@@ -282,8 +290,10 @@ func (s *SimpleBoard) Print() string {
 			builder.WriteString(fmt.Sprintf("|%s%2dx ", strings.Repeat(" ", cellWidth-4), x))
 		}
 		builder.WriteString("|\n")
-		for _, piece := range row {
-			if piece == nil {
+		for x, piece := range row {
+            if s.pointOutOfBounds(&Point{x, y}) {
+                builder.WriteString(fmt.Sprintf("|%s", strings.Repeat("X", cellWidth)))
+            } else if piece == nil {
 				builder.WriteString(fmt.Sprintf("|%s", strings.Repeat(" ", cellWidth)))
 			} else {
 				p := piece.print()
@@ -327,9 +337,18 @@ func (s *SimpleBoard) State() *BoardData {
         }
     }
 
+    disabled := []*DisabledData{}
+    for disabledLocation := range s.disabledLocations {
+        disabled = append(disabled, &DisabledData{
+            X: disabledLocation.x,
+            Y: disabledLocation.y,
+        })
+    }
+
     return &BoardData{
         XSize: s.size.x,
         YSize: s.size.y,
+        Disabled: disabled,
         Pieces: pieces,
         Turn: s.playerToMove,
         Check: s.check,
@@ -369,6 +388,7 @@ func (s *SimpleBoard) copy() (*SimpleBoard, error) {
 }
 
 func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {
-    return p.y < 0 || p.y >= s.size.y || p.x < 0 || p.x >= s.size.x
+    _, ok := s.disabledLocations[*p]
+    return p.y < 0 || p.y >= s.size.y || p.x < 0 || p.x >= s.size.x || ok
 }
 

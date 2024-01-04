@@ -331,15 +331,15 @@ func Test_NewSimpleFourPlayerGame(t *testing.T) {
 	expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            |            |            |            |            |            |            |            |            |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            |            |            |            |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
@@ -375,15 +375,15 @@ func Test_NewSimpleFourPlayerGame(t *testing.T) {
 |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            |            |            |            |            |            |            |            |            |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            |            |            |            |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | P white    | P white    | P white    | P white    | P white    | P white    | P white    | P white    |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P white    | P white    | P white    | P white    | P white    | P white    | P white    | P white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
@@ -405,15 +405,15 @@ func Test_NewSimpleFourPlayerGame(t *testing.T) {
     expectedPrintedBoard = strings.Trim(`
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | P black    | P black    | P black    | P black    |            | P black    | P black    | P black    |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P black    | P black    | P black    | P black    |            | P black    | P black    | P black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            |            |            |            |            |            |            |            |            |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            |            |            |            |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
@@ -449,15 +449,15 @@ func Test_NewSimpleFourPlayerGame(t *testing.T) {
 |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            |            |            |            |            |            |            |            |            |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            |            |            |            |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |            |            |            |
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"

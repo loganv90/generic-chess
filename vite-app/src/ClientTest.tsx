@@ -10,6 +10,7 @@ type Message = {
 type BoardData = {
     XSize: number,
     YSize: number,
+    Disabled: { X: number, Y: number }[],
     Pieces: { T: string, C: string, X: number, Y: number }[],
     Turn: string,
     Check: boolean,
@@ -87,6 +88,7 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
     const [boardData, setBoardData] = useState<BoardData>({
         XSize: 0,
         YSize: 0,
+        Disabled: [],
         Pieces: [],
         Turn: '',
         Check: false,

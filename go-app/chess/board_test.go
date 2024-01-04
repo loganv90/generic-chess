@@ -27,6 +27,11 @@ func (m *MockBoard) setPiece(location *Point, piece Piece) error {
 	return args.Error(0)
 }
 
+func (m *MockBoard) disableLocation(location *Point) error {
+    args := m.Called(location)
+    return args.Error(0)
+}
+
 func (m *MockBoard) getVulnerables(color string) ([]*Point, error) {
     args := m.Called(color)
     return args.Get(0).([]*Point), args.Error(1)

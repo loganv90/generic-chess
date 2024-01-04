@@ -4,6 +4,7 @@ type BoardData struct {
     XSize int
     YSize int
     Pieces []*PieceData
+    Disabled []*DisabledData
     Turn string
     Check bool
     Checkmate bool
@@ -15,6 +16,11 @@ type PieceData struct {
     C string // Color
     X int // X position
     Y int // Y position
+}
+
+type DisabledData struct {
+    X int
+    Y int
 }
 
 type PieceState struct {
