@@ -68,13 +68,18 @@ const ClientTest = () => {
 
     return (
         <>
-            <input
-                type="text"
-                onChange={(e) => setUrlExtension(e.target.value)}
-            />
-            <button
-                onClick={() => setCurrentUrlExtension(`${baseUrl}${urlExtension}`)}
-            />
+            <div style={{textAlign: "left"}}>
+                <label htmlFor="two">Two player: </label>
+                <button id="two" name="two" onClick={() => setCurrentUrlExtension(`${baseUrl}/two`)} />
+                <br />
+                <label htmlFor="four">Four player: </label>
+                <button id="four" name="four" onClick={() => setCurrentUrlExtension(`${baseUrl}/four`)} />
+                <br />
+                <label htmlFor="code">Game code: </label>
+                <input type="text" id="code" name="code" onChange={(e) => setUrlExtension(e.target.value)} />
+                <button id="code" name="code" onClick={() => setCurrentUrlExtension(`${baseUrl}/${urlExtension}`)} />
+            </div>
+            <br />
             { currentUrlExtension && <ChessGame urlExtension={currentUrlExtension} /> }
         </>
     )
