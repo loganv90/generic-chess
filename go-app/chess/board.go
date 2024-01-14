@@ -86,7 +86,7 @@ func (s *SimpleBoard) setPiece(location *Point, p Piece) error {
     }
 
     oldPiece, err := s.getPiece(location)
-    if err != nil && oldPiece != nil {
+    if err == nil && oldPiece != nil {
         if pieceLocations, ok := s.pieceLocationsMap[oldPiece.getColor()]; ok {
             removeIndex := -1
             for i, pieceLocation := range pieceLocations {
@@ -95,18 +95,15 @@ func (s *SimpleBoard) setPiece(location *Point, p Piece) error {
                     break
                 }
             }
-            if removeIndex == -1 {
-                return nil
+            if removeIndex != -1 {
+                pieceLocations[removeIndex] = pieceLocations[len(pieceLocations)-1]
+                pieceLocations[len(pieceLocations)-1] = nil
+                pieceLocations = pieceLocations[:len(pieceLocations)-1]
+                s.pieceLocationsMap[oldPiece.getColor()] = pieceLocations
             }
-
-            pieceLocations[removeIndex] = pieceLocations[len(pieceLocations)-1]
-            pieceLocations[len(pieceLocations)-1] = nil
-            pieceLocations = pieceLocations[:len(pieceLocations)-1]
-            s.pieceLocationsMap[oldPiece.getColor()] = pieceLocations
         }
     }
 
-	s.pieces[location.y][location.x] = p
     if p != nil {
         if pieceLocations, ok := s.pieceLocationsMap[p.getColor()]; ok {
             pieceLocations = append(pieceLocations, location)
@@ -120,6 +117,7 @@ func (s *SimpleBoard) setPiece(location *Point, p Piece) error {
         }
     }
 
+	s.pieces[location.y][location.x] = p
     return nil
 }
 
@@ -198,6 +196,7 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
     s.check = false
     s.checkmate = false
     s.stalemate = false
+    // TODO we want to determine somewhere whether the game is over. s.winner = "string" or something
 
     ownPieceLocations, ok := s.pieceLocationsMap[color]
     if !ok {

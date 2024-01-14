@@ -3,6 +3,7 @@ package chess
 
 import (
 	"testing"
+    "slices"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -154,6 +155,38 @@ func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
 		_, ok = piece.(*Rook)
 		assert.True(t, ok)
 	}
+}
+
+func Test_getAndSetPiece(t *testing.T) {
+    s, err := newSimpleBoard(&Point{8, 8})
+    assert.Nil(t, err)
+
+    p := newPawn("white", false, 0, 1)
+    location := &Point{0, 0}
+
+    // adding piece to board
+    err = s.setPiece(location, p)
+    assert.Nil(t, err)
+
+    piece, err := s.getPiece(location)
+    assert.Nil(t, err)
+    assert.Equal(t, p, piece)
+    pieceLocations, ok := s.pieceLocationsMap["white"]
+    assert.True(t, ok)
+    exists := slices.Contains(pieceLocations, location)
+    assert.True(t, exists)
+
+    // removing piece from board
+    err = s.setPiece(location, nil)
+    assert.Nil(t, err)
+
+    piece, err = s.getPiece(location)
+    assert.Nil(t, err)
+    assert.Nil(t, piece)
+    pieceLocations, ok = s.pieceLocationsMap["white"]
+    assert.True(t, ok)
+    exists = slices.Contains(pieceLocations, location)
+    assert.False(t, exists)
 }
 
 func Test_CalculateMoves_default(t *testing.T) {
