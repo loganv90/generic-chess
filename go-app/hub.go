@@ -142,6 +142,10 @@ func (h *Hub) handleMessage(c *Client, unmarshalledMessage []byte) {
         h.handleMoveMessage(message.Data)
     } else if message.Type == "view" {
         h.handleViewMessage(message.Data)
+    } else if message.Type == "undo" {
+        h.handleUndoMessage()
+    } else if message.Type == "redo" {
+        h.handleRedoMessage()
     } else {
         fmt.Println("unknown message type")
     }
@@ -194,6 +198,38 @@ func (h *Hub) handleViewMessage(messageData json.RawMessage) {
     }
 
     message, err := h.createPieceStateMessage(pieceState)
+    if err != nil {
+        fmt.Println("error creating state message")
+        return
+    }
+
+    h.broadcastMessage(message)
+}
+
+func (h *Hub) handleUndoMessage() {
+    err := h.game.Undo()
+    if err != nil {
+        fmt.Println("error undoing move")
+        return
+    }
+        
+    message, err := h.createBoardStateMessage()
+    if err != nil {
+        fmt.Println("error creating state message")
+        return
+    }
+
+    h.broadcastMessage(message)
+}
+
+func (h *Hub) handleRedoMessage() {
+    err := h.game.Redo()
+    if err != nil {
+        fmt.Println("error redoing move")
+        return
+    }
+        
+    message, err := h.createBoardStateMessage()
     if err != nil {
         fmt.Println("error creating state message")
         return

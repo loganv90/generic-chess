@@ -7,6 +7,111 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_UndoAndRedo(t *testing.T) {
+    game, err := NewSimpleGame()
+    assert.Nil(t, err)
+
+    err = game.Execute(4, 6, 4, 4, "") // white pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(4, 1, 4, 3, "") // black pawn advance
+    assert.Nil(t, err)
+
+    err = game.Undo()
+    assert.Nil(t, err)
+
+    err = game.Undo()
+    assert.Nil(t, err)
+
+    err = game.Undo()
+    assert.NotNil(t, err)
+
+	actualPrintedBoard := game.Print()
+	expectedPrintedBoard := strings.Trim(`
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |
+|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |
+|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P white    | P white    | P white    | P white    | P white    | P white    | P white    | P white    |
+|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
+|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
++-------------------------------------------------------------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+
+    err = game.Redo()
+    assert.Nil(t, err)
+
+    err = game.Redo()
+    assert.Nil(t, err)
+
+    err = game.Redo()
+    assert.NotNil(t, err)
+
+	actualPrintedBoard = game.Print()
+	expectedPrintedBoard = strings.Trim(`
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |
+|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P black    | P black    | P black    | P black    |            | P black    | P black    | P black    |
+|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            | P black    |            |            |            |
+|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            | P white    |            |            |            |
+|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |
+|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
+|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
++-------------------------------------------------------------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
 func Test_NewSimpleGame(t *testing.T) {
 	game, err := NewSimpleGame()
 	assert.Nil(t, err)

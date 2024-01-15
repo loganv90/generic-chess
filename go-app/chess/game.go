@@ -187,6 +187,9 @@ func (s *SimpleGame) Undo() error {
 
 func (s *SimpleGame) decrement() {
     s.currentPlayer = (s.currentPlayer - 1) % len(s.players)
+    if s.currentPlayer < 0 {
+        s.currentPlayer = len(s.players) - 1
+    }
     s.b.CalculateMoves(s.turn())
 }
 
@@ -202,6 +205,9 @@ func (s *SimpleGame) Redo() error {
 
 func (s *SimpleGame) increment() {
     s.currentPlayer = (s.currentPlayer + 1) % len(s.players)
+    if s.currentPlayer < 0 {
+        s.currentPlayer = len(s.players) - 1
+    }
     s.b.CalculateMoves(s.turn())
 }
 

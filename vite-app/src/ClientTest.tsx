@@ -108,14 +108,15 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
     })
 
     useEffect(() => {
-        console.log(lastMessage)
         const message = JSON.parse(lastMessage?.data || '{}') as Message
 
         if (message.Type === 'BoardState') {
             const boardData = message.Data as BoardData
+            console.log(boardData)
             setBoardData(boardData)
         } else if (message.Type === 'PieceState') {
             const moveData = message.Data as MoveData
+            console.log(moveData)
             setMoveData(moveData)
         } else {
             console.log('unknown message')

@@ -164,6 +164,9 @@ func (s *SimpleBoard) possibleEnPassant(color string, target *Point) ([]*EnPassa
     enPassants := []*EnPassant{}
 
 	for k, v := range s.enPassantMap {
+        if v == nil {
+            continue
+        }
 		if k != color && target.equals(v.target) {
             enPassants = append(enPassants, v)
 		}
