@@ -29,6 +29,8 @@ type Board interface {
     Size() *Point
 	Print() string
     State() *BoardData
+    Checkmate() bool
+    Stalemate() bool
 }
 
 func newSimpleBoard(size *Point) (*SimpleBoard, error) {
@@ -200,6 +202,7 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
     s.checkmate = false
     s.stalemate = false
     // TODO we want to determine somewhere whether the game is over. s.winner = "string" or something
+    // before we do this we need some concept of which players are still in the game
 
     ownPieceLocations, ok := s.pieceLocationsMap[color]
     if !ok {
@@ -357,6 +360,14 @@ func (s *SimpleBoard) State() *BoardData {
         Checkmate: s.checkmate,
         Stalemate: s.stalemate,
     }
+}
+
+func (s *SimpleBoard) Checkmate() bool {
+    return s.checkmate
+}
+
+func (s *SimpleBoard) Stalemate() bool {
+    return s.stalemate
 }
 
 func (s *SimpleBoard) copy() (*SimpleBoard, error) {

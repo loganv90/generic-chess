@@ -36,6 +36,11 @@ type MoveData struct {
     P bool // is promotion move
 }
 
+type Player struct {
+    color string
+    alive bool
+}
+
 type Point struct {
     x int
     y int

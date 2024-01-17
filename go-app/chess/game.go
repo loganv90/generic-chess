@@ -12,6 +12,7 @@ type Game interface {
 	Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error // called when a player tries to make a move
     State() (*BoardData, error) // called to get the game state
     View(xFrom int, yFrom int) (*PieceState, error) // show valid moves to current player and show all moves to others
+    Player(color string) (*Player, error) // get player by color
 	Undo() error
 	Redo() error
 	Print() string
@@ -33,7 +34,16 @@ func NewSimpleGame() (Game, error) {
 		b: b,
 		i: i,
         currentPlayer: 0,
-        players: []string{"white", "black"},
+        players: []*Player{
+            {
+                color: "white",
+                alive: true,
+            },
+            {
+                color: "black",
+                alive: true,
+            },
+        },
 	}, nil
 }
 
@@ -53,7 +63,24 @@ func NewSimpleFourPlayerGame() (Game, error) {
         b: b,
         i: i,
         currentPlayer: 0,
-        players: []string{"white", "red", "black", "blue"},
+        players: []*Player{
+            {
+                color: "white",
+                alive: true,
+            },
+            {
+                color: "red",
+                alive: true,
+            },
+            {
+                color: "black",
+                alive: true,
+            },
+            {
+                color: "blue",
+                alive: true,
+            },
+        },
     }, nil
 }
 
@@ -61,7 +88,7 @@ type SimpleGame struct {
 	b Board
 	i Invoker
     currentPlayer int
-    players []string
+    players []*Player
 }
 
 func (s *SimpleGame) State() (*BoardData, error) {
@@ -171,8 +198,18 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     }
 }
 
+func (s *SimpleGame) Player(color string) (*Player, error) {
+    for _, p := range s.players {
+        if p.color == color {
+            return p, nil
+        }
+    }
+
+    return nil, fmt.Errorf("player not found")
+}
+
 func (s *SimpleGame) turn() string {
-    return s.players[s.currentPlayer]
+    return s.players[s.currentPlayer].color
 }
 
 func (s *SimpleGame) Undo() error {
@@ -185,14 +222,6 @@ func (s *SimpleGame) Undo() error {
     return nil
 }
 
-func (s *SimpleGame) decrement() {
-    s.currentPlayer = (s.currentPlayer - 1) % len(s.players)
-    if s.currentPlayer < 0 {
-        s.currentPlayer = len(s.players) - 1
-    }
-    s.b.CalculateMoves(s.turn())
-}
-
 func (s *SimpleGame) Redo() error {
     err := s.i.redo()
     if err != nil {
@@ -203,12 +232,37 @@ func (s *SimpleGame) Redo() error {
     return nil
 }
 
-func (s *SimpleGame) increment() {
+func (s *SimpleGame) incrementPlayer() {
     s.currentPlayer = (s.currentPlayer + 1) % len(s.players)
     if s.currentPlayer < 0 {
         s.currentPlayer = len(s.players) - 1
     }
+}
+
+func (s *SimpleGame) decrementPlayer() {
+    s.currentPlayer = (s.currentPlayer - 1) % len(s.players)
+    if s.currentPlayer < 0 {
+        s.currentPlayer = len(s.players) - 1
+    }
+}
+
+// TODO we're treating checkmate and stalemate the same for now
+func (s *SimpleGame) decrement() {
+    if s.b.Checkmate() || s.b.Stalemate() {
+        s.players[s.currentPlayer].alive = true
+    }
+
+    s.decrementPlayer()
     s.b.CalculateMoves(s.turn())
+}
+
+func (s *SimpleGame) increment() {
+    s.incrementPlayer()
+    s.b.CalculateMoves(s.turn())
+
+    if s.b.Checkmate() || s.b.Stalemate() {
+        s.players[s.currentPlayer].alive = false
+    }
 }
 
 func (s *SimpleGame) Print() string {

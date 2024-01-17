@@ -112,6 +112,42 @@ func Test_UndoAndRedo(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
+func Test_AliveAndDead(t *testing.T) {
+    game, err := NewSimpleGame()
+    assert.Nil(t, err)
+
+    err = game.Execute(4, 6, 4, 4, "") // white pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(0, 1, 0, 2, "") // black pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(5, 7, 2, 4, "") // white bishop advance
+    assert.Nil(t, err)
+
+    err = game.Execute(0, 2, 0, 3, "") // black pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(3, 7, 5, 5, "") // white queen advance
+    assert.Nil(t, err)
+
+    err = game.Execute(0, 3, 0, 4, "") // black pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(5, 5, 5, 1, "") // white queen checkmate
+    assert.Nil(t, err)
+
+    blackPlayer, err := game.Player("black")
+    assert.Nil(t, err)
+    assert.False(t, blackPlayer.alive)
+
+    err = game.Undo()
+
+    blackPlayer, err = game.Player("black")
+    assert.Nil(t, err)
+    assert.True(t, blackPlayer.alive)
+}
+
 func Test_NewSimpleGame(t *testing.T) {
 	game, err := NewSimpleGame()
 	assert.Nil(t, err)

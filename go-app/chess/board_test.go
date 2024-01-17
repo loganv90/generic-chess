@@ -93,6 +93,16 @@ func (m *MockBoard) State() *BoardData {
     return args.Get(0).(*BoardData)
 }
 
+func (m *MockBoard) Checkmate() bool {
+    args := m.Called()
+    return args.Bool(0)
+}
+
+func (m *MockBoard) Stalemate() bool {
+    args := m.Called()
+    return args.Bool(0)
+}
+
 func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
     s, err := createSimpleBoardWithDefaultPieceLocations()
 	assert.Nil(t, err)
