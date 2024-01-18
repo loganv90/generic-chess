@@ -34,6 +34,7 @@ func NewSimpleGame() (Game, error) {
 		b: b,
 		i: i,
         currentPlayer: 0,
+        winningPlayer: -1,
         players: []*Player{
             {
                 color: "white",
@@ -63,6 +64,7 @@ func NewSimpleFourPlayerGame() (Game, error) {
         b: b,
         i: i,
         currentPlayer: 0,
+        winningPlayer: -1,
         players: []*Player{
             {
                 color: "white",
@@ -84,15 +86,29 @@ func NewSimpleFourPlayerGame() (Game, error) {
     }, nil
 }
 
+// TODO we might want to make an addition to the invoker class such that we can store player state
 type SimpleGame struct {
 	b Board
 	i Invoker
     currentPlayer int
+    winningPlayer int
     players []*Player
 }
 
 func (s *SimpleGame) State() (*BoardData, error) {
-    return s.b.State(), nil
+    boardData := s.b.State()
+
+    currentPlayer, err := s.getCurrentPlayer()
+    if err == nil {
+        boardData.CurrentPlayer = currentPlayer.color
+    }
+
+    winningPlayer, err := s.getWinningPlayer()
+    if err == nil {
+        boardData.WinningPlayer = winningPlayer.color
+    }
+
+    return boardData, nil
 }
 
 func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error {
@@ -154,7 +170,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         }, nil
     }
 
-    if s.turn() == piece.getColor() {
+    currentPlayer, err := s.getCurrentPlayer()
+    if err == nil && currentPlayer.color == piece.getColor() {
         moves, err := s.b.ValidMoves(location)
         if err != nil {
             return &PieceState{
@@ -208,8 +225,20 @@ func (s *SimpleGame) Player(color string) (*Player, error) {
     return nil, fmt.Errorf("player not found")
 }
 
-func (s *SimpleGame) turn() string {
-    return s.players[s.currentPlayer].color
+func (s *SimpleGame) getCurrentPlayer() (*Player, error) {
+    if s.currentPlayer < 0 || s.currentPlayer >= len(s.players) {
+        return nil, fmt.Errorf("no current player")
+    }
+
+    return s.players[s.currentPlayer], nil
+}
+
+func (s *SimpleGame) getWinningPlayer() (*Player, error) {
+    if s.winningPlayer < 0 || s.winningPlayer >= len(s.players) {
+        return nil, fmt.Errorf("no winning player")
+    }
+
+    return s.players[s.winningPlayer], nil
 }
 
 func (s *SimpleGame) Undo() error {
@@ -232,33 +261,35 @@ func (s *SimpleGame) Redo() error {
     return nil
 }
 
-func (s *SimpleGame) incrementPlayer() {
+func (s *SimpleGame) incrementPlayer() string {
     s.currentPlayer = (s.currentPlayer + 1) % len(s.players)
     if s.currentPlayer < 0 {
         s.currentPlayer = len(s.players) - 1
     }
+    return s.players[s.currentPlayer].color
 }
 
-func (s *SimpleGame) decrementPlayer() {
+func (s *SimpleGame) decrementPlayer() string {
     s.currentPlayer = (s.currentPlayer - 1) % len(s.players)
     if s.currentPlayer < 0 {
         s.currentPlayer = len(s.players) - 1
     }
+    return s.players[s.currentPlayer].color
 }
 
-// TODO we're treating checkmate and stalemate the same for now
+// TODO we're going to have to determine the winning player in the increment/decrement stuff
 func (s *SimpleGame) decrement() {
     if s.b.Checkmate() || s.b.Stalemate() {
         s.players[s.currentPlayer].alive = true
     }
 
-    s.decrementPlayer()
-    s.b.CalculateMoves(s.turn())
+    currentPlayerColor := s.decrementPlayer()
+    s.b.CalculateMoves(currentPlayerColor)
 }
 
 func (s *SimpleGame) increment() {
-    s.incrementPlayer()
-    s.b.CalculateMoves(s.turn())
+    currentPlayerColor := s.incrementPlayer()
+    s.b.CalculateMoves(currentPlayerColor)
 
     if s.b.Checkmate() || s.b.Stalemate() {
         s.players[s.currentPlayer].alive = false

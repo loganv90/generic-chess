@@ -52,7 +52,6 @@ func newSimpleBoard(size *Point) (*SimpleBoard, error) {
 		enPassantMap: map[string]*EnPassant{},
         vulnerablesMap: map[string][]*Point{},
         moveMap: map[Point][]Move{},
-        playerToMove: "",
         check: false,
         checkmate: false,
         stalemate: false,
@@ -68,7 +67,6 @@ type SimpleBoard struct {
 	enPassantMap map[string]*EnPassant
     vulnerablesMap map[string][]*Point
     moveMap map[Point][]Move
-    playerToMove string
     check bool
     checkmate bool
     stalemate bool
@@ -201,8 +199,6 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
     s.check = false
     s.checkmate = false
     s.stalemate = false
-    // TODO we want to determine somewhere whether the game is over. s.winner = "string" or something
-    // before we do this we need some concept of which players are still in the game
 
     ownPieceLocations, ok := s.pieceLocationsMap[color]
     if !ok {
@@ -244,8 +240,6 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
 
     s.checkmate = s.check && len(s.moveMap) == 0
     s.stalemate = !s.check && len(s.moveMap) == 0
-
-    s.playerToMove = color
 
     return nil
 }
@@ -355,7 +349,6 @@ func (s *SimpleBoard) State() *BoardData {
         YSize: s.size.y,
         Disabled: disabled,
         Pieces: pieces,
-        Turn: s.playerToMove,
         Check: s.check,
         Checkmate: s.checkmate,
         Stalemate: s.stalemate,

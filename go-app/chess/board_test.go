@@ -212,7 +212,6 @@ func Test_CalculateMoves_default(t *testing.T) {
     }
 
     assert.Equal(t, 20, moveCount)
-    assert.Equal(t, "white", boardData.Turn)
     assert.False(t, boardData.Check)
     assert.False(t, boardData.Checkmate)
     assert.False(t, boardData.Stalemate)
@@ -235,7 +234,6 @@ func Test_CalculateMoves_check(t *testing.T) {
     }
 
     assert.Equal(t, 1, moveCount)
-    assert.Equal(t, "white", boardData.Turn)
     assert.True(t, boardData.Check)
     assert.False(t, boardData.Checkmate)
     assert.False(t, boardData.Stalemate)
@@ -258,7 +256,6 @@ func Test_CalculateMoves_checkmate(t *testing.T) {
     }
 
     assert.Equal(t, 0, moveCount)
-    assert.Equal(t, "white", boardData.Turn)
     assert.True(t, boardData.Check)
     assert.True(t, boardData.Checkmate)
     assert.False(t, boardData.Stalemate)
@@ -281,7 +278,6 @@ func Test_CalculateMoves_stalemate(t *testing.T) {
     }
 
     assert.Equal(t, 0, moveCount)
-    assert.Equal(t, "white", boardData.Turn)
     assert.False(t, boardData.Check)
     assert.False(t, boardData.Checkmate)
     assert.True(t, boardData.Stalemate)
@@ -305,7 +301,6 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
     }
 
     assert.Equal(t, 13, moveCount)
-    assert.Equal(t, "white", boardData.Turn)
     assert.False(t, boardData.Check)
     assert.False(t, boardData.Checkmate)
     assert.False(t, boardData.Stalemate)
@@ -328,7 +323,6 @@ func Test_CalculateMoves_promotion(t *testing.T) {
     }
 
     assert.Equal(t, 7, moveCount)
-    assert.Equal(t, "white", boardData.Turn)
     assert.False(t, boardData.Check)
     assert.False(t, boardData.Checkmate)
     assert.False(t, boardData.Stalemate)

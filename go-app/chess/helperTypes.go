@@ -5,7 +5,8 @@ type BoardData struct {
     YSize int
     Pieces []*PieceData
     Disabled []*DisabledData
-    Turn string
+    CurrentPlayer string
+    WinningPlayer string
     Check bool
     Checkmate bool
     Stalemate bool

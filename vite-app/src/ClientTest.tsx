@@ -12,7 +12,8 @@ type BoardData = {
     YSize: number,
     Disabled: { X: number, Y: number }[],
     Pieces: { T: string, C: string, X: number, Y: number }[],
-    Turn: string,
+    CurrentPlayer: string,
+    WinningPlayer: string,
     Check: boolean,
     Checkmate: boolean,
     Stalemate: boolean,
@@ -119,7 +120,7 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
             console.log(moveData)
             setMoveData(moveData)
         } else {
-            console.log('unknown message')
+            console.log('unknown message', lastMessage)
         }
     }, [lastMessage])
 
