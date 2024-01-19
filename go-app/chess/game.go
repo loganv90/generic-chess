@@ -4,15 +4,13 @@ import "fmt"
 
 /*
 Responsible for:
-- keeping track of the board and the invoker to execute moves
-- keeping track of the players in the game
+- keeping track of the board, playerCollection, and the invoker
 */
 type Game interface {
     // these are for the hub
 	Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error // called when a player tries to make a move
     State() (*BoardData, error) // called to get the game state
     View(xFrom int, yFrom int) (*PieceState, error) // show valid moves to current player and show all moves to others
-    Player(color string) (*Player, error) // get player by color
 	Undo() error
 	Redo() error
 	Print() string
@@ -23,7 +21,11 @@ func NewSimpleGame() (Game, error) {
 	if err != nil {
 		return nil, err
 	}
-    b.CalculateMoves("white")
+
+    p, err := createSimplePlayerCollectionWithDefaultPlayers()
+    if err != nil {
+        return nil, err
+    }
 
 	i, err := invokerFactoryInstance.newSimpleInvoker()
 	if err != nil {
@@ -32,19 +34,8 @@ func NewSimpleGame() (Game, error) {
 
 	return &SimpleGame{
 		b: b,
+        p: p,
 		i: i,
-        currentPlayer: 0,
-        winningPlayer: -1,
-        players: []*Player{
-            {
-                color: "white",
-                alive: true,
-            },
-            {
-                color: "black",
-                alive: true,
-            },
-        },
 	}, nil
 }
 
@@ -53,7 +44,11 @@ func NewSimpleFourPlayerGame() (Game, error) {
     if err != nil {
         return nil, err
     }
-    b.CalculateMoves("white")
+
+    p, err := createSimpleFourPlayerCollectionWithDefaultPlayers()
+    if err != nil {
+        return nil, err
+    }
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
     if err != nil {
@@ -62,50 +57,32 @@ func NewSimpleFourPlayerGame() (Game, error) {
 
     return &SimpleGame{
         b: b,
+        p: p,
         i: i,
-        currentPlayer: 0,
-        winningPlayer: -1,
-        players: []*Player{
-            {
-                color: "white",
-                alive: true,
-            },
-            {
-                color: "red",
-                alive: true,
-            },
-            {
-                color: "black",
-                alive: true,
-            },
-            {
-                color: "blue",
-                alive: true,
-            },
-        },
     }, nil
 }
 
 // TODO we might want to make an addition to the invoker class such that we can store player state
+// we're going to have to keep track of player state throughout the game somehow
+// we're going to have to be able to determine the winner somehow as well
+// we should also have the Board class use integers instead of strings for colors
 type SimpleGame struct {
 	b Board
+    p PlayerCollection
 	i Invoker
-    currentPlayer int
-    winningPlayer int
-    players []*Player
 }
 
 func (s *SimpleGame) State() (*BoardData, error) {
     boardData := s.b.State()
 
-    currentPlayer, err := s.getCurrentPlayer()
+    currentPlayer, err := s.p.getCurrent()
     if err == nil {
-        boardData.CurrentPlayer = currentPlayer.color
+        boardData.CurrentPlayer = currentPlayer
     }
 
-    winningPlayer, err := s.getWinningPlayer()
+    winningPlayer, err := s.p.getWinner()
     if err == nil {
-        boardData.WinningPlayer = winningPlayer.color
+        boardData.WinningPlayer = winningPlayer
     }
 
     return boardData, nil
@@ -130,7 +107,12 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return err
     }
 
-    s.increment()
+    currentPlayer, err := s.p.increment()
+    if err != nil {
+        return err
+    }
+
+    s.b.CalculateMoves(currentPlayer)
     return nil
 }
 
@@ -170,8 +152,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         }, nil
     }
 
-    currentPlayer, err := s.getCurrentPlayer()
-    if err == nil && currentPlayer.color == piece.getColor() {
+    currentPlayer, err := s.p.getCurrent()
+    if err == nil && currentPlayer == piece.getColor() {
         moves, err := s.b.ValidMoves(location)
         if err != nil {
             return &PieceState{
@@ -215,39 +197,18 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     }
 }
 
-func (s *SimpleGame) Player(color string) (*Player, error) {
-    for _, p := range s.players {
-        if p.color == color {
-            return p, nil
-        }
-    }
-
-    return nil, fmt.Errorf("player not found")
-}
-
-func (s *SimpleGame) getCurrentPlayer() (*Player, error) {
-    if s.currentPlayer < 0 || s.currentPlayer >= len(s.players) {
-        return nil, fmt.Errorf("no current player")
-    }
-
-    return s.players[s.currentPlayer], nil
-}
-
-func (s *SimpleGame) getWinningPlayer() (*Player, error) {
-    if s.winningPlayer < 0 || s.winningPlayer >= len(s.players) {
-        return nil, fmt.Errorf("no winning player")
-    }
-
-    return s.players[s.winningPlayer], nil
-}
-
 func (s *SimpleGame) Undo() error {
     err := s.i.undo()
     if err != nil {
         return err
     }
 
-    s.decrement()
+    currentPlayer, err := s.p.decrement()
+    if err != nil {
+        return err
+    }
+
+    s.b.CalculateMoves(currentPlayer)
     return nil
 }
 
@@ -257,10 +218,16 @@ func (s *SimpleGame) Redo() error {
         return err
     }
 
-    s.increment()
+    currentPlayer, err := s.p.increment()
+    if err != nil {
+        return err
+    }
+
+    s.b.CalculateMoves(currentPlayer)
     return nil
 }
 
+/*
 func (s *SimpleGame) incrementPlayer() string {
     s.currentPlayer = (s.currentPlayer + 1) % len(s.players)
     if s.currentPlayer < 0 {
@@ -277,7 +244,6 @@ func (s *SimpleGame) decrementPlayer() string {
     return s.players[s.currentPlayer].color
 }
 
-// TODO we're going to have to determine the winning player in the increment/decrement stuff
 func (s *SimpleGame) decrement() {
     if s.b.Checkmate() || s.b.Stalemate() {
         s.players[s.currentPlayer].alive = true
@@ -295,6 +261,7 @@ func (s *SimpleGame) increment() {
         s.players[s.currentPlayer].alive = false
     }
 }
+*/
 
 func (s *SimpleGame) Print() string {
 	return s.b.Print()
