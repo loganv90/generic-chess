@@ -45,7 +45,11 @@ func createSimpleBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
     simpleBoard.setPiece(&Point{6, 7}, newKnight(color2))
     simpleBoard.setPiece(&Point{7, 7}, newRook(color2, false))
 
-    simpleBoard.CalculateMoves(color2)
+    err = simpleBoard.CalculateMoves(color2)
+    if err != nil {
+        return nil, err
+    }
+    
     return simpleBoard, nil
 }
 
@@ -172,7 +176,11 @@ func createSimpleFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error
     simpleBoard.disableLocation(&Point{13, 12})
     simpleBoard.disableLocation(&Point{13, 13})
 
-    simpleBoard.CalculateMoves(color2)
+    err = simpleBoard.CalculateMoves(color2)
+    if err != nil {
+        return nil, err
+    }
+
     return simpleBoard, nil
 }
 
@@ -185,7 +193,7 @@ func createSimplePlayerCollectionWithDefaultPlayers() (*SimplePlayerCollection, 
     return newSimplePlayerCollection(players)
 }
 
-func createSimpleFourPlayerCollectionWithDefaultPlayers() (*SimplePlayerCollection, error) {
+func createSimpleFourPlayerPlayerCollectionWithDefaultPlayers() (*SimplePlayerCollection, error) {
     players := []*Player{
         {"white", true},
         {"red", true},

@@ -45,7 +45,7 @@ func NewSimpleFourPlayerGame() (Game, error) {
         return nil, err
     }
 
-    p, err := createSimpleFourPlayerCollectionWithDefaultPlayers()
+    p, err := createSimpleFourPlayerPlayerCollectionWithDefaultPlayers()
     if err != nil {
         return nil, err
     }

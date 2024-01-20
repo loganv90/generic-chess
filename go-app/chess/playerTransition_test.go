@@ -1,7 +1,10 @@
 package chess
 
 import (
+    "testing"
+
 	"github.com/stretchr/testify/mock"
+    "github.com/stretchr/testify/assert"
 )
 
 type MockPlayerTransitionFactory struct {
@@ -30,5 +33,31 @@ func (m *MockPlayerTransition) execute() error {
 func (m *MockPlayerTransition) undo() error {
 	args := m.Called()
 	return args.Error(0)
+}
+
+func Test_IncrementalTransition(t *testing.T) {
+	board := &MockBoard{}
+    playerCollection := &MockPlayerCollection{}
+
+    playerCollection.On("getCurrent").Return("white", nil)
+    playerCollection.On("getNext").Return(&Player{"black", true}, nil)
+    board.On("CalculateMoves", "black").Return(nil)
+    board.On("Checkmate").Return(false)
+    board.On("Stalemate").Return(false)
+    incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection)
+    assert.Nil(t, err)
+
+    playerCollection.On("setCurrent", "black").Return(nil)
+    board.On("CalculateMoves", "black").Return(nil)
+    err = incrementalTransition.execute()
+    assert.Nil(t, err)
+
+    playerCollection.On("setCurrent", "white").Return(nil)
+    board.On("CalculateMoves", "white").Return(nil)
+    err = incrementalTransition.undo()
+    assert.Nil(t, err)
+
+	board.AssertExpectations(t)
+	playerCollection.AssertExpectations(t)
 }
 

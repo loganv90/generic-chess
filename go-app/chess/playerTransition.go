@@ -29,7 +29,10 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
             break
         }
 
-        b.CalculateMoves(newPlayer.color)
+        err = b.CalculateMoves(newPlayer.color)
+        if err != nil {
+            return nil, err
+        }
 
         if b.Checkmate() {
             eliminatedColors = append(eliminatedColors, newPlayer.color)
@@ -69,25 +72,43 @@ type IncrementalTransition struct {
 }
 
 func (s *IncrementalTransition) execute() error {
-    s.p.setCurrent(s.newColor)
-
-    for _, color := range s.eliminatedColors {
-        s.p.eliminate(color)
+    err := s.p.setCurrent(s.newColor)
+    if err != nil {
+        return err
     }
 
-    s.b.CalculateMoves(s.newColor)
+    for _, color := range s.eliminatedColors {
+        err = s.p.eliminate(color)
+        if err != nil {
+            return err
+        }
+    }
+
+    err = s.b.CalculateMoves(s.newColor)
+    if err != nil {
+        return err
+    }
 
     return nil
 }
 
 func (s *IncrementalTransition) undo() error {
-    s.p.setCurrent(s.oldColor)
-
-    for _, color := range s.eliminatedColors {
-        s.p.restore(color)
+    err := s.p.setCurrent(s.oldColor)
+    if err != nil {
+        return err
     }
 
-    s.b.CalculateMoves(s.oldColor)
+    for _, color := range s.eliminatedColors {
+        err = s.p.restore(color)
+        if err != nil {
+            return err
+        }
+    }
+
+    err = s.b.CalculateMoves(s.oldColor)
+    if err != nil {
+        return err
+    }
 
     return nil
 }
