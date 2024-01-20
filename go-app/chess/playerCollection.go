@@ -9,8 +9,7 @@ Responsible for:
 - keeping track of the players in the game
 */
 type PlayerCollection interface {
-    increment() (string, error)
-    decrement() (string, error)
+    getNext() (*Player, error)
     eliminate(color string) error
     restore(color string) error
     getCurrent() (string, error)
@@ -48,54 +47,30 @@ type SimplePlayerCollection struct {
     winningPlayer int
 }
 
-func (s *SimplePlayerCollection) increment() (string, error) {
+func (s *SimplePlayerCollection) getNext() (*Player, error) {
     currentPlayer := s.currentPlayer
 
     for {
-        s.incrementOnce()
+        currentPlayer = s.incrementOnce(currentPlayer)
 
         if s.currentPlayer == currentPlayer {
             break
         }
 
-        if s.players[s.currentPlayer].alive {
+        if s.players[currentPlayer].alive {
             break
         }
     }
 
-    return s.players[s.currentPlayer].color, nil
+    return s.players[currentPlayer], nil
 }
 
-func (s *SimplePlayerCollection) incrementOnce() {
-    s.currentPlayer = (s.currentPlayer + 1) % len(s.players)
-    if s.currentPlayer < 0 {
-        s.currentPlayer = len(s.players) - 1
+func (s *SimplePlayerCollection) incrementOnce(start int) int {
+    end := (start + 1) % len(s.players)
+    if end < 0 {
+        end = len(s.players) - 1
     }
-}
-
-func (s *SimplePlayerCollection) decrement() (string, error) {
-    currentPlayer := s.currentPlayer
-
-    for {
-        s.decrementOnce()
-
-        if s.currentPlayer == currentPlayer {
-            break
-        }
-
-        if s.players[s.currentPlayer].alive {
-            break
-        }
-    }
-
-    return s.players[s.currentPlayer].color, nil
-}
-
-func (s *SimplePlayerCollection) decrementOnce() {
-    s.currentPlayer = (s.currentPlayer - 1) % len(s.players)
-    if s.currentPlayer < 0 {
-        s.currentPlayer = len(s.players) - 1
-    }
+    return end
 }
 
 func (s *SimplePlayerCollection) eliminate(color string) error {

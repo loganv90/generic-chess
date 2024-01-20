@@ -12,6 +12,11 @@ type BoardData struct {
     Stalemate bool
 }
 
+type MoveAndPlayerTransition struct {
+    m Move
+    p PlayerTransition
+}
+
 type PieceData struct {
     T string // Type
     C string // Color

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_incrementAndDecrement(t *testing.T) {
+func Test_getNext(t *testing.T) {
     s, err := newSimplePlayerCollection(
         []*Player{
             {"white", true},
@@ -16,11 +16,11 @@ func Test_incrementAndDecrement(t *testing.T) {
         },
     )
     assert.Nil(t, err)
-    assert.Equal(t, 0, s.currentPlayer)
-    s.increment()
-    assert.Equal(t, 1, s.currentPlayer)
-    s.decrement()
-    assert.Equal(t, 0, s.currentPlayer)
+    playerColor, err := s.getCurrent()
+    assert.Equal(t, "white", playerColor)
+    player, err := s.getNext()
+    assert.Nil(t, err)
+    assert.Equal(t, "black", player.color)
 
     s, err = newSimplePlayerCollection(
         []*Player{
@@ -31,11 +31,11 @@ func Test_incrementAndDecrement(t *testing.T) {
         },
     )
     assert.Nil(t, err)
-    assert.Equal(t, 0, s.currentPlayer)
-    s.increment()
-    assert.Equal(t, 2, s.currentPlayer)
-    s.decrement()
-    assert.Equal(t, 0, s.currentPlayer)
+    playerColor, err = s.getCurrent()
+    assert.Equal(t, "white", playerColor)
+    player, err = s.getNext()
+    assert.Nil(t, err)
+    assert.Equal(t, "blue", player.color)
 
     s, err = newSimplePlayerCollection(
         []*Player{
@@ -46,11 +46,11 @@ func Test_incrementAndDecrement(t *testing.T) {
         },
     )
     assert.Nil(t, err)
-    assert.Equal(t, 0, s.currentPlayer)
-    s.increment()
-    assert.Equal(t, 0, s.currentPlayer)
-    s.decrement()
-    assert.Equal(t, 0, s.currentPlayer)
+    playerColor, err = s.getCurrent()
+    assert.Equal(t, "white", playerColor)
+    player, err = s.getNext()
+    assert.Nil(t, err)
+    assert.Equal(t, "white", player.color)
 
     s, err = newSimplePlayerCollection(
         []*Player{
@@ -61,10 +61,10 @@ func Test_incrementAndDecrement(t *testing.T) {
         },
     )
     assert.Nil(t, err)
-    assert.Equal(t, 0, s.currentPlayer)
-    s.increment()
-    assert.Equal(t, 3, s.currentPlayer)
-    s.decrement()
-    assert.Equal(t, 3, s.currentPlayer)
+    playerColor, err = s.getCurrent()
+    assert.Equal(t, "white", playerColor)
+    player, err = s.getNext()
+    assert.Nil(t, err)
+    assert.Equal(t, "red", player.color)
 }
 

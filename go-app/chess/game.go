@@ -102,17 +102,13 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return fmt.Errorf("move not possible")
     }
 
-    err = s.i.execute(move)
+    playerTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(s.b, s.p)
+
+    err = s.i.execute(move, playerTransition)
     if err != nil {
         return err
     }
 
-    currentPlayer, err := s.p.increment()
-    if err != nil {
-        return err
-    }
-
-    s.b.CalculateMoves(currentPlayer)
     return nil
 }
 
@@ -203,12 +199,6 @@ func (s *SimpleGame) Undo() error {
         return err
     }
 
-    currentPlayer, err := s.p.decrement()
-    if err != nil {
-        return err
-    }
-
-    s.b.CalculateMoves(currentPlayer)
     return nil
 }
 
@@ -218,50 +208,8 @@ func (s *SimpleGame) Redo() error {
         return err
     }
 
-    currentPlayer, err := s.p.increment()
-    if err != nil {
-        return err
-    }
-
-    s.b.CalculateMoves(currentPlayer)
     return nil
 }
-
-/*
-func (s *SimpleGame) incrementPlayer() string {
-    s.currentPlayer = (s.currentPlayer + 1) % len(s.players)
-    if s.currentPlayer < 0 {
-        s.currentPlayer = len(s.players) - 1
-    }
-    return s.players[s.currentPlayer].color
-}
-
-func (s *SimpleGame) decrementPlayer() string {
-    s.currentPlayer = (s.currentPlayer - 1) % len(s.players)
-    if s.currentPlayer < 0 {
-        s.currentPlayer = len(s.players) - 1
-    }
-    return s.players[s.currentPlayer].color
-}
-
-func (s *SimpleGame) decrement() {
-    if s.b.Checkmate() || s.b.Stalemate() {
-        s.players[s.currentPlayer].alive = true
-    }
-
-    currentPlayerColor := s.decrementPlayer()
-    s.b.CalculateMoves(currentPlayerColor)
-}
-
-func (s *SimpleGame) increment() {
-    currentPlayerColor := s.incrementPlayer()
-    s.b.CalculateMoves(currentPlayerColor)
-
-    if s.b.Checkmate() || s.b.Stalemate() {
-        s.players[s.currentPlayer].alive = false
-    }
-}
-*/
 
 func (s *SimpleGame) Print() string {
 	return s.b.Print()
