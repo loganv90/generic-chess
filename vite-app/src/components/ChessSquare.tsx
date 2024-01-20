@@ -23,7 +23,7 @@ const ChessSquare = ({
 }): JSX.Element => {
     const getSquareColor = (): string => {
         if (square.disabled) {
-            return 'gray'
+            return 'dimgray'
         } else if (selected) {
             return 'red'
         } else if (destination) {

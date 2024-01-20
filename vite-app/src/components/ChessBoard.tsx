@@ -5,8 +5,8 @@ import { BoardData, MoveData } from '../ClientTest.tsx'
 const boardStyle: React.CSSProperties = {
     display: 'flex',
     flexWrap: 'wrap',
-    width: '500px',
-    height: '500px',
+    width: '800px',
+    height: '800px',
 }
 
 type SquareData = {

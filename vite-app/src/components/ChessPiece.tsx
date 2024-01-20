@@ -15,6 +15,7 @@ const imgStyle: React.CSSProperties = {
     height: '80%',
 }
 
+// TODO add red and blue pieces
 const getImgSrc = (type: string, color: string): string => {
     if (color === 'white') {
         switch (type) {
@@ -47,6 +48,40 @@ const getImgSrc = (type: string, color: string): string => {
                 return '/src/assets/bq.png'
             case 'K':
                 return '/src/assets/bk.png'
+            default:
+                return ''
+        }
+    } else if (color === 'red') {
+        switch (type) {
+            case 'P':
+                return '/src/assets/rp.png'
+            case 'R':
+                return '/src/assets/rr.png'
+            case 'N':
+                return '/src/assets/rn.png'
+            case 'B':
+                return '/src/assets/rb.png'
+            case 'Q':
+                return '/src/assets/rq.png'
+            case 'K':
+                return '/src/assets/rk.png'
+            default:
+                return ''
+        }
+    } else if (color === 'blue') {
+        switch (type) {
+            case 'P':
+                return '/src/assets/lp.png'
+            case 'R':
+                return '/src/assets/lr.png'
+            case 'N':
+                return '/src/assets/ln.png'
+            case 'B':
+                return '/src/assets/lb.png'
+            case 'Q':
+                return '/src/assets/lq.png'
+            case 'K':
+                return '/src/assets/lk.png'
             default:
                 return ''
         }

@@ -62,10 +62,7 @@ func NewSimpleFourPlayerGame() (Game, error) {
     }, nil
 }
 
-// TODO we might want to make an addition to the invoker class such that we can store player state
-// we're going to have to keep track of player state throughout the game somehow
-// we're going to have to be able to determine the winner somehow as well
-// we should also have the Board class use integers instead of strings for colors
+// TODO we're going to have to be able to determine the winner somehow as well
 type SimpleGame struct {
 	b Board
     p PlayerCollection
