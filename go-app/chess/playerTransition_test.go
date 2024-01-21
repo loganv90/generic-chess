@@ -11,6 +11,16 @@ type MockPlayerTransitionFactory struct {
 	mock.Mock
 }
 
+func (m *MockPlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection) (PlayerTransition, error) {
+	args := m.Called(b, p)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	} else {
+		return args.Get(0).(PlayerTransition), args.Error(1)
+	}
+}
+
 func (m *MockPlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection) (*IncrementalTransition, error) {
 	args := m.Called(b, p)
 
@@ -42,6 +52,8 @@ func Test_IncrementalTransition(t *testing.T) {
     playerCollection.On("getCurrent").Return("white", nil)
     playerCollection.On("getWinner").Return("", nil)
     playerCollection.On("getNext").Return(&Player{"black", true}, nil)
+    playerCollection.On("setCurrent", "black").Return(nil)
+    playerCollection.On("setCurrent", "white").Return(nil)
     board.On("CalculateMoves", "black").Return(nil)
     board.On("Checkmate").Return(false)
     board.On("Stalemate").Return(false)

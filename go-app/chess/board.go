@@ -233,6 +233,7 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
                 continue
             }
 
+            // TODO this is a good spot to create the player transition
             move.getAction().b = s
             s.moveMap[*ownPieceLocation] = append(s.moveMap[*ownPieceLocation], move)
         }

@@ -62,7 +62,6 @@ func NewSimpleFourPlayerGame() (Game, error) {
     }, nil
 }
 
-// TODO we're going to have to be able to determine the winner somehow as well
 type SimpleGame struct {
 	b Board
     p PlayerCollection
@@ -103,12 +102,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return fmt.Errorf("move not possible")
     }
 
-    playerTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(s.b, s.p)
-    if err != nil {
-        return err
-    }
-
-    err = s.i.execute(move, playerTransition)
+    err = s.i.execute(move, s.b, s.p)
     if err != nil {
         return err
     }

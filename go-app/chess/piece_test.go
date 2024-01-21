@@ -38,6 +38,8 @@ func (m *MockPiece) print() string {
 }
 
 func Test_Pawn_Moves_Unmoved(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
 	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]*EnPassant{}, nil)
@@ -57,6 +59,8 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
 }
 
 func Test_Pawn_Moves_Moved(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, nil)
 	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]*EnPassant{}, nil)
@@ -75,6 +79,8 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
 }
 
 func Test_Pawn_Moves_Capturing(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	board.On("getPiece", &Point{2, 4}).Return(nil, nil)
 	board.On("getPiece", &Point{3, 4}).Return(nil, nil)
@@ -102,6 +108,8 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
 }
 
 func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	board.On("getPiece", &Point{2, 4}).Return(nil, nil)
 	board.On("getPiece", &Point{3, 4}).Return(nil, nil)
@@ -128,6 +136,8 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 }
 
 func Test_Pawn_Moves_Promotion(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	board.On("getPiece", &Point{3, 4}).Return(nil, nil)
 	board.On("getPiece", &Point{3, 5}).Return(nil, errors.New(""))
@@ -150,6 +160,8 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
 }
 
 func Test_Knight_Moves(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
     moveFactory := &MockMoveFactory{}
 
@@ -188,6 +200,8 @@ func Test_Knight_Moves(t *testing.T) {
 }
 
 func Test_Bishop_Moves(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
     moveFactory := &MockMoveFactory{}
 
@@ -231,6 +245,8 @@ func Test_Bishop_Moves(t *testing.T) {
 }
 
 func Test_Rook_Moves(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	moveFactory := &MockMoveFactory{}
 
@@ -279,6 +295,8 @@ func Test_Rook_Moves(t *testing.T) {
 }
 
 func Test_Queen_Moves(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	moveFactory := &MockMoveFactory{}
 
@@ -340,6 +358,8 @@ func Test_Queen_Moves(t *testing.T) {
 }
 
 func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	moveFactory := &MockMoveFactory{}
 
@@ -392,6 +412,8 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 }
 
 func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
+    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
+
 	board := &MockBoard{}
 	moveFactory := &MockMoveFactory{}
 

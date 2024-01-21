@@ -18,7 +18,7 @@ func (f *ConcreteInvokerFactory) newSimpleInvoker() (*SimpleInvoker, error) {
 }
 
 type Invoker interface {
-	execute(m Move, p PlayerTransition) error
+	execute(m Move, b Board, p PlayerCollection) error
 	undo() error
 	redo() error
 }
@@ -28,18 +28,23 @@ type SimpleInvoker struct {
 	index   int
 }
 
-func (s *SimpleInvoker) execute(m Move, p PlayerTransition) error {
+func (s *SimpleInvoker) execute(m Move, b Board, p PlayerCollection) error {
 	err := m.execute()
 	if err != nil {
 		return err
 	}
 
-    err = p.execute()
+    t, err := playerTransitionFactoryInstance.newIncrementalTransitionAsPlayerTransition(b, p)
     if err != nil {
         return err
     }
 
-	s.history = append(s.history[:s.index], MoveAndPlayerTransition{m, p})
+    err = t.execute()
+    if err != nil {
+        return err
+    }
+
+	s.history = append(s.history[:s.index], MoveAndPlayerTransition{m, t})
 	s.index++
 
 	return nil

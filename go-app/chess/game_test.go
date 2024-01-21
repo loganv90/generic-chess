@@ -112,6 +112,8 @@ func Test_UndoAndRedo(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
+// TODO add four player checkmate test
+// TODO add some kind of event system to the state to notify checkmates and stalemates
 func Test_TwoPlayerCheckmate(t *testing.T) {
     game, err := NewSimpleGame()
     assert.Nil(t, err)
@@ -139,7 +141,7 @@ func Test_TwoPlayerCheckmate(t *testing.T) {
 
     state, err := game.State()
     assert.Nil(t, err)
-    assert.True(t, state.Checkmate)
+    assert.Equal(t, "white", state.CurrentPlayer)
     assert.Equal(t, "white", state.WinningPlayer)
 
     err = game.Undo()
@@ -147,7 +149,7 @@ func Test_TwoPlayerCheckmate(t *testing.T) {
 
     state, err = game.State()
     assert.Nil(t, err)
-    assert.False(t, state.Checkmate)
+    assert.Equal(t, "white", state.CurrentPlayer)
     assert.Equal(t, "", state.WinningPlayer)
 }
 

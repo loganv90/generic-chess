@@ -7,6 +7,8 @@ import (
 )
 
 func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
+    t.Cleanup(func() { playerTransitionFactoryInstance = &ConcretePlayerTransitionFactory{} })
+
 	move1 := &MockMove{}
 	move1.On("execute").Return(nil)
 	move1.On("undo").Return(nil)
@@ -23,14 +25,25 @@ func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
     playerTransition2.On("execute").Return(nil)
     playerTransition2.On("undo").Return(nil)
 
+    board1 := &MockBoard{}
+    playerCollection1 := &MockPlayerCollection{}
+
+    board2 := &MockBoard{}
+    playerCollection2 := &MockPlayerCollection{}
+
+	playerTransitionFactory := &MockPlayerTransitionFactory{}
+	playerTransitionFactory.On("newIncrementalTransitionAsPlayerTransition", board1, playerCollection1).Return(playerTransition1, nil)
+	playerTransitionFactory.On("newIncrementalTransitionAsPlayerTransition", board2, playerCollection2).Return(playerTransition2, nil)
+	playerTransitionFactoryInstance = playerTransitionFactory
+
 	simpleInvoker, err := invokerFactoryInstance.newSimpleInvoker()
 	assert.Nil(t, err)
 
-	err = simpleInvoker.execute(move1, playerTransition1)
+	err = simpleInvoker.execute(move1, board1, playerCollection1)
 	assert.Nil(t, err)
 	move1.AssertNumberOfCalls(t, "execute", 1)
 
-	err = simpleInvoker.execute(move2, playerTransition2)
+	err = simpleInvoker.execute(move2, board2, playerCollection2)
 	assert.Nil(t, err)
 	move2.AssertNumberOfCalls(t, "execute", 1)
 
@@ -63,6 +76,8 @@ func Test_SimpleInvoker_UndoAndRedoWithNoMoves(t *testing.T) {
 }
 
 func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
+    t.Cleanup(func() { playerTransitionFactoryInstance = &ConcretePlayerTransitionFactory{} })
+
 	move1 := &MockMove{}
 	move1.On("execute").Return(nil)
 	move1.On("undo").Return(nil)
@@ -87,12 +102,27 @@ func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
     playerTransition3.On("execute").Return(nil)
     playerTransition3.On("undo").Return(nil)
 
+    board1 := &MockBoard{}
+    playerCollection1 := &MockPlayerCollection{}
+
+    board2 := &MockBoard{}
+    playerCollection2 := &MockPlayerCollection{}
+
+    board3 := &MockBoard{}
+    playerCollection3 := &MockPlayerCollection{}
+
+	playerTransitionFactory := &MockPlayerTransitionFactory{}
+	playerTransitionFactory.On("newIncrementalTransitionAsPlayerTransition", board1, playerCollection1).Return(playerTransition1, nil)
+	playerTransitionFactory.On("newIncrementalTransitionAsPlayerTransition", board2, playerCollection2).Return(playerTransition2, nil)
+	playerTransitionFactory.On("newIncrementalTransitionAsPlayerTransition", board3, playerCollection3).Return(playerTransition3, nil)
+	playerTransitionFactoryInstance = playerTransitionFactory
+
 	simpleInvoker, err := invokerFactoryInstance.newSimpleInvoker()
 	assert.Nil(t, err)
 
-	err = simpleInvoker.execute(move1, playerTransition1)
+	err = simpleInvoker.execute(move1, board1, playerCollection1)
 	assert.Nil(t, err)
-	err = simpleInvoker.execute(move2, playerTransition2)
+	err = simpleInvoker.execute(move2, board2, playerCollection2)
 	assert.Nil(t, err)
 
 	err = simpleInvoker.undo()
@@ -100,7 +130,7 @@ func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
 	err = simpleInvoker.undo()
 	assert.Nil(t, err)
 
-	err = simpleInvoker.execute(move3, playerTransition3)
+	err = simpleInvoker.execute(move3, board3, playerCollection3)
 	assert.Nil(t, err)
 	err = simpleInvoker.redo()
 	assert.NotNil(t, err)

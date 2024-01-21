@@ -3,10 +3,15 @@ package chess
 var playerTransitionFactoryInstance = PlayerTransitionFactory(&ConcretePlayerTransitionFactory{})
 
 type PlayerTransitionFactory interface {
-	newIncrementalTransition(b Board, p PlayerCollection) (*IncrementalTransition, error)
+	newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection) (PlayerTransition, error)
+    newIncrementalTransition(b Board, p PlayerCollection) (*IncrementalTransition, error)
 }
 
 type ConcretePlayerTransitionFactory struct{}
+
+func (f *ConcretePlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection) (PlayerTransition, error) {
+    return f.newIncrementalTransition(b, p)
+}
 
 func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection) (*IncrementalTransition, error) {
     oldCurrent, err := p.getCurrent()
@@ -41,6 +46,12 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
 
         if b.Checkmate() {
             eliminated = append(eliminated, newPlayer.color)
+
+            err = p.setCurrent(newPlayer.color)
+            if err != nil {
+                return nil, err
+            }
+
             continue
         } else if b.Stalemate() {
             newCurrent = newPlayer.color
@@ -50,6 +61,11 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
             newCurrent = newPlayer.color
             break
         }
+    }
+    
+    err = p.setCurrent(oldCurrent)
+    if err != nil {
+        return nil, err
     }
 
     return &IncrementalTransition{
