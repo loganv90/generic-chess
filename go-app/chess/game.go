@@ -73,14 +73,18 @@ func (s *SimpleGame) State() (*BoardData, error) {
     boardData := s.b.State()
 
     currentPlayer, err := s.p.getCurrent()
-    if err == nil {
-        boardData.CurrentPlayer = currentPlayer
+    if err != nil {
+        return nil, err
     }
 
+    boardData.CurrentPlayer = currentPlayer
+
     winningPlayer, err := s.p.getWinner()
-    if err == nil {
-        boardData.WinningPlayer = winningPlayer
+    if err != nil {
+        return nil, err
     }
+
+    boardData.WinningPlayer = winningPlayer
 
     return boardData, nil
 }
@@ -100,6 +104,9 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
     }
 
     playerTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(s.b, s.p)
+    if err != nil {
+        return err
+    }
 
     err = s.i.execute(move, playerTransition)
     if err != nil {

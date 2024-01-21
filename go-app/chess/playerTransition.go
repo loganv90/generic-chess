@@ -9,23 +9,28 @@ type PlayerTransitionFactory interface {
 type ConcretePlayerTransitionFactory struct{}
 
 func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection) (*IncrementalTransition, error) {
-    oldColor, err := p.getCurrent()
+    oldCurrent, err := p.getCurrent()
     if err != nil {
         return nil, err
     }
 
-    newColor := ""
-    winner := ""
-    eliminatedColors := []string{}
+    oldWinner, err := p.getWinner()
+    if err != nil {
+        return nil, err
+    }
+
+    newCurrent := ""
+    newWinner := ""
+    eliminated := []string{}
     for {
         newPlayer, err := p.getNext()
         if err != nil {
             return nil, err
         }
 
-        if newPlayer.color == oldColor {
-            newColor = newPlayer.color
-            winner = newPlayer.color
+        if newPlayer.color == oldCurrent {
+            newCurrent = newPlayer.color
+            newWinner = newPlayer.color
             break
         }
 
@@ -35,14 +40,14 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
         }
 
         if b.Checkmate() {
-            eliminatedColors = append(eliminatedColors, newPlayer.color)
+            eliminated = append(eliminated, newPlayer.color)
             continue
         } else if b.Stalemate() {
-            newColor = newPlayer.color
-            winner = "draw"
+            newCurrent = newPlayer.color
+            newWinner = "draw"
             break
         } else {
-            newColor = newPlayer.color
+            newCurrent = newPlayer.color
             break
         }
     }
@@ -50,10 +55,11 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
     return &IncrementalTransition{
         p: p,
         b: b,
-        oldColor: oldColor,
-        newColor: newColor,
-        winner: winner,
-        eliminatedColors: eliminatedColors,
+        oldCurrent: oldCurrent,
+        newCurrent: newCurrent,
+        newWinner: newWinner,
+        oldWinner: oldWinner,
+        eliminated: eliminated,
     }, nil
 }
 
@@ -65,26 +71,32 @@ type PlayerTransition interface {
 type IncrementalTransition struct {
     p PlayerCollection
     b Board
-    oldColor string
-    newColor string
-    winner string
-    eliminatedColors []string
+    oldCurrent string
+    newCurrent string
+    oldWinner string
+    newWinner string
+    eliminated []string
 }
 
 func (s *IncrementalTransition) execute() error {
-    err := s.p.setCurrent(s.newColor)
+    err := s.p.setCurrent(s.newCurrent)
     if err != nil {
         return err
     }
 
-    for _, color := range s.eliminatedColors {
+    err = s.p.setWinner(s.newWinner)
+    if err != nil {
+        return err
+    }
+
+    for _, color := range s.eliminated {
         err = s.p.eliminate(color)
         if err != nil {
             return err
         }
     }
 
-    err = s.b.CalculateMoves(s.newColor)
+    err = s.b.CalculateMoves(s.newCurrent)
     if err != nil {
         return err
     }
@@ -93,19 +105,24 @@ func (s *IncrementalTransition) execute() error {
 }
 
 func (s *IncrementalTransition) undo() error {
-    err := s.p.setCurrent(s.oldColor)
+    err := s.p.setCurrent(s.oldCurrent)
     if err != nil {
         return err
     }
 
-    for _, color := range s.eliminatedColors {
+    err = s.p.setWinner(s.oldWinner)
+    if err != nil {
+        return err
+    }
+
+    for _, color := range s.eliminated {
         err = s.p.restore(color)
         if err != nil {
             return err
         }
     }
 
-    err = s.b.CalculateMoves(s.oldColor)
+    err = s.b.CalculateMoves(s.oldCurrent)
     if err != nil {
         return err
     }

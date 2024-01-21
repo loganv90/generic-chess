@@ -40,6 +40,7 @@ func Test_IncrementalTransition(t *testing.T) {
     playerCollection := &MockPlayerCollection{}
 
     playerCollection.On("getCurrent").Return("white", nil)
+    playerCollection.On("getWinner").Return("", nil)
     playerCollection.On("getNext").Return(&Player{"black", true}, nil)
     board.On("CalculateMoves", "black").Return(nil)
     board.On("Checkmate").Return(false)
@@ -48,11 +49,13 @@ func Test_IncrementalTransition(t *testing.T) {
     assert.Nil(t, err)
 
     playerCollection.On("setCurrent", "black").Return(nil)
+    playerCollection.On("setWinner", "").Return(nil)
     board.On("CalculateMoves", "black").Return(nil)
     err = incrementalTransition.execute()
     assert.Nil(t, err)
 
     playerCollection.On("setCurrent", "white").Return(nil)
+    playerCollection.On("setWinner", "").Return(nil)
     board.On("CalculateMoves", "white").Return(nil)
     err = incrementalTransition.undo()
     assert.Nil(t, err)

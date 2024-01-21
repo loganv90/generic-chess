@@ -112,7 +112,7 @@ func Test_UndoAndRedo(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
-func Test_AliveAndDead(t *testing.T) {
+func Test_TwoPlayerCheckmate(t *testing.T) {
     game, err := NewSimpleGame()
     assert.Nil(t, err)
 
@@ -137,17 +137,18 @@ func Test_AliveAndDead(t *testing.T) {
     err = game.Execute(5, 5, 5, 1, "") // white queen checkmate
     assert.Nil(t, err)
 
-    /*
-    blackPlayer, err := game.Player("black")
+    state, err := game.State()
     assert.Nil(t, err)
-    assert.False(t, blackPlayer.alive)
+    assert.True(t, state.Checkmate)
+    assert.Equal(t, "white", state.WinningPlayer)
 
     err = game.Undo()
-
-    blackPlayer, err = game.Player("black")
     assert.Nil(t, err)
-    assert.True(t, blackPlayer.alive)
-    */
+
+    state, err = game.State()
+    assert.Nil(t, err)
+    assert.False(t, state.Checkmate)
+    assert.Equal(t, "", state.WinningPlayer)
 }
 
 func Test_NewSimpleGame(t *testing.T) {

@@ -96,7 +96,8 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
         YSize: 0,
         Disabled: [],
         Pieces: [],
-        Turn: '',
+        CurrentPlayer: '',
+        WinningPlayer: '',
         Check: false,
         Checkmate: false,
         Stalemate: false,
@@ -157,6 +158,10 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
                 view={handleView}
             />
             <div style={{textAlign: "left"}}>
+                <br />
+                Current player: {boardData.CurrentPlayer}
+                <br />
+                Winning player: {boardData.WinningPlayer}
                 <br />
                 <label htmlFor="pieces">Default promotion piece: </label>
                 <select id="pieces" name="pieces" value={promotionPiece} onChange={handlePromotionPiece} >

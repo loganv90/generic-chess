@@ -110,13 +110,18 @@ func (s *SimplePlayerCollection) setCurrent(color string) error {
 
 func (s *SimplePlayerCollection) getWinner() (string, error) {
     if s.winningPlayer < 0 || s.winningPlayer >= len(s.players) {
-        return "", fmt.Errorf("no winning player")
+        return "", nil
     }
 
     return s.players[s.winningPlayer].color, nil
 }
 
 func (s *SimplePlayerCollection) setWinner(color string) error {
+    if color == "" {
+        s.winningPlayer = -1
+        return nil
+    }
+
     if i, ok := s.playerMap[color]; ok {
         s.winningPlayer = i
         return nil
