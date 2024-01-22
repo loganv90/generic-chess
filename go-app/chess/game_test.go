@@ -112,7 +112,6 @@ func Test_UndoAndRedo(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
-// TODO add four player checkmate test
 // TODO add some kind of event system to the state to notify checkmates and stalemates
 func Test_TwoPlayerCheckmate(t *testing.T) {
     game, err := NewSimpleGame()
@@ -120,23 +119,89 @@ func Test_TwoPlayerCheckmate(t *testing.T) {
 
     err = game.Execute(4, 6, 4, 4, "") // white pawn advance
     assert.Nil(t, err)
-
     err = game.Execute(0, 1, 0, 2, "") // black pawn advance
     assert.Nil(t, err)
 
     err = game.Execute(5, 7, 2, 4, "") // white bishop advance
     assert.Nil(t, err)
-
     err = game.Execute(0, 2, 0, 3, "") // black pawn advance
     assert.Nil(t, err)
 
     err = game.Execute(3, 7, 5, 5, "") // white queen advance
     assert.Nil(t, err)
-
     err = game.Execute(0, 3, 0, 4, "") // black pawn advance
     assert.Nil(t, err)
 
     err = game.Execute(5, 5, 5, 1, "") // white queen checkmate
+    assert.Nil(t, err)
+
+    state, err := game.State()
+    assert.Nil(t, err)
+    assert.Equal(t, "white", state.CurrentPlayer)
+    assert.Equal(t, "white", state.WinningPlayer)
+
+    err = game.Undo()
+    assert.Nil(t, err)
+
+    state, err = game.State()
+    assert.Nil(t, err)
+    assert.Equal(t, "white", state.CurrentPlayer)
+    assert.Equal(t, "", state.WinningPlayer)
+}
+
+// TODO disable pieces of eliminated players
+func Test_FourPlayerCheckmate(t *testing.T) {
+    game, err := NewSimpleFourPlayerGame()
+    assert.Nil(t, err)
+
+    err = game.Execute(5, 12, 5, 11, "") // white pawn advance
+    assert.Nil(t, err)
+    err = game.Execute(1, 10, 2, 10, "") // red pawn advance
+    assert.Nil(t, err)
+    err = game.Execute(6, 1, 6, 2, "") // black pawn advance
+    assert.Nil(t, err)
+    err = game.Execute(12, 10, 11, 10, "") // blue pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(7, 12, 7, 11, "") // white pawn advance
+    assert.Nil(t, err)
+    err = game.Execute(1, 3, 2, 3, "") // red pawn advance
+    assert.Nil(t, err)
+    err = game.Execute(5, 0, 7, 2, "") // black bishop advance
+    assert.Nil(t, err)
+    err = game.Execute(12, 3, 11, 3, "") // blue pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(6, 13, 1, 8, "") // white queen checkmate
+    assert.Nil(t, err)
+    err = game.Execute(6, 2, 6, 3, "") // black pawn advance
+    assert.Nil(t, err)
+    err = game.Execute(12, 4, 11, 4, "") // blue pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(8, 13, 2, 7, "") // white bishop advance
+    assert.Nil(t, err)
+    err = game.Execute(6, 0, 6, 2, "") // black queen advance
+    assert.Nil(t, err)
+    err = game.Execute(12, 5, 11, 5, "") // blue pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(1, 8, 12, 8, "") // white queen checkmate
+    assert.Nil(t, err)
+    err = game.Execute(7, 2, 5, 0, "") // black bishop advance
+    assert.Nil(t, err)
+
+    err = game.Execute(12, 8, 8, 8, "") // white queen advance
+    assert.Nil(t, err)
+    err = game.Execute(6, 2, 6, 0, "") // black queen advance
+    assert.Nil(t, err)
+
+    err = game.Execute(2, 7, 6, 3, "") // white bishop advance
+    assert.Nil(t, err)
+    err = game.Execute(5, 0, 6, 1, "") // black bishop advance
+    assert.Nil(t, err)
+
+    err = game.Execute(6, 3, 8, 1, "") // white bishop checkmate
     assert.Nil(t, err)
 
     state, err := game.State()

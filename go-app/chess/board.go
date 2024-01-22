@@ -194,6 +194,9 @@ func (s *SimpleBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
     return moves, nil
 }
 
+// TODO add 3 move repetition and 50 move rule
+// TODO add rule to allow checks and only lose on king capture
+// TODO add rule to check for checkmate and stalemate on all players after every move
 func (s *SimpleBoard) CalculateMoves(color string) error {
     s.moveMap = map[Point][]Move{}
     s.check = false
@@ -233,7 +236,6 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
                 continue
             }
 
-            // TODO this is a good spot to create the player transition
             move.getAction().b = s
             s.moveMap[*ownPieceLocation] = append(s.moveMap[*ownPieceLocation], move)
         }
