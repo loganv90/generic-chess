@@ -14,11 +14,26 @@ func (a *Allegiant) getColor() string {
 	return a.color
 }
 
+type Disableable struct {
+    disabled bool
+}
+
+func (d *Disableable) setDisabled(disabled bool) error {
+    d.disabled = disabled
+    return nil
+}
+
+func (d *Disableable) getDisabled() (bool, error) {
+    return d.disabled, nil
+}
+
 type Piece interface {
 	getColor() string
 	copy() Piece
     setMoved() error
 	moves(Board, *Point) []Move
+    setDisabled(bool) error
+    getDisabled() (bool, error)
 	print() string
 }
 
@@ -108,6 +123,7 @@ func newPawn(color string, moved bool, xDir int, yDir int) *Pawn {
 
 	return &Pawn{
 		Allegiant{color},
+        Disableable{false},
 		moved,
 		forward1,
 		forward2,
@@ -118,6 +134,7 @@ func newPawn(color string, moved bool, xDir int, yDir int) *Pawn {
 
 type Pawn struct {
 	Allegiant
+    Disableable
 	moved bool
 	forward1 *Point
 	forward2 *Point
@@ -132,6 +149,7 @@ func (a *Pawn) print() string {
 func (a *Pawn) copy() Piece {
 	return &Pawn{
 		Allegiant{a.color},
+        Disableable{a.disabled},
 		a.moved,
 		a.forward1,
 		a.forward2,
@@ -147,6 +165,9 @@ func (a *Pawn) setMoved() error {
 
 func (a *Pawn) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
+    if disabled, _ := a.getDisabled(); disabled {
+        return *moves
+    }
 	a.addForward(b, fromLocation, moves)
 	a.addCaptures(b, fromLocation, moves)
 	return *moves
@@ -252,11 +273,13 @@ var knightSimples = []*Point{
 func newKnight(color string) *Knight {
 	return &Knight{
 		Allegiant{color},
+        Disableable{false},
 	}
 }
 
 type Knight struct {
 	Allegiant
+    Disableable
 }
 
 func (n *Knight) print() string {
@@ -266,6 +289,7 @@ func (n *Knight) print() string {
 func (n *Knight) copy() Piece {
 	return &Knight{
 		Allegiant{n.color},
+        Disableable{n.disabled},
 	}
 }
 
@@ -275,6 +299,9 @@ func (n *Knight) setMoved() error {
 
 func (n *Knight) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
+    if disabled, _ := n.getDisabled(); disabled {
+        return *moves
+    }
 	n.addSimples(b, fromLocation, moves)
 	return *moves
 }
@@ -295,11 +322,13 @@ var bishopDirections = []*Point{
 func newBishop(color string) *Bishop {
 	return &Bishop{
 		Allegiant{color},
+        Disableable{false},
 	}
 }
 
 type Bishop struct {
 	Allegiant
+    Disableable
 }
 
 func (s *Bishop) print() string {
@@ -309,6 +338,7 @@ func (s *Bishop) print() string {
 func (s *Bishop) copy() Piece {
 	return &Bishop{
 		Allegiant{s.color},
+        Disableable{s.disabled},
 	}
 }
 
@@ -318,6 +348,9 @@ func (s *Bishop) setMoved() error {
 
 func (s *Bishop) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
+    if disabled, _ := s.getDisabled(); disabled {
+        return *moves
+    }
 	s.addDirections(b, fromLocation, moves)
 	return *moves
 }
@@ -338,12 +371,14 @@ var rookDirections = []*Point{
 func newRook(color string, moved bool) *Rook {
 	return &Rook{
 		Allegiant{color},
+        Disableable{false},
 		moved,
 	}
 }
 
 type Rook struct {
 	Allegiant
+    Disableable
 	moved bool
 }
 
@@ -354,6 +389,7 @@ func (r *Rook) print() string {
 func (r *Rook) copy() Piece {
 	return &Rook{
 		Allegiant{r.color},
+        Disableable{r.disabled},
 		true,
 	}
 }
@@ -365,6 +401,9 @@ func (r *Rook) setMoved() error {
 
 func (r *Rook) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
+    if disabled, _ := r.getDisabled(); disabled {
+        return *moves
+    }
 	r.addDirections(b, fromLocation, moves)
 	return *moves
 }
@@ -389,11 +428,13 @@ var queenDirections = []*Point{
 func newQueen(color string) *Queen {
 	return &Queen{
 		Allegiant{color},
+        Disableable{false},
 	}
 }
 
 type Queen struct {
 	Allegiant
+    Disableable
 }
 
 func (q *Queen) print() string {
@@ -403,6 +444,7 @@ func (q *Queen) print() string {
 func (q *Queen) copy() Piece {
 	return &Queen{
 		Allegiant{q.color},
+        Disableable{q.disabled},
 	}
 }
 
@@ -412,6 +454,9 @@ func (q *Queen) setMoved() error {
 
 func (q *Queen) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
+    if disabled, _ := q.getDisabled(); disabled {
+        return *moves
+    }
 	q.addDirections(b, fromLocation, moves)
 	return *moves
 }
@@ -452,6 +497,7 @@ func newKing(color string, moved bool, xDir int, yDir int) *King {
 
 	return &King{
 		Allegiant{color},
+        Disableable{false},
 		moved,
 		castles,
 	}
@@ -459,6 +505,7 @@ func newKing(color string, moved bool, xDir int, yDir int) *King {
 
 type King struct {
 	Allegiant
+    Disableable
 	moved   bool
 	castles []*CastleDirection
 }
@@ -470,6 +517,7 @@ func (k *King) print() string {
 func (k *King) copy() Piece {
 	return &King{
 		Allegiant{k.color},
+        Disableable{k.disabled},
 		k.moved,
 		k.castles,
 	}
@@ -482,6 +530,9 @@ func (k *King) setMoved() error {
 
 func (k *King) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
+    if disabled, _ := k.getDisabled(); disabled {
+        return *moves
+    }
 	k.addSimples(b, fromLocation, moves)
 	k.addCastles(b, fromLocation, moves)
 	return *moves

@@ -17,6 +17,16 @@ func (m *MockPiece) getColor() string {
 	return args.String(0)
 }
 
+func (m *MockPiece) setDisabled(disabled bool) error {
+    args := m.Called(disabled)
+    return args.Error(0)
+}
+
+func (m *MockPiece) getDisabled() (bool, error) {
+    args := m.Called()
+    return args.Bool(0), args.Error(1)
+}
+
 func (m *MockPiece) copy() Piece {
     args := m.Called()
     return args.Get(0).(Piece)

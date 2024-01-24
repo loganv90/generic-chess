@@ -110,6 +110,10 @@ func (s *IncrementalTransition) execute() error {
         if err != nil {
             return err
         }
+        err = s.b.disablePieces(color, true)
+        if err != nil {
+            return err
+        }
     }
 
     err = s.b.CalculateMoves(s.newCurrent)
@@ -133,6 +137,10 @@ func (s *IncrementalTransition) undo() error {
 
     for _, color := range s.eliminated {
         err = s.p.restore(color)
+        if err != nil {
+            return err
+        }
+        err = s.b.disablePieces(color, false)
         if err != nil {
             return err
         }

@@ -22,6 +22,9 @@ type Board interface {
     possibleEnPassant(color string, location *Point) ([]*EnPassant, error)
     clearEnPassant(color string) error
 
+    // these are for the playerTransition
+    disablePieces(color string, disable bool) error
+
     // these are for the game
     PotentialMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece without considering other pieces
     ValidMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece using the moveMap
@@ -70,6 +73,17 @@ type SimpleBoard struct {
     check bool
     checkmate bool
     stalemate bool
+}
+
+func (s *SimpleBoard) disablePieces(color string, disable bool) error {
+    for _, pieceLocation := range s.pieceLocationsMap[color] {
+        piece, err := s.getPiece(pieceLocation)
+        if err != nil {
+            continue
+        }
+        piece.setDisabled(disable)
+    }
+    return nil
 }
 
 func (s *SimpleBoard) getPiece(location *Point) (Piece, error) {

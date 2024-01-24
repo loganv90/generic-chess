@@ -13,6 +13,11 @@ type MockBoard struct {
 	mock.Mock
 }
 
+func (m *MockBoard) disablePieces(color string, disable bool) error {
+    args := m.Called(color, disable)
+    return args.Error(0)
+}
+
 func (m *MockBoard) getPiece(location *Point) (Piece, error) {
 	args := m.Called(location)
 

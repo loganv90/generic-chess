@@ -149,7 +149,9 @@ func Test_TwoPlayerCheckmate(t *testing.T) {
     assert.Equal(t, "", state.WinningPlayer)
 }
 
-// TODO disable pieces of eliminated players
+// TODO test disabled pieces
+// TODO test for stalemates
+// TODO prevent piece movement if there is a winner
 func Test_FourPlayerCheckmate(t *testing.T) {
     game, err := NewSimpleFourPlayerGame()
     assert.Nil(t, err)
