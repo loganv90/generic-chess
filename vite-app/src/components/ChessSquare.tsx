@@ -40,7 +40,7 @@ const ChessSquare = ({
             style={{...squareStyle, backgroundColor: getSquareColor(), width: sizePercent, height: sizePercent}}
             onClick={() => clickSquare(square.id, square.x, square.y)}
         >
-            <ChessPiece type={square.type} color={square.color} />
+            <ChessPiece type={square.type} color={square.color} disabled={square.pieceDisabled} />
         </div>
     )
 }

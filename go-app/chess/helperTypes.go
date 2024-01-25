@@ -23,6 +23,7 @@ type PieceData struct {
     C string // Color
     X int // X position
     Y int // Y position
+    D bool // Disabled
 }
 
 type DisabledData struct {

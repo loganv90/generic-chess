@@ -92,14 +92,16 @@ const getImgSrc = (type: string, color: string): string => {
 const ChessPiece = ({
     type,
     color,
+    disabled,
 }: {
     type: string,
     color: string,
+    disabled: boolean,
 }): JSX.Element => {
     const imgSrc = getImgSrc(type, color)
     return (
         <div style={divStyle} >
-            {imgSrc ? <img src={imgSrc} style={imgStyle} /> : type + color}
+            {imgSrc ? <img src={imgSrc} style={{...imgStyle, opacity: disabled ? 0.6 : 1}} /> : type + color}
         </div>
     )
 }

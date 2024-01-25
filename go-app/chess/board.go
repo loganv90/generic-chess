@@ -365,11 +365,13 @@ func (s *SimpleBoard) State() *BoardData {
         for x := range row {
             piece := s.pieces[y][x]
             if piece != nil {
+                disabled, _ := piece.getDisabled()
                 pieces = append(pieces, &PieceData{
                     T: piece.print(),
                     C: piece.getColor(),
                     X: x,
                     Y: y,
+                    D: disabled,
                 })
             }
         }

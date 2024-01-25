@@ -14,6 +14,7 @@ type SquareData = {
     y: number,
     id: string,
     disabled: boolean,
+    pieceDisabled: boolean,
     light: boolean,
     type: string,
     color: string,
@@ -29,6 +30,7 @@ const createSquares = (boardData: BoardData): SquareData[][] => {
                 x: x,
                 y: y,
                 disabled: false,
+                pieceDisabled: false,
                 id: `${x},${y}`,
                 light: (x + y) % 2 === 0,
                 type: '',
@@ -44,6 +46,7 @@ const createSquares = (boardData: BoardData): SquareData[][] => {
     boardData.Pieces.forEach(p => {
         squares[p.Y][p.X].type = p.T
         squares[p.Y][p.X].color = p.C
+        squares[p.Y][p.X].pieceDisabled = p.D
     })
 
     return squares
