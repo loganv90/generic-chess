@@ -51,6 +51,16 @@ func (m *MockPlayerCollection) setWinner(color string) error {
     return args.Error(0)
 }
 
+func (m *MockPlayerCollection) getGameOver() (bool, error) {
+    args := m.Called()
+    return args.Bool(0), args.Error(1)
+}
+
+func (m *MockPlayerCollection) setGameOver(gameOver bool) error {
+    args := m.Called(gameOver)
+    return args.Error(0)
+}
+
 func Test_getNext(t *testing.T) {
     s, err := newSimplePlayerCollection(
         []*Player{

@@ -147,11 +147,16 @@ func Test_TwoPlayerCheckmate(t *testing.T) {
     assert.Nil(t, err)
     assert.Equal(t, "white", state.CurrentPlayer)
     assert.Equal(t, "", state.WinningPlayer)
+
+    err = game.Redo()
+    assert.Nil(t, err)
+
+    moves, err := game.Moves()
+    assert.Nil(t, err)
+    err = game.Execute(moves[0].XFrom, moves[0].YFrom, moves[0].XTo, moves[0].YTo, moves[0].Promotion)
+    assert.NotNil(t, err)
 }
 
-// TODO test disabled pieces
-// TODO test for stalemates
-// TODO prevent piece movement if there is a winner
 func Test_FourPlayerCheckmate(t *testing.T) {
     game, err := NewSimpleFourPlayerGame()
     assert.Nil(t, err)
@@ -218,6 +223,83 @@ func Test_FourPlayerCheckmate(t *testing.T) {
     assert.Nil(t, err)
     assert.Equal(t, "white", state.CurrentPlayer)
     assert.Equal(t, "", state.WinningPlayer)
+
+    err = game.Redo()
+    assert.Nil(t, err)
+
+    moves, err := game.Moves()
+    assert.Nil(t, err)
+    err = game.Execute(moves[0].XFrom, moves[0].YFrom, moves[0].XTo, moves[0].YTo, moves[0].Promotion)
+    assert.NotNil(t, err)
+}
+
+func Test_DisabledPieces(t *testing.T) {
+    b, err := newSimpleBoard(&Point{8, 8})
+    assert.Nil(t, err)
+    b.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
+    b.setPiece(&Point{7, 0}, newKing("black", false, 0, 1))
+    b.setPiece(&Point{4, 0}, newKing("gray", false, 0, 1))
+    b.setPiece(&Point{1, 7}, newQueen("black"))
+    b.setPiece(&Point{6, 6}, newQueen("white"))
+    b.setPiece(&Point{6, 7}, newQueen("white"))
+    err = b.CalculateMoves("white")
+    assert.Nil(t, err)
+
+    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}, {"gray", true}})
+    assert.Nil(t, err)
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+
+    err = game.Execute(6, 6, 6, 1, "") // white queen checkmate black
+    assert.Nil(t, err)
+    err = game.Execute(4, 0, 3, 0, "") // gray waiting move
+    assert.Nil(t, err)
+    err = game.Execute(0, 0, 1, 0, "") // white move into range of disabled black queen
+    assert.Nil(t, err)
+
+    state, err := game.State()
+    assert.Nil(t, err)
+    assert.Equal(t, "", state.WinningPlayer)
+    assert.Equal(t, false, state.GameOver)
+}
+
+func Test_Stalemate(t *testing.T) {
+    b, err := newSimpleBoard(&Point{8, 8})
+    assert.Nil(t, err)
+    b.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
+    b.setPiece(&Point{7, 0}, newKing("black", false, 0, 1))
+    b.setPiece(&Point{4, 0}, newKing("gray", false, 0, 1))
+    b.setPiece(&Point{6, 6}, newQueen("white"))
+    b.setPiece(&Point{6, 7}, newQueen("white"))
+    err = b.CalculateMoves("white")
+    assert.Nil(t, err)
+
+    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}, {"gray", true}})
+    assert.Nil(t, err)
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+
+    err = game.Execute(6, 6, 6, 2, "") // white queen stalemate black
+    assert.Nil(t, err)
+
+    state, err := game.State()
+    assert.Nil(t, err)
+    assert.Equal(t, "", state.WinningPlayer)
+    assert.Equal(t, true, state.GameOver)
 }
 
 func Test_NewSimpleGame(t *testing.T) {

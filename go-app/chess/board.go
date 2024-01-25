@@ -29,6 +29,7 @@ type Board interface {
     PotentialMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece without considering other pieces
     ValidMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece using the moveMap
     CalculateMoves(color string) error // calcutes moves assuming it is the color's turn and sets moveMap and state
+    AvailableMoves() ([]*MoveKey, error) // returns moves for a piece using the moveMap
     Size() *Point
 	Print() string
     State() *BoardData
@@ -259,6 +260,27 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
     s.stalemate = !s.check && len(s.moveMap) == 0
 
     return nil
+}
+
+func (s *SimpleBoard) AvailableMoves() ([]*MoveKey, error) {
+    moveKeys := []*MoveKey{}
+    for _, moves := range s.moveMap {
+        for _, move := range moves {
+            action := move.getAction()
+            promotion := ""
+            if promotionMove, ok := move.(*PromotionMove); ok {
+                promotion = promotionMove.promotionPiece.print()
+            }
+            moveKeys = append(moveKeys, &MoveKey{
+                action.fromLocation.x,
+                action.fromLocation.y,
+                action.toLocation.x,
+                action.toLocation.y,
+                promotion,
+            })
+        }
+    }
+    return moveKeys, nil
 }
 
 func (s *SimpleBoard) isInCheck(color string, ememyPieceLocations []*Point) bool {

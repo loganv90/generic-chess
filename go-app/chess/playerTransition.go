@@ -24,8 +24,14 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
         return nil, err
     }
 
+    oldGameOver, err := p.getGameOver()
+    if err != nil {
+        return nil, err
+    }
+
     newCurrent := ""
     newWinner := ""
+    newGameOver := false
     eliminated := []string{}
     for {
         newPlayer, err := p.getNext()
@@ -36,6 +42,7 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
         if newPlayer.color == oldCurrent {
             newCurrent = newPlayer.color
             newWinner = newPlayer.color
+            newGameOver = true
             break
         }
 
@@ -55,7 +62,7 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
             continue
         } else if b.Stalemate() {
             newCurrent = newPlayer.color
-            newWinner = "draw"
+            newGameOver = true
             break
         } else {
             newCurrent = newPlayer.color
@@ -76,6 +83,8 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
         newWinner: newWinner,
         oldWinner: oldWinner,
         eliminated: eliminated,
+        oldGameOver: oldGameOver,
+        newGameOver: newGameOver,
     }, nil
 }
 
@@ -92,6 +101,8 @@ type IncrementalTransition struct {
     oldWinner string
     newWinner string
     eliminated []string
+    oldGameOver bool
+    newGameOver bool
 }
 
 func (s *IncrementalTransition) execute() error {
@@ -101,6 +112,11 @@ func (s *IncrementalTransition) execute() error {
     }
 
     err = s.p.setWinner(s.newWinner)
+    if err != nil {
+        return err
+    }
+
+    err = s.p.setGameOver(s.newGameOver)
     if err != nil {
         return err
     }
@@ -131,6 +147,11 @@ func (s *IncrementalTransition) undo() error {
     }
 
     err = s.p.setWinner(s.oldWinner)
+    if err != nil {
+        return err
+    }
+
+    err = s.p.setGameOver(s.oldGameOver)
     if err != nil {
         return err
     }

@@ -10,7 +10,8 @@ type Game interface {
     // these are for the hub
 	Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error // called when a player tries to make a move
     State() (*BoardData, error) // called to get the game state
-    View(xFrom int, yFrom int) (*PieceState, error) // show valid moves to current player and show all moves to others
+    View(xFrom int, yFrom int) (*PieceState, error) // show valid moves of piece
+    Moves() ([]*MoveKey, error) // get all valid moves
 	Undo() error
 	Redo() error
 	Print() string
@@ -85,12 +86,25 @@ func (s *SimpleGame) State() (*BoardData, error) {
 
     boardData.WinningPlayer = winningPlayer
 
+
+    gameOver, err := s.p.getGameOver()
+    if err != nil {
+        return nil, err
+    }
+
+    boardData.GameOver = gameOver
+
     return boardData, nil
 }
 
 func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error {
     fromLocation := &Point{xFrom, yFrom}
     toLocation := &Point{xTo, yTo}
+
+    gameOver, err := s.p.getGameOver()
+    if err != nil || gameOver {
+        return fmt.Errorf("game is over")
+    }
 
     moves, err := s.b.ValidMoves(fromLocation)
     if err != nil {
@@ -115,13 +129,13 @@ func getMoveFromSlice(moves []Move, toLocation *Point, promotion string) Move {
         actionToLocation := m.getAction().toLocation
         if actionToLocation.equals(toLocation) {
             if promotionMove, ok := m.(*PromotionMove); ok {
-                if _, ok := promotionMove.promotionPiece.(*Queen); ok && promotion == "Q" {
+                if p, ok := promotionMove.promotionPiece.(*Queen); ok && promotion == p.print() {
                     return m
-                } else if _, ok := promotionMove.promotionPiece.(*Rook); ok && promotion == "R" {
+                } else if p, ok := promotionMove.promotionPiece.(*Rook); ok && promotion == p.print() {
                     return m
-                } else if _, ok := promotionMove.promotionPiece.(*Bishop); ok && promotion == "B" {
+                } else if p, ok := promotionMove.promotionPiece.(*Bishop); ok && promotion == p.print() {
                     return m
-                } else if _, ok := promotionMove.promotionPiece.(*Knight); ok && promotion == "N" {
+                } else if p, ok := promotionMove.promotionPiece.(*Knight); ok && promotion == p.print() {
                     return m
                 }
             } else {
@@ -138,6 +152,16 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
 
     piece, err := s.b.getPiece(location)
     if err != nil || piece == nil {
+        return &PieceState{
+            X: x,
+            Y: y,
+            Moves: []*MoveData{},
+            Turn: false,
+        }, nil
+    }
+
+    gameOver, err := s.p.getGameOver()
+    if err != nil || gameOver {
         return &PieceState{
             X: x,
             Y: y,
@@ -189,6 +213,10 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
             Turn: false,
         }, nil
     }
+}
+
+func (s *SimpleGame) Moves() ([]*MoveKey, error) {
+    return s.b.AvailableMoves()
 }
 
 func (s *SimpleGame) Undo() error {

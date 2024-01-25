@@ -83,6 +83,11 @@ func (m *MockBoard) CalculateMoves(color string) error {
     return args.Error(0)
 }
 
+func (m *MockBoard) AvailableMoves() ([]*MoveKey, error) {
+    args := m.Called()
+    return args.Get(0).([]*MoveKey), args.Error(1)
+}
+
 func (m *MockBoard) Size() *Point {
     args := m.Called()
     return args.Get(0).(*Point)

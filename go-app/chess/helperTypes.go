@@ -7,6 +7,7 @@ type BoardData struct {
     Disabled []*DisabledData
     CurrentPlayer string
     WinningPlayer string
+    GameOver bool
     Check bool
     Checkmate bool
     Stalemate bool
@@ -40,6 +41,14 @@ type MoveData struct {
     X int // X position
     Y int // Y position
     P bool // is promotion move
+}
+
+type MoveKey struct {
+    XFrom int
+    YFrom int
+    XTo int
+    YTo int
+    Promotion string
 }
 
 type Player struct {

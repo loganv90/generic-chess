@@ -15,7 +15,6 @@ const imgStyle: React.CSSProperties = {
     height: '80%',
 }
 
-// TODO add red and blue pieces
 const getImgSrc = (type: string, color: string): string => {
     if (color === 'white') {
         switch (type) {

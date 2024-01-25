@@ -14,6 +14,7 @@ type BoardData = {
     Pieces: { T: string, C: string, X: number, Y: number }[],
     CurrentPlayer: string,
     WinningPlayer: string,
+    GameOver: boolean,
     Check: boolean,
     Checkmate: boolean,
     Stalemate: boolean,
@@ -98,6 +99,7 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
         Pieces: [],
         CurrentPlayer: '',
         WinningPlayer: '',
+        GameOver: false,
         Check: false,
         Checkmate: false,
         Stalemate: false,
@@ -162,6 +164,8 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
                 Current player: {boardData.CurrentPlayer}
                 <br />
                 Winning player: {boardData.WinningPlayer}
+                <br />
+                Game over: {boardData.GameOver.toString()}
                 <br />
                 <label htmlFor="pieces">Default promotion piece: </label>
                 <select id="pieces" name="pieces" value={promotionPiece} onChange={handlePromotionPiece} >

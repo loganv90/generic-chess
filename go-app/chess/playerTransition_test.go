@@ -51,6 +51,7 @@ func Test_IncrementalTransition(t *testing.T) {
 
     playerCollection.On("getCurrent").Return("white", nil)
     playerCollection.On("getWinner").Return("", nil)
+    playerCollection.On("getGameOver").Return(false, nil)
     playerCollection.On("getNext").Return(&Player{"black", true}, nil).Once()
     playerCollection.On("getNext").Return(&Player{"white", true}, nil)
     playerCollection.On("setCurrent", "white").Return(nil)
@@ -63,6 +64,7 @@ func Test_IncrementalTransition(t *testing.T) {
 
     playerCollection.On("setWinner", "white").Return(nil)
     playerCollection.On("eliminate", "black").Return(nil)
+    playerCollection.On("setGameOver", true).Return(nil)
     board.On("CalculateMoves", "white").Return(nil)
     board.On("disablePieces", "black", true).Return(nil)
     err = incrementalTransition.execute()
@@ -70,6 +72,7 @@ func Test_IncrementalTransition(t *testing.T) {
 
     playerCollection.On("setWinner", "").Return(nil)
     playerCollection.On("restore", "black").Return(nil)
+    playerCollection.On("setGameOver", false).Return(nil)
     board.On("CalculateMoves", "white").Return(nil)
     board.On("disablePieces", "black", false).Return(nil)
     err = incrementalTransition.undo()

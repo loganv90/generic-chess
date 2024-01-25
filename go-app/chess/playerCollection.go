@@ -16,6 +16,8 @@ type PlayerCollection interface {
     setCurrent(color string) error
     getWinner() (string, error)
     setWinner(color string) error
+    getGameOver() (bool, error)
+    setGameOver(gameOver bool) error
 }
 
 func newSimplePlayerCollection(players []*Player) (*SimplePlayerCollection, error) {
@@ -45,6 +47,7 @@ type SimplePlayerCollection struct {
     playerMap map[string]int
     currentPlayer int
     winningPlayer int
+    gameOver bool
 }
 
 func (s *SimplePlayerCollection) getNext() (*Player, error) {
@@ -128,5 +131,14 @@ func (s *SimplePlayerCollection) setWinner(color string) error {
     }
 
     return fmt.Errorf("player not found")
+}
+
+func (s *SimplePlayerCollection) getGameOver() (bool, error) {
+    return s.gameOver, nil
+}
+
+func (s *SimplePlayerCollection) setGameOver(gameOver bool) error {
+    s.gameOver = gameOver
+    return nil
 }
 
