@@ -26,7 +26,6 @@ type ViewData struct {
 
 type Hub struct {
     clients map[*Client]bool
-    broadcast chan []byte
     register chan *Client
     unregister chan *Client
     send chan *ClientMessage
@@ -42,7 +41,6 @@ func newTwoPlayerHub() *Hub {
 
     return &Hub{
         clients:    make(map[*Client]bool),
-        broadcast:  make(chan []byte),
         register:   make(chan *Client),
         unregister: make(chan *Client),
         send:       make(chan *ClientMessage),
@@ -59,7 +57,6 @@ func newFourPlayerHub() *Hub {
 
     return &Hub{
         clients:    make(map[*Client]bool),
-        broadcast:  make(chan []byte),
         register:   make(chan *Client),
         unregister: make(chan *Client),
         send:       make(chan *ClientMessage),
@@ -86,15 +83,6 @@ func (h *Hub) run() {
                 clientMessage.client,
                 clientMessage.message,
             )
-        case message := <-h.broadcast:
-            for client := range h.clients {
-                select {
-                case client.send <- message:
-                default:
-                    close(client.send)
-                    delete(h.clients, client)
-                }
-            }
         }
     }
 }

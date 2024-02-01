@@ -44,8 +44,6 @@ When the bot is running:
 
 Changes to the UI:
 - the UI will need a control to specify the colors the bot is playing
-
-I think we should get rid of the hub's broadcast channel, I don't think we use it
 */
 
 /*
