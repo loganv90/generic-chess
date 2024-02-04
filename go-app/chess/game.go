@@ -205,7 +205,6 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
             Turn: true,
         }, nil
     } else {
-        _, _ = s.b.PotentialMoves(location)
         return &PieceState{
             X: x,
             Y: y,

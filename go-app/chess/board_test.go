@@ -68,11 +68,6 @@ func (m *MockBoard) clearEnPassant(color string) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) PotentialMoves(fromLocation *Point) ([]Move, error) {
-    args := m.Called(fromLocation)
-    return args.Get(0).([]Move), args.Error(1)
-}
-
 func (m *MockBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
     args := m.Called(fromLocation)
     return args.Get(0).([]Move), args.Error(1)

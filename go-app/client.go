@@ -120,9 +120,14 @@ func (c *PlayerClient) writeLoop() {
 }
 
 func newBotClient(hub *Hub, game chess.Game, colors []string) (*BotClient, error) {
+    bot, err := chess.NewSimpleBot(game)
+    if err != nil {
+        return nil, err
+    }
+
     botClient := &BotClient{
         hub: hub,
-        game: game,
+        bot: bot,
         send: make(chan []byte, 256),
         colors: colors,
     }
@@ -132,7 +137,7 @@ func newBotClient(hub *Hub, game chess.Game, colors []string) (*BotClient, error
 
 type BotClient struct {
     hub *Hub
-    game chess.Game
+    bot chess.Bot
     send chan []byte
     colors []string
 }
@@ -180,9 +185,36 @@ func (c *BotClient) run() {
             }
 
             for _, color := range c.colors {
-                if color == boardData.CurrentPlayer {
-                    // TODO have the bot make a move
-                    fmt.Println("bot received message")
+                if !boardData.GameOver && color == boardData.CurrentPlayer {
+                    moveKey, err := c.bot.FindMove()
+                    if err != nil {
+                        fmt.Println("error finding move")
+                        break
+                    }
+
+                    marshalledMoveKey, err := json.Marshal(moveKey)
+                    if err != nil {
+                        fmt.Println("error marshalling moveKey")
+                        break
+                    }
+
+                    message := Message{
+                        Type: "move",
+                        Data: marshalledMoveKey,
+                    }
+
+                    marshalledMessage, err := json.Marshal(message)
+                    if err != nil {
+                        fmt.Println("error marshalling moveKey")
+                        break
+                    }
+
+                    c.hub.send <- &ClientMessage{
+                        message: marshalledMessage,
+                        client: c,
+                    }
+
+                    break
                 }
             }
         }

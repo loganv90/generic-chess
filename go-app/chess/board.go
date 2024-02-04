@@ -26,7 +26,6 @@ type Board interface {
     disablePieces(color string, disable bool) error
 
     // these are for the game
-    PotentialMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece without considering other pieces
     ValidMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece using the moveMap
     CalculateMoves(color string) error // calcutes moves assuming it is the color's turn and sets moveMap and state
     AvailableMoves() ([]*MoveKey, error) // returns moves for a piece using the moveMap
@@ -193,11 +192,6 @@ func (s *SimpleBoard) possibleEnPassant(color string, target *Point) ([]*EnPassa
 func (s *SimpleBoard) clearEnPassant(color string) error {
     delete(s.enPassantMap, color)
     return nil
-}
-
-// TODO we want the moves assuming empty board when not payer's turn for premoves
-func (s *SimpleBoard) PotentialMoves(fromLocation *Point) ([]Move, error) {
-    return []Move{}, nil
 }
 
 func (s *SimpleBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
