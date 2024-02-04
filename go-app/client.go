@@ -15,16 +15,49 @@ const maxMessageSize = 1024
 
 type ClientMessage struct {
     message []byte
-    client *Client
+    client Client
 }
 
-type Client struct {
+type Client interface {
+    sendMessage(message []byte) error
+    close() error
+}
+
+func newPlayerClient(hub *Hub, conn *websocket.Conn) (*PlayerClient, error) {
+    playerClient := &PlayerClient{
+        hub: hub,
+        conn: conn,
+        send: make(chan []byte, 256),
+    }
+    playerClient.hub.register <- playerClient
+
+    go playerClient.writeLoop()
+    go playerClient.readLoop()
+
+    return playerClient, nil
+}
+
+type PlayerClient struct {
     hub *Hub
     conn *websocket.Conn
     send chan []byte
 }
 
-func (c *Client) readLoop() {
+func (c *PlayerClient) sendMessage(message []byte) error {
+    select {
+    case c.send <- message:
+    default:
+        c.hub.unregister <- c
+    }
+    return nil
+}
+
+func (c *PlayerClient) close() error {
+    close(c.send)
+    return nil
+}
+
+func (c *PlayerClient) readLoop() {
     c.conn.SetReadLimit(maxMessageSize)
     c.conn.SetReadDeadline(time.Now().Add(pongWait))
     c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
@@ -48,7 +81,7 @@ func (c *Client) readLoop() {
     }
 }
 
-func (c *Client) writeLoop() {
+func (c *PlayerClient) writeLoop() {
     ticker := time.NewTicker(pingPeriod)
     defer func() {
         c.conn.Close()

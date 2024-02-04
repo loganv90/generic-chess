@@ -44,6 +44,9 @@ When the bot is running:
 
 Changes to the UI:
 - the UI will need a control to specify the colors the bot is playing
+
+This is kinda gross but we can make the client an interface and then have a bot-client and a human-client
+It's gross because the bot-client won't use the messages it receives from its send channel
 */
 
 /*

@@ -49,14 +49,15 @@ func createRoomId(hubs map[string]*Hub) (string, error) {
 func startClient(c *gin.Context, hub *Hub, conn *websocket.Conn) {
     conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
     if err != nil {
+        fmt.Println("error upgrading connection")
         return
     }
 
-    client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-    client.hub.register <- client
-
-    go client.readLoop()
-    go client.writeLoop()
+    _, err = newPlayerClient(hub, conn)
+    if err != nil {
+        fmt.Println("error creating client")
+        return
+    }
 }
 
 func main() {

@@ -25,9 +25,9 @@ type ViewData struct {
 }
 
 type Hub struct {
-    clients map[*Client]bool
-    register chan *Client
-    unregister chan *Client
+    clients map[Client]bool
+    register chan Client
+    unregister chan Client
     send chan *ClientMessage
     capacity int
     game chess.Game
@@ -40,9 +40,9 @@ func newTwoPlayerHub() *Hub {
     }
 
     return &Hub{
-        clients:    make(map[*Client]bool),
-        register:   make(chan *Client),
-        unregister: make(chan *Client),
+        clients:    make(map[Client]bool),
+        register:   make(chan Client),
+        unregister: make(chan Client),
         send:       make(chan *ClientMessage),
         capacity:   2,
         game:       game,
@@ -56,9 +56,9 @@ func newFourPlayerHub() *Hub {
     }
 
     return &Hub{
-        clients:    make(map[*Client]bool),
-        register:   make(chan *Client),
-        unregister: make(chan *Client),
+        clients:    make(map[Client]bool),
+        register:   make(chan Client),
+        unregister: make(chan Client),
         send:       make(chan *ClientMessage),
         capacity:   4,
         game:       game,
@@ -72,8 +72,8 @@ func (h *Hub) run() {
             h.handleClientJoin(client)
         case client := <-h.unregister:
             if _, ok := h.clients[client]; ok {
+                client.close()
                 delete(h.clients, client)
-                close(client.send)
             }
             if len(h.clients) <= 0 {
                 return
@@ -93,20 +93,15 @@ func (h *Hub) full() bool {
 
 func (h *Hub) broadcastMessage(message []byte) {
     for client := range h.clients {
-        h.sendMessage(client, message)
+        err := client.sendMessage(message)
+        if err != nil {
+            fmt.Println("error sending message")
+            return
+        }
     }
 }
 
-func (h *Hub) sendMessage(client *Client, message []byte) {
-    select {
-    case client.send <- message:
-    default:
-        close(client.send)
-        delete(h.clients, client)
-    }
-}
-
-func (h *Hub) handleClientJoin(c *Client) {
+func (h *Hub) handleClientJoin(c Client) {
     h.clients[c] = true
 
     message, err := h.createBoardStateMessage()
@@ -115,10 +110,14 @@ func (h *Hub) handleClientJoin(c *Client) {
         return
     }
 
-    h.sendMessage(c, message)
+    err = c.sendMessage(message)
+    if err != nil {
+        fmt.Println("error sending state message")
+        return
+    }
 }
 
-func (h *Hub) handleMessage(c *Client, unmarshalledMessage []byte) {
+func (h *Hub) handleMessage(c Client, unmarshalledMessage []byte) {
     var message *Message
     err := json.Unmarshal(unmarshalledMessage, &message)
     if err != nil {
