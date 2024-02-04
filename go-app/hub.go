@@ -39,7 +39,7 @@ func newTwoPlayerHub() *Hub {
         panic(err)
     }
 
-    return &Hub{
+    hub := &Hub{
         clients:    make(map[Client]bool),
         register:   make(chan Client),
         unregister: make(chan Client),
@@ -47,6 +47,18 @@ func newTwoPlayerHub() *Hub {
         capacity:   2,
         game:       game,
     }
+
+    // TODO create another function for hubs with bots
+    botClient, err := newBotClient(hub, game, []string{"black"})
+    if err != nil {
+        panic(err)
+    }
+
+    hub.handleClientJoin(botClient)
+
+    go botClient.run()
+
+    return hub
 }
 
 func newFourPlayerHub() *Hub {
@@ -70,12 +82,14 @@ func (h *Hub) run() {
         select {
         case client := <-h.register:
             h.handleClientJoin(client)
-        case client := <-h.unregister:
-            if _, ok := h.clients[client]; ok {
-                client.close()
-                delete(h.clients, client)
+            if h.empty() {
+                h.close()
+                return
             }
-            if len(h.clients) <= 0 {
+        case client := <-h.unregister:
+            h.handleClientLeave(client)
+            if h.empty() {
+                h.close()
                 return
             }
         case clientMessage := <-h.send:
@@ -89,6 +103,21 @@ func (h *Hub) run() {
 
 func (h *Hub) full() bool {
     return len(h.clients) >= h.capacity
+}
+
+func (h *Hub) empty() bool {
+    for client := range h.clients {
+        if _, ok := client.(*PlayerClient); ok {
+            return false
+        }
+    }
+    return true
+}
+
+func (h *Hub) close() {
+    for client := range h.clients {
+        h.handleClientLeave(client)
+    }
 }
 
 func (h *Hub) broadcastMessage(message []byte) {
@@ -114,6 +143,13 @@ func (h *Hub) handleClientJoin(c Client) {
     if err != nil {
         fmt.Println("error sending state message")
         return
+    }
+}
+
+func (h *Hub) handleClientLeave(c Client) {
+    if _, ok := h.clients[c]; ok {
+        c.close()
+        delete(h.clients, c)
     }
 }
 

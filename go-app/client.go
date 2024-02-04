@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+    "encoding/json"
 	"github.com/gorilla/websocket"
+    "go-app/chess"
 )
 
 const writeWait = 10 * time.Second
@@ -29,10 +31,6 @@ func newPlayerClient(hub *Hub, conn *websocket.Conn) (*PlayerClient, error) {
         conn: conn,
         send: make(chan []byte, 256),
     }
-    playerClient.hub.register <- playerClient
-
-    go playerClient.writeLoop()
-    go playerClient.readLoop()
 
     return playerClient, nil
 }
@@ -62,7 +60,7 @@ func (c *PlayerClient) readLoop() {
     c.conn.SetReadDeadline(time.Now().Add(pongWait))
     c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
     defer func() {
-        fmt.Println("closing connection")
+        fmt.Println("ending readLoop")
         c.hub.unregister <- c
         c.conn.Close()
     }()
@@ -84,6 +82,8 @@ func (c *PlayerClient) readLoop() {
 func (c *PlayerClient) writeLoop() {
     ticker := time.NewTicker(pingPeriod)
     defer func() {
+        fmt.Println("ending writeLoop")
+        c.hub.unregister <- c
         c.conn.Close()
     }()
     for {
@@ -114,6 +114,76 @@ func (c *PlayerClient) writeLoop() {
             c.conn.SetWriteDeadline(time.Now().Add(writeWait))
             if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
                 return
+            }
+        }
+    }
+}
+
+func newBotClient(hub *Hub, game chess.Game, colors []string) (*BotClient, error) {
+    botClient := &BotClient{
+        hub: hub,
+        game: game,
+        send: make(chan []byte, 256),
+        colors: colors,
+    }
+
+    return botClient, nil
+}
+
+type BotClient struct {
+    hub *Hub
+    game chess.Game
+    send chan []byte
+    colors []string
+}
+
+func (c *BotClient) sendMessage(message []byte) error {
+    select {
+    case c.send <- message:
+    default:
+        c.hub.unregister <- c
+    }
+    return nil
+}
+
+func (c *BotClient) close() error {
+    close(c.send)
+    return nil
+}
+
+func (c *BotClient) run() {
+    defer func() {
+        fmt.Println("ending run")
+        c.hub.unregister <- c
+    }()
+    for {
+        select {
+        case unmarshalledMessage, ok := <-c.send:
+            if !ok {
+                return
+            }
+
+            var message *Message
+            err := json.Unmarshal(unmarshalledMessage, &message)
+            if err != nil {
+                continue
+            }
+
+            if message.Type != "BoardState" {
+                continue
+            }
+
+            var boardData *chess.BoardData
+            err = json.Unmarshal(message.Data, &boardData)
+            if err != nil {
+                continue
+            }
+
+            for _, color := range c.colors {
+                if color == boardData.CurrentPlayer {
+                    // TODO have the bot make a move
+                    fmt.Println("bot received message")
+                }
             }
         }
     }

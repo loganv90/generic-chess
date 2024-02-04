@@ -53,11 +53,16 @@ func startClient(c *gin.Context, hub *Hub, conn *websocket.Conn) {
         return
     }
 
-    _, err = newPlayerClient(hub, conn)
+    playerClient, err := newPlayerClient(hub, conn)
     if err != nil {
         fmt.Println("error creating client")
         return
     }
+
+    playerClient.hub.register <- playerClient
+
+    go playerClient.writeLoop()
+    go playerClient.readLoop()
 }
 
 func main() {
