@@ -208,23 +208,21 @@ func (s *SimpleBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
 // TODO add rule to check for checkmate and stalemate on all players after every move
 func (s *SimpleBoard) CalculateMoves(color string) error {
     s.moveMap = map[Point][]Move{}
-    s.check = false
+    s.check = s.isInCheck(color)
     s.checkmate = false
     s.stalemate = false
+
+    // TODO right now we're calculating moves for all pieces so many times
+    // instead, we should calculate moves for all pieces once
+    // we're going to have to calculate xray moves for all pieces
+    // imagine just getting all the moves for all pieces and then putting them into maps
+    // then we can find when a pinned piece moves and calculate moves again for that piece
+    // we need move types for xray moves, and self attack moves
 
     ownPieceLocations, ok := s.pieceLocationsMap[color]
     if !ok {
         return fmt.Errorf("no pieces found for color %s", color)
     }
-
-    enemyPieceLocations := []*Point{}
-    for k, v := range s.pieceLocationsMap {
-        if k != color {
-            enemyPieceLocations = append(enemyPieceLocations, v...)
-        }
-    }
-
-    s.check = s.isInCheck(color, enemyPieceLocations)
 
     for _, ownPieceLocation := range ownPieceLocations {
         piece, err := s.getPiece(ownPieceLocation)
@@ -241,7 +239,7 @@ func (s *SimpleBoard) CalculateMoves(color string) error {
             move.getAction().b = boardCopy
 
             move.execute()
-            if boardCopy.isInCheck(color, enemyPieceLocations) {
+            if boardCopy.isInCheck(color) {
                 continue
             }
 
@@ -277,11 +275,11 @@ func (s *SimpleBoard) AvailableMoves() ([]*MoveKey, error) {
     return moveKeys, nil
 }
 
-func (s *SimpleBoard) isInCheck(color string, ememyPieceLocations []*Point) bool {
+func (s *SimpleBoard) isInCheck(color string) bool {
     vulnerableLocations, err := s.getVulnerables(color)
     if err == nil {
         for _, vulnerableLocation := range vulnerableLocations {
-            if s.isLocationAttacked(vulnerableLocation, ememyPieceLocations) {
+            if s.isLocationAttacked(vulnerableLocation, color) {
                 return true
             }
         }
@@ -290,17 +288,23 @@ func (s *SimpleBoard) isInCheck(color string, ememyPieceLocations []*Point) bool
     return false
 }
 
-func (s *SimpleBoard) isLocationAttacked(location *Point, pieceLocations []*Point) bool {
-    for _, pieceLocation := range pieceLocations {
-        piece, err := s.getPiece(pieceLocation)
-        if piece == nil || err != nil {
+func (s *SimpleBoard) isLocationAttacked(location *Point, allyColor string) bool {
+    for color, pieceLocations := range s.pieceLocationsMap {
+        if color == allyColor {
             continue
         }
 
-        moves := piece.moves(s, pieceLocation)
-        for _, move := range moves {
-            if move.getAction().toLocation.equals(location) {
-                return true
+        for _, pieceLocation := range pieceLocations {
+            piece, err := s.getPiece(pieceLocation)
+            if piece == nil || err != nil {
+                continue
+            }
+
+            moves := piece.moves(s, pieceLocation)
+            for _, move := range moves {
+                if move.getAction().toLocation.equals(location) {
+                    return true
+                }
             }
         }
     }
