@@ -9,13 +9,18 @@ type Bot interface {
 }
 
 func NewSimpleBot(game Game) (Bot, error) {
-    return &SimpleBot{}, nil
+    return &SimpleBot{
+        game: game,
+    }, nil
 }
 
 type SimpleBot struct {
+    game Game
 }
 
 func (b *SimpleBot) FindMove() (*MoveKey, error) {
+    // we should probably clone the game here before doing the engine stuff
+
     moveKey := &MoveKey{
         XFrom: 4,
         YFrom: 1,
