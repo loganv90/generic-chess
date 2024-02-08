@@ -241,7 +241,7 @@ func Test_DisabledPieces(t *testing.T) {
     b.setPiece(&Point{1, 7}, newQueen("black"))
     b.setPiece(&Point{6, 6}, newQueen("white"))
     b.setPiece(&Point{6, 7}, newQueen("white"))
-    err = b.CalculateMoves("white")
+    err = b.CalculateMoves()
     assert.Nil(t, err)
 
     p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}, {"gray", true}})
@@ -277,7 +277,7 @@ func Test_Stalemate(t *testing.T) {
     b.setPiece(&Point{4, 0}, newKing("gray", false, 0, 1))
     b.setPiece(&Point{6, 6}, newQueen("white"))
     b.setPiece(&Point{6, 7}, newQueen("white"))
-    err = b.CalculateMoves("white")
+    err = b.CalculateMoves()
     assert.Nil(t, err)
 
     p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}, {"gray", true}})

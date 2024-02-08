@@ -73,13 +73,13 @@ func (m *MockBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
     return args.Get(0).([]Move), args.Error(1)
 }
 
-func (m *MockBoard) CalculateMoves(color string) error {
-    args := m.Called(color)
+func (m *MockBoard) CalculateMoves() error {
+    args := m.Called()
     return args.Error(0)
 }
 
-func (m *MockBoard) AvailableMoves() ([]*MoveKey, error) {
-    args := m.Called()
+func (m *MockBoard) AvailableMoves(color string) ([]*MoveKey, error) {
+    args := m.Called(color)
     return args.Get(0).([]*MoveKey), args.Error(1)
 }
 
@@ -98,13 +98,18 @@ func (m *MockBoard) State() *BoardData {
     return args.Get(0).(*BoardData)
 }
 
-func (m *MockBoard) Checkmate() bool {
+func (m *MockBoard) Check(color string) bool {
     args := m.Called()
     return args.Bool(0)
 }
 
-func (m *MockBoard) Stalemate() bool {
-    args := m.Called()
+func (m *MockBoard) Checkmate(color string) bool {
+    args := m.Called(color)
+    return args.Bool(0)
+}
+
+func (m *MockBoard) Stalemate(color string) bool {
+    args := m.Called(color)
     return args.Bool(0)
 }
 
@@ -208,18 +213,34 @@ func Test_CalculateMoves_default(t *testing.T) {
     s, err := createSimpleBoardWithDefaultPieceLocations()
     assert.Nil(t, err)
 
-    s.CalculateMoves("white")
-    boardData := s.State()
+    s.CalculateMoves()
 
-    moveCount := 0
-    for _, m := range s.moveMap {
-        moveCount += len(m)
+    fromMoveCount := 0
+    for _, toToMoveMap := range s.fromToToToMoveMap {
+        fromMoveCount += len(toToMoveMap)
     }
+    assert.Equal(t, 40, fromMoveCount)
 
-    assert.Equal(t, 20, moveCount)
-    assert.False(t, boardData.Check)
-    assert.False(t, boardData.Checkmate)
-    assert.False(t, boardData.Stalemate)
+    toMoveCount := 0
+    for _, toToMoveMap := range s.toToFromToMoveMap {
+        toMoveCount += len(toToMoveMap)
+    }
+    assert.Equal(t, 40, toMoveCount)
+    
+    whiteMoveKeys, err := s.AvailableMoves("white")
+    assert.Nil(t, err)
+    assert.Equal(t, 20, len(whiteMoveKeys))
+
+    blackMoveKeys, err := s.AvailableMoves("black")
+    assert.Nil(t, err)
+    assert.Equal(t, 20, len(blackMoveKeys))
+
+    assert.False(t, s.Check("white"))
+    assert.False(t, s.Check("black"))
+    assert.False(t, s.Checkmate("white"))
+    assert.False(t, s.Checkmate("black"))
+    assert.False(t, s.Stalemate("white"))
+    assert.False(t, s.Stalemate("black"))
 }
 
 func Test_CalculateMoves_check(t *testing.T) {
@@ -230,18 +251,34 @@ func Test_CalculateMoves_check(t *testing.T) {
     s.setPiece(&Point{0, 1}, newQueen("black"))
     s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
 
-    s.CalculateMoves("white")
-    boardData := s.State()
+    s.CalculateMoves()
 
-    moveCount := 0
-    for _, m := range s.moveMap {
-        moveCount += len(m)
+    fromMoveCount := 0
+    for _, toToMoveMap := range s.fromToToToMoveMap {
+        fromMoveCount += len(toToMoveMap)
     }
+    assert.Equal(t, 24, fromMoveCount)
 
-    assert.Equal(t, 1, moveCount)
-    assert.True(t, boardData.Check)
-    assert.False(t, boardData.Checkmate)
-    assert.False(t, boardData.Stalemate)
+    toMoveCount := 0
+    for _, toToMoveMap := range s.toToFromToMoveMap {
+        toMoveCount += len(toToMoveMap)
+    }
+    assert.Equal(t, 24, toMoveCount)
+    
+    whiteMoveKeys, err := s.AvailableMoves("white")
+    assert.Nil(t, err)
+    assert.Equal(t, 1, len(whiteMoveKeys))
+
+    blackMoveKeys, err := s.AvailableMoves("black")
+    assert.Nil(t, err)
+    assert.Equal(t, 23, len(blackMoveKeys))
+
+    assert.True(t, s.Check("white"))
+    assert.False(t, s.Check("black"))
+    assert.False(t, s.Checkmate("white"))
+    assert.False(t, s.Checkmate("black"))
+    assert.False(t, s.Stalemate("white"))
+    assert.False(t, s.Stalemate("black"))
 }
 
 func Test_CalculateMoves_checkmate(t *testing.T) {
@@ -252,18 +289,34 @@ func Test_CalculateMoves_checkmate(t *testing.T) {
     s.setPiece(&Point{0, 1}, newQueen("black"))
     s.setPiece(&Point{0, 2}, newKing("black", false, 0, -1))
 
-    s.CalculateMoves("white")
-    boardData := s.State()
+    s.CalculateMoves()
 
-    moveCount := 0
-    for _, m := range s.moveMap {
-        moveCount += len(m)
+    fromMoveCount := 0
+    for _, toToMoveMap := range s.fromToToToMoveMap {
+        fromMoveCount += len(toToMoveMap)
     }
+    assert.Equal(t, 18, fromMoveCount)
 
-    assert.Equal(t, 0, moveCount)
-    assert.True(t, boardData.Check)
-    assert.True(t, boardData.Checkmate)
-    assert.False(t, boardData.Stalemate)
+    toMoveCount := 0
+    for _, toToMoveMap := range s.toToFromToMoveMap {
+        toMoveCount += len(toToMoveMap)
+    }
+    assert.Equal(t, 18, toMoveCount)
+    
+    whiteMoveKeys, err := s.AvailableMoves("white")
+    assert.Nil(t, err)
+    assert.Equal(t, 0, len(whiteMoveKeys))
+
+    blackMoveKeys, err := s.AvailableMoves("black")
+    assert.Nil(t, err)
+    assert.Equal(t, 18, len(blackMoveKeys))
+
+    assert.True(t, s.Check("white"))
+    assert.False(t, s.Check("black"))
+    assert.True(t, s.Checkmate("white"))
+    assert.False(t, s.Checkmate("black"))
+    assert.False(t, s.Stalemate("white"))
+    assert.False(t, s.Stalemate("black"))
 }
 
 func Test_CalculateMoves_stalemate(t *testing.T) {
@@ -274,18 +327,34 @@ func Test_CalculateMoves_stalemate(t *testing.T) {
     s.setPiece(&Point{1, 2}, newQueen("black"))
     s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
 
-    s.CalculateMoves("white")
-    boardData := s.State()
+    s.CalculateMoves()
 
-    moveCount := 0
-    for _, m := range s.moveMap {
-        moveCount += len(m)
+    fromMoveCount := 0
+    for _, toToMoveMap := range s.fromToToToMoveMap {
+        fromMoveCount += len(toToMoveMap)
     }
+    assert.Equal(t, 26, fromMoveCount)
 
-    assert.Equal(t, 0, moveCount)
-    assert.False(t, boardData.Check)
-    assert.False(t, boardData.Checkmate)
-    assert.True(t, boardData.Stalemate)
+    toMoveCount := 0
+    for _, toToMoveMap := range s.toToFromToMoveMap {
+        toMoveCount += len(toToMoveMap)
+    }
+    assert.Equal(t, 26, toMoveCount)
+    
+    whiteMoveKeys, err := s.AvailableMoves("white")
+    assert.Nil(t, err)
+    assert.Equal(t, 0, len(whiteMoveKeys))
+
+    blackMoveKeys, err := s.AvailableMoves("black")
+    assert.Nil(t, err)
+    assert.Equal(t, 26, len(blackMoveKeys))
+
+    assert.False(t, s.Check("white"))
+    assert.False(t, s.Check("black"))
+    assert.False(t, s.Checkmate("white"))
+    assert.False(t, s.Checkmate("black"))
+    assert.True(t, s.Stalemate("white"))
+    assert.False(t, s.Stalemate("black"))
 }
 
 func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
@@ -297,12 +366,12 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
     s.setPiece(&Point{3, 7}, newRook("black", false))
     s.setPiece(&Point{4, 7}, newKing("black", false, 0, -1))
 
-    s.CalculateMoves("white")
+    s.CalculateMoves()
     boardData := s.State()
 
     moveCount := 0
-    for _, m := range s.moveMap {
-        moveCount += len(m)
+    for _, toToMoveMap := range s.fromToToToMoveMap {
+        moveCount += len(toToMoveMap)
     }
 
     assert.Equal(t, 13, moveCount)
@@ -319,12 +388,12 @@ func Test_CalculateMoves_promotion(t *testing.T) {
     s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
     s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
 
-    s.CalculateMoves("white")
+    s.CalculateMoves()
     boardData := s.State()
 
     moveCount := 0
-    for _, m := range s.moveMap {
-        moveCount += len(m)
+    for _, toToMoveMap := range s.fromToToToMoveMap {
+        moveCount += len(toToMoveMap)
     }
 
     assert.Equal(t, 7, moveCount)

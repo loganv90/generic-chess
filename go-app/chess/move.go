@@ -1,5 +1,9 @@
 package chess
 
+import (
+    "fmt"
+)
+
 type Action struct {
 	b Board
     fromLocation *Point
@@ -23,6 +27,7 @@ type MoveFactory interface {
 	newCaptureEnPassantMove(b Board, fromLocation *Point, toLocation *Point) (*CaptureEnPassantMove, error)
 	newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point, newVulnerables []*Point) (*CastleMove, error)
     newPromotionMoves(move Move, promotionPieces []Piece) ([]*PromotionMove, error)
+    newAllyDefenseMove(b Board, fromLocation *Point, toLocation *Point) (*AllyDefenseMove, error)
 }
 
 type ConcreteMoveFactory struct{}
@@ -224,6 +229,22 @@ func (f *ConcreteMoveFactory) newPromotionMoves(move Move, promotionPieces []Pie
     }
 
     return promotionMoves, nil
+}
+
+func (m *ConcreteMoveFactory) newAllyDefenseMove(b Board, fromLocation *Point, toLocation *Point) (*AllyDefenseMove, error) {
+	p, err := b.getPiece(fromLocation)
+	if err != nil {
+		return nil, err
+	}
+
+    return &AllyDefenseMove{
+        &Action{
+            b: b,
+            fromLocation: fromLocation,
+            toLocation: toLocation,
+        },
+        p,
+    }, nil
 }
 
 type Move interface {
@@ -483,5 +504,22 @@ func (p *PromotionMove) undo() error {
     p.baseMove.undo()
     
 	return nil
+}
+
+type AllyDefenseMove struct {
+    *Action
+    piece Piece
+}
+
+func (m *AllyDefenseMove) getNewPiece() Piece {
+    return m.piece
+}
+
+func (m *AllyDefenseMove) execute() error {
+	return fmt.Errorf("AllyDefenseMove cannot be executed")
+}
+
+func (m *AllyDefenseMove) undo() error {
+	return fmt.Errorf("AllyDefenseMove cannot be undone")
 }
 

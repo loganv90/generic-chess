@@ -61,6 +61,16 @@ func (m *MockMoveFactory) newPromotionMoves(move Move, promotionPieces []Piece) 
     }
 }
 
+func (m *MockMoveFactory) newAllyDefenseMove(b Board, fromLocation *Point, toLocation *Point) (*AllyDefenseMove, error) {
+    args := m.Called(b, fromLocation, toLocation)
+
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    } else {
+        return args.Get(0).(*AllyDefenseMove), args.Error(1)
+    }
+}
+
 type MockMove struct {
 	mock.Mock
 }

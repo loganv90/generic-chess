@@ -64,6 +64,10 @@ func addDirection(
 			}
 			break
 		} else {
+            allyDefenseMove, err := moveFactoryInstance.newAllyDefenseMove(b, fromLocation, currentLocation)
+            if err == nil {
+                *moves = append(*moves, allyDefenseMove)
+            }
 			break
 		}
 
@@ -95,7 +99,12 @@ func addSimple(
 		if err == nil {
 			*moves = append(*moves, simpleMove)
 		}
-	}
+	} else {
+        allyDefenseMove, err := moveFactoryInstance.newAllyDefenseMove(b, fromLocation, toLocation)
+        if err == nil {
+            *moves = append(*moves, allyDefenseMove)
+        }
+    }
 }
 
 func newPawn(color string, moved bool, xDir int, yDir int) *Pawn {
@@ -255,7 +264,12 @@ func (a *Pawn) addCaptures(b Board, fromLocation *Point, moves *[]Move) {
             } else {
                 *moves = append(*moves, simpleMove)
             }
-		}
+		} else if piece != nil {
+            allyDefenseMove, err := moveFactoryInstance.newAllyDefenseMove(b, fromLocation, toLocation)
+            if err == nil {
+                *moves = append(*moves, allyDefenseMove)
+            }
+        }
 	}
 }
 

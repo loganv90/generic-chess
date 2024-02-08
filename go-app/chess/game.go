@@ -215,7 +215,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
 }
 
 func (s *SimpleGame) Moves() ([]*MoveKey, error) {
-    return s.b.AvailableMoves()
+    // TODO find a new way to do this
+    return s.b.AvailableMoves("white")
 }
 
 func (s *SimpleGame) Undo() error {

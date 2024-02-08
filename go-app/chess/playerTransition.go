@@ -46,12 +46,12 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
             break
         }
 
-        err = b.CalculateMoves(newPlayer.color)
+        err = b.CalculateMoves()
         if err != nil {
             return nil, err
         }
 
-        if b.Checkmate() {
+        if b.Checkmate(newPlayer.color) {
             eliminated = append(eliminated, newPlayer.color)
 
             err = p.setCurrent(newPlayer.color)
@@ -60,7 +60,7 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
             }
 
             continue
-        } else if b.Stalemate() {
+        } else if b.Stalemate(newPlayer.color) {
             newCurrent = newPlayer.color
             newGameOver = true
             break
@@ -132,7 +132,7 @@ func (s *IncrementalTransition) execute() error {
         }
     }
 
-    err = s.b.CalculateMoves(s.newCurrent)
+    err = s.b.CalculateMoves()
     if err != nil {
         return err
     }
@@ -167,7 +167,8 @@ func (s *IncrementalTransition) undo() error {
         }
     }
 
-    err = s.b.CalculateMoves(s.oldCurrent)
+    // TODO we don't have to do this here anymore
+    err = s.b.CalculateMoves()
     if err != nil {
         return err
     }

@@ -26,14 +26,15 @@ type Board interface {
     disablePieces(color string, disable bool) error
 
     // these are for the game
-    ValidMoves(fromLocation *Point) ([]Move, error) // returns moves for a piece using the moveMap
-    CalculateMoves(color string) error // calcutes moves assuming it is the color's turn and sets moveMap and state
-    AvailableMoves() ([]*MoveKey, error) // returns moves for a piece using the moveMap
+    CalculateMoves() error // calcutes moves for every color
+    ValidMoves(fromLocation *Point) ([]Move, error) // returns moves from a location
+    AvailableMoves(color string) ([]*MoveKey, error) // returns moves for a color
     Size() *Point
 	Print() string
     State() *BoardData
-    Checkmate() bool
-    Stalemate() bool
+    Check(color string) bool
+    Checkmate(color string) bool
+    Stalemate(color string) bool
 }
 
 func newSimpleBoard(size *Point) (*SimpleBoard, error) {
@@ -54,10 +55,11 @@ func newSimpleBoard(size *Point) (*SimpleBoard, error) {
         pieceLocationsMap: map[string][]*Point{},
 		enPassantMap: map[string]*EnPassant{},
         vulnerablesMap: map[string][]*Point{},
-        moveMap: map[Point][]Move{},
-        check: false,
-        checkmate: false,
-        stalemate: false,
+        fromToToToMoveMap: map[Point]map[Point]Move{},
+        toToFromToMoveMap: map[Point]map[Point]Move{},
+        checkMap: map[string]bool{},
+        checkmateMap: map[string]bool{},
+        stalemateMap: map[string]bool{},
 	}, nil
 }
 
@@ -69,10 +71,11 @@ type SimpleBoard struct {
     pieceLocationsMap map[string][]*Point
 	enPassantMap map[string]*EnPassant
     vulnerablesMap map[string][]*Point
-    moveMap map[Point][]Move
-    check bool
-    checkmate bool
-    stalemate bool
+    fromToToToMoveMap map[Point]map[Point]Move
+    toToFromToMoveMap map[Point]map[Point]Move
+    checkMap map[string]bool
+    checkmateMap map[string]bool
+    stalemateMap map[string]bool
 }
 
 func (s *SimpleBoard) disablePieces(color string, disable bool) error {
@@ -195,69 +198,20 @@ func (s *SimpleBoard) clearEnPassant(color string) error {
 }
 
 func (s *SimpleBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
-    moves, ok := s.moveMap[*fromLocation]
-    if !ok {
-        return []Move{}, nil
+    moves := []Move{}
+    
+    for _, move := range s.fromToToToMoveMap[*fromLocation] {
+        moves = append(moves, move)
     }
 
     return moves, nil
 }
 
-// TODO add 3 move repetition and 50 move rule
-// TODO add rule to allow checks and only lose on king capture
-// TODO add rule to check for checkmate and stalemate on all players after every move
-func (s *SimpleBoard) CalculateMoves(color string) error {
-    s.moveMap = map[Point][]Move{}
-    s.check = s.isInCheck(color)
-    s.checkmate = false
-    s.stalemate = false
-
-    // TODO right now we're calculating moves for all pieces so many times
-    // instead, we should calculate moves for all pieces once
-    // we're going to have to calculate xray moves for all pieces
-    // imagine just getting all the moves for all pieces and then putting them into maps
-    // then we can find when a pinned piece moves and calculate moves again for that piece
-    // we need move types for xray moves, and self attack moves
-
-    ownPieceLocations, ok := s.pieceLocationsMap[color]
-    if !ok {
-        return fmt.Errorf("no pieces found for color %s", color)
-    }
-
-    for _, ownPieceLocation := range ownPieceLocations {
-        piece, err := s.getPiece(ownPieceLocation)
-        if piece == nil || err != nil {
-            continue
-        }
-        
-        moves := piece.moves(s, ownPieceLocation)
-        for _, move := range moves {
-            boardCopy, err := s.copy()
-            if err != nil {
-                continue
-            }
-            move.getAction().b = boardCopy
-
-            move.execute()
-            if boardCopy.isInCheck(color) {
-                continue
-            }
-
-            move.getAction().b = s
-            s.moveMap[*ownPieceLocation] = append(s.moveMap[*ownPieceLocation], move)
-        }
-    }
-
-    s.checkmate = s.check && len(s.moveMap) == 0
-    s.stalemate = !s.check && len(s.moveMap) == 0
-
-    return nil
-}
-
-func (s *SimpleBoard) AvailableMoves() ([]*MoveKey, error) {
+func (s *SimpleBoard) AvailableMoves(color string) ([]*MoveKey, error) {
     moveKeys := []*MoveKey{}
-    for _, moves := range s.moveMap {
-        for _, move := range moves {
+
+    for _, pieceLocation := range s.pieceLocationsMap[color] {
+        for _, move := range s.fromToToToMoveMap[*pieceLocation] { 
             action := move.getAction()
             promotion := ""
             if promotionMove, ok := move.(*PromotionMove); ok {
@@ -275,35 +229,159 @@ func (s *SimpleBoard) AvailableMoves() ([]*MoveKey, error) {
     return moveKeys, nil
 }
 
-func (s *SimpleBoard) isInCheck(color string) bool {
-    vulnerableLocations, err := s.getVulnerables(color)
-    if err == nil {
-        for _, vulnerableLocation := range vulnerableLocations {
-            if s.isLocationAttacked(vulnerableLocation, color) {
-                return true
-            }
-        }
-    }
+// TODO add 3 move repetition and 50 move rule
+// TODO add rule to allow checks and only lose on king capture
+// TODO add rule to check for checkmate and stalemate on all players after every move
+func (s *SimpleBoard) CalculateMoves() error {
+    colorToMoveCountMap := map[string]int{}
+    s.fromToToToMoveMap = map[Point]map[Point]Move{}
+    s.toToFromToMoveMap = map[Point]map[Point]Move{}
 
-    return false
-}
-
-func (s *SimpleBoard) isLocationAttacked(location *Point, allyColor string) bool {
-    for color, pieceLocations := range s.pieceLocationsMap {
-        if color == allyColor {
-            continue
-        }
-
-        for _, pieceLocation := range pieceLocations {
-            piece, err := s.getPiece(pieceLocation)
+    for _, pieceLocations := range s.pieceLocationsMap {
+        for _, fromLocation := range pieceLocations {
+            piece, err := s.getPiece(fromLocation)
             if piece == nil || err != nil {
                 continue
             }
 
-            moves := piece.moves(s, pieceLocation)
+            moves := piece.moves(s, fromLocation)
             for _, move := range moves {
-                if move.getAction().toLocation.equals(location) {
+                action := move.getAction()
+                color := move.getNewPiece().getColor()
+
+                if _, ok := s.fromToToToMoveMap[*action.fromLocation]; !ok {
+                    s.fromToToToMoveMap[*action.fromLocation] = map[Point]Move{}
+                }
+                if _, ok := s.toToFromToMoveMap[*action.toLocation]; !ok {
+                    s.toToFromToMoveMap[*action.toLocation] = map[Point]Move{}
+                }
+                if _, ok := colorToMoveCountMap[color]; !ok {
+                    colorToMoveCountMap[color] = 0
+                }
+
+                s.fromToToToMoveMap[*action.fromLocation][*action.toLocation] = move
+                s.toToFromToMoveMap[*action.toLocation][*action.fromLocation] = move
+                colorToMoveCountMap[color] += 1
+            }
+        }
+    }
+
+    boardCopy, err := s.copy()
+    if err != nil {
+        return err
+    }
+
+    for _, toLocations := range s.fromToToToMoveMap {
+        for _, move := range toLocations {
+            action := move.getAction()
+            action.b = boardCopy
+            color := move.getNewPiece().getColor()
+            fromLocationsToUpdate := boardCopy.getFromLocationsGivenToLocations([]*Point{action.toLocation, action.fromLocation})
+
+            err = move.execute()
+            if err != nil {
+                continue
+            }
+            boardCopy.recalculateMovesFromLocations(fromLocationsToUpdate)
+
+            if boardCopy.isInCheck(color) {
+                delete(s.fromToToToMoveMap[*action.fromLocation], *action.toLocation)
+                delete(s.toToFromToMoveMap[*action.toLocation], *action.fromLocation)
+                colorToMoveCountMap[color] -= 1
+            }
+
+            err = move.undo()
+            if err != nil {
+                continue
+            }
+            boardCopy.recalculateMovesFromLocations(fromLocationsToUpdate)
+
+            action.b = s
+        }
+    }
+
+    // TODO we don't really want to remove these ever. Bot can use them
+    for fromLocation, toLocations := range s.fromToToToMoveMap {
+        for toLocation, move := range toLocations {
+            if _, ok := move.(*AllyDefenseMove); ok {
+                color := move.getNewPiece().getColor()
+                delete(s.toToFromToMoveMap[toLocation], fromLocation)
+                delete(s.fromToToToMoveMap[fromLocation], toLocation)
+                colorToMoveCountMap[color] -= 1
+            }
+        }
+    }
+
+    for color, moveCount := range colorToMoveCountMap {
+        s.checkMap[color] = s.isInCheck(color)
+        s.checkmateMap[color] = s.checkMap[color] && moveCount <= 0
+        s.stalemateMap[color] = !s.checkMap[color] && moveCount <= 0
+    }
+    
+    return nil
+}
+
+func (s *SimpleBoard) getFromLocationsGivenToLocations(toLocations []*Point) map[Point]bool {
+    fromLocations := map[Point]bool{}
+    for _, toLocation := range toLocations {
+        for fromLocation := range s.toToFromToMoveMap[*toLocation] {
+            fromLocations[fromLocation] = true
+        }
+    }
+    return fromLocations
+}
+
+func (s *SimpleBoard) recalculateMovesFromLocations(fromLocations map[Point]bool) error {
+    for fromLocation := range fromLocations {
+        for toLocation := range s.fromToToToMoveMap[fromLocation] {
+            delete(s.toToFromToMoveMap[toLocation], fromLocation)
+        }
+        delete(s.fromToToToMoveMap, fromLocation)
+    }
+
+    for fromLocation := range fromLocations {
+        piece, err := s.getPiece(&fromLocation)
+        if piece == nil || err != nil {
+            continue
+        }
+
+        moves := piece.moves(s, &fromLocation)
+        for _, move := range moves {
+            action := move.getAction()
+
+            if _, ok := s.fromToToToMoveMap[*action.fromLocation]; !ok {
+                s.fromToToToMoveMap[*action.fromLocation] = map[Point]Move{}
+            }
+            if _, ok := s.toToFromToMoveMap[*action.toLocation]; !ok {
+                s.toToFromToMoveMap[*action.toLocation] = map[Point]Move{}
+            }
+
+            s.fromToToToMoveMap[*action.fromLocation][*action.toLocation] = move
+            s.toToFromToMoveMap[*action.toLocation][*action.fromLocation] = move
+        }
+    }
+
+    return nil
+}
+
+func (s *SimpleBoard) isInCheck(color string) bool {
+    if kingLocation, ok1 := s.kingLocationMap[color]; ok1 {
+        if fromToMoveMap, ok2 := s.toToFromToMoveMap[*kingLocation]; ok2 {
+            for _, move := range fromToMoveMap {
+                if move.getNewPiece().getColor() != color {
                     return true
+                }
+            }
+        }
+    }
+
+    if vulnerableLocations, ok1 := s.vulnerablesMap[color]; ok1 {
+        for _, vulnerableLocation := range vulnerableLocations {
+            if fromToMoveMap, ok2 := s.toToFromToMoveMap[*vulnerableLocation]; ok2 {
+                for _, move := range fromToMoveMap {
+                    if move.getNewPiece().getColor() != color {
+                        return true
+                    }
                 }
             }
         }
@@ -388,18 +466,28 @@ func (s *SimpleBoard) State() *BoardData {
         YSize: s.size.y,
         Disabled: disabled,
         Pieces: pieces,
-        Check: s.check,
-        Checkmate: s.checkmate,
-        Stalemate: s.stalemate,
     }
 }
 
-func (s *SimpleBoard) Checkmate() bool {
-    return s.checkmate
+func (s *SimpleBoard) Check(color string) bool {
+    if check, ok := s.checkMap[color]; ok {
+        return check
+    }
+    return false
 }
 
-func (s *SimpleBoard) Stalemate() bool {
-    return s.stalemate
+func (s *SimpleBoard) Checkmate(color string) bool {
+    if checkmate, ok := s.checkmateMap[color]; ok {
+        return checkmate
+    }
+    return false
+}
+
+func (s *SimpleBoard) Stalemate(color string) bool {
+    if stalemate, ok := s.stalemateMap[color]; ok {
+        return stalemate
+    }
+    return false
 }
 
 func (s *SimpleBoard) copy() (*SimpleBoard, error) {
@@ -417,6 +505,10 @@ func (s *SimpleBoard) copy() (*SimpleBoard, error) {
         }
     }
 
+    for k, v := range s.disabledLocations {
+        simpleBoard.disabledLocations[k] = v
+    }
+
     for k, v := range s.kingLocationMap {
         simpleBoard.kingLocationMap[k] = v
     }
@@ -427,6 +519,36 @@ func (s *SimpleBoard) copy() (*SimpleBoard, error) {
 
     for k, v := range s.vulnerablesMap {
         simpleBoard.vulnerablesMap[k] = v
+    }
+
+    for k, v := range s.fromToToToMoveMap {
+        for k2, v2 := range v {
+            if _, ok := simpleBoard.fromToToToMoveMap[k]; !ok {
+                simpleBoard.fromToToToMoveMap[k] = map[Point]Move{}
+            }
+            simpleBoard.fromToToToMoveMap[k][k2] = v2
+        }
+    }
+
+    for k, v := range s.toToFromToMoveMap {
+        for k2, v2 := range v {
+            if _, ok := simpleBoard.toToFromToMoveMap[k]; !ok {
+                simpleBoard.toToFromToMoveMap[k] = map[Point]Move{}
+            }
+            simpleBoard.toToFromToMoveMap[k][k2] = v2
+        }
+    }
+
+    for k, v := range s.checkMap {
+        simpleBoard.checkMap[k] = v
+    }
+
+    for k, v := range s.checkmateMap {
+        simpleBoard.checkmateMap[k] = v
+    }
+
+    for k, v := range s.stalemateMap {
+        simpleBoard.stalemateMap[k] = v
     }
 
     return simpleBoard, nil
