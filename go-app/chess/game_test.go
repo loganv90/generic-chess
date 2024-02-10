@@ -756,5 +756,32 @@ func Test_NewSimpleFourPlayerGame(t *testing.T) {
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
     assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+
+    err = game.Execute(8, 13, 6, 11, "") // white bishop move
+    assert.Nil(t, err)
+
+    err = game.Execute(0, 8, 2, 6, "") // red bishop move
+    assert.Nil(t, err)
+
+    err = game.Execute(8, 0, 6, 2, "") // black bishop move
+    assert.Nil(t, err)
+
+    err = game.Execute(13, 8, 11, 6, "") // blue bishop move
+    assert.Nil(t, err)
+
+    err = game.Execute(9, 13, 8, 11, "") // white knight move
+    assert.Nil(t, err)
+
+    err = game.Execute(0, 9, 2, 8, "") // red knight move
+    assert.Nil(t, err)
+
+    err = game.Execute(9, 0, 8, 2, "") // black knight move
+    assert.Nil(t, err)
+
+    err = game.Execute(13, 9, 11, 8, "") // blue knight move
+    assert.Nil(t, err)
+
+    err = game.Execute(7, 13, 10, 13, "") // white castle
+    assert.Nil(t, err)
 }
 

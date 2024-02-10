@@ -372,6 +372,9 @@ func (s *SimpleBoard) isLocationAttacked(color string, fromLocationsToExclude ma
 }
 
 func (s *SimpleBoard) isInCheck(color string, fromLocationsToExclude map[Point]bool, toLocationsToInclude map[Point]bool) bool {
+    // fromLocationsToExclude: contains the locations of the pieces that are attacking the toLocation or fromLocation of the recent move
+    // toLocationsToInclude: contains the updated attacked locations of the pieces that were attacking the toLocation or fromLocation of the recent move
+
     if kingLocation, ok1 := s.kingLocationMap[color]; ok1 {
         if s.isLocationAttacked(color, fromLocationsToExclude, toLocationsToInclude, kingLocation) {
             return true

@@ -357,7 +357,6 @@ func Test_CalculateMoves_stalemate(t *testing.T) {
     assert.False(t, s.Stalemate("black"))
 }
 
-// TODO castling is broken. try moving the black rook to 2, 7
 func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
     s, err := newSimpleBoard(&Point{8, 8})
     assert.Nil(t, err)
@@ -387,7 +386,7 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
 
     blackMoveKeys, err := s.AvailableMoves("black")
     assert.Nil(t, err)
-    assert.Equal(t, 14, len(blackMoveKeys))
+    assert.Equal(t, 15, len(blackMoveKeys))
 
     assert.False(t, s.Check("white"))
     assert.False(t, s.Check("black"))

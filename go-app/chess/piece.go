@@ -1,5 +1,9 @@
 package chess
 
+import (
+    "fmt"
+)
+
 type CastleDirection struct {
 	Point
 	kingOffset *Point
@@ -558,100 +562,92 @@ func (k *King) addSimples(b Board, fromLocation *Point, moves *[]Move) {
 	}
 }
 
+func (k *King) findRookForCastle(b Board, fromLocation *Point, direction *Point) (*Point, error) {
+    currentLocation := fromLocation.add(direction)
+
+    for {
+        piece, err := b.getPiece(currentLocation)
+        if err != nil {
+            return nil, err
+        }
+
+        if piece == nil {
+            currentLocation = currentLocation.add(direction)
+            continue
+        }
+
+        if rook, ok := piece.(*Rook); !ok || rook.moved || rook.color != k.color {
+            return nil, fmt.Errorf("no rook found")
+        }
+
+        return currentLocation, nil
+    }
+}
+
+func (k *King) findEdgeForCastle(b Board, fromLocation *Point, direction *Point) (*Point, error) {
+    previousLocation := fromLocation
+    currentLocation := previousLocation.add(direction)
+
+    for {
+        _, err := b.getPiece(currentLocation)
+        if err != nil {
+            return previousLocation, nil
+        }
+
+        previousLocation = currentLocation
+        currentLocation = previousLocation.add(direction)
+    }
+}
+
 func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
 	if k.moved {
 		return
 	}
 
 	for _, castle := range k.castles {
-        vulnerableLocations := []*Point{}
-        currentLocation := fromLocation.add(&castle.Point)
-
-		rookFound := false
-		for {
-			piece, err := b.getPiece(currentLocation)
-			if err != nil {
-				break
-			}
-
-			if piece == nil {
-                currentLocation = currentLocation.add(&castle.Point)
-				continue
-			}
-
-			rook, ok := piece.(*Rook)
-			if !ok || rook.moved || rook.color != k.color {
-				break
-			}
-
-			rookFound = true
-			break
-		}
-		if !rookFound {
-			continue
-		}
-
-		xToKing := fromLocation.x
-		xToRook := currentLocation.x
-		yToKing := fromLocation.y
-		yToRook := currentLocation.y
-		if castle.kingOffset.x > 0 {
-			xToKing = castle.kingOffset.x
-		} else if castle.kingOffset.x < 0 {
-			xToKing = b.Size().x - 1 + castle.kingOffset.x
-		}
-		if castle.kingOffset.y > 0 {
-			yToKing = castle.kingOffset.y
-		} else if castle.kingOffset.y < 0 {
-			yToKing = b.Size().y - 1 + castle.kingOffset.y
-		}
-		if castle.rookOffset.x > 0 {
-			xToRook = castle.rookOffset.x
-		} else if castle.rookOffset.x < 0 {
-			xToRook = b.Size().x - 1 + castle.rookOffset.x
-		}
-		if castle.rookOffset.y > 0 {
-			yToRook = castle.rookOffset.y
-		} else if castle.rookOffset.y < 0 {
-			yToRook = b.Size().y - 1 + castle.rookOffset.y
-		}
-        if xToKing < 0 || xToKing >= b.Size().x || yToKing < 0 || yToKing >= b.Size().y {
-            continue
-        }
-        if xToRook < 0 || xToRook >= b.Size().x || yToRook < 0 || yToRook >= b.Size().y {
+        fromRookLocation, err := k.findRookForCastle(b, fromLocation, &castle.Point)
+        if err != nil {
             continue
         }
 
-        xCheckedMin := min(fromLocation.x, currentLocation.x)
-        xCheckedMax := max(fromLocation.x, currentLocation.x)
-        yCheckedMin := min(fromLocation.y, currentLocation.y)
-        yCheckedMax := max(fromLocation.y, currentLocation.y)
+        edgeLocation, err := k.findEdgeForCastle(b, fromRookLocation, &castle.Point)
+        if err != nil {
+            continue
+        }
 
-        xToMin := min(xToKing, xToRook)
-        xToMax := max(xToKing, xToRook)
-        yToMin := min(yToKing, yToRook)
-        yToMax := max(yToKing, yToRook)
+        toLocation := edgeLocation.add(castle.kingOffset)
+        toRookLocation := edgeLocation.add(castle.rookOffset)
+
+        xCheckedMin := min(fromLocation.x, fromRookLocation.x)
+        xCheckedMax := max(fromLocation.x, fromRookLocation.x)
+        yCheckedMin := min(fromLocation.y, fromRookLocation.y)
+        yCheckedMax := max(fromLocation.y, fromRookLocation.y)
+
+        xToMin := min(toLocation.x, toRookLocation.x)
+        xToMax := max(toLocation.x, toRookLocation.x)
+        yToMin := min(toLocation.y, toRookLocation.y)
+        yToMax := max(toLocation.y, toRookLocation.y)
 
         clear := true
-        for x := xCheckedMin; x > xToMin && clear; x-- {
+        for x := xCheckedMin - 1; x > xToMin && clear; x-- {
             if piece, err := b.getPiece(&Point{x, fromLocation.y}); err != nil || piece != nil {
                 clear = false
                 break
             }
         }
-        for y := yCheckedMin; y > yToMin && clear; y-- {
+        for y := yCheckedMin - 1; y > yToMin && clear; y-- {
             if piece, err := b.getPiece(&Point{fromLocation.x, y}); err != nil || piece != nil {
                 clear = false
                 break
             }
         }
-        for x := xCheckedMax; x < xToMax && clear; x++ {
+        for x := xCheckedMax + 1; x < xToMax && clear; x++ {
             if piece, err := b.getPiece(&Point{x, fromLocation.y}); err != nil || piece != nil {
                 clear = false
                 break
             }
         }
-        for y := yCheckedMax; y < yToMax && clear; y++ {
+        for y := yCheckedMax + 1; y < yToMax && clear; y++ {
             if piece, err := b.getPiece(&Point{fromLocation.y, y}); err != nil || piece != nil {
                 clear = false
                 break
@@ -661,30 +657,35 @@ func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
             continue
         }
 
-        if xToKing > fromLocation.x {
-            for x := fromLocation.x + 1; x < xToKing; x++ {
-                vulnerableLocations = append(vulnerableLocations, &Point{x, fromLocation.y})
+        vulnerableLocations := []*Point{}
+        if toLocation.x > fromLocation.x {
+            for x := fromLocation.x + 1; x < toLocation.x; x++ {
+                location := &Point{x, fromLocation.y}
+                vulnerableLocations = append(vulnerableLocations, location)
             }
-        } else if xToKing < fromLocation.x {
-            for x := fromLocation.x - 1; x > xToKing; x-- {
-                vulnerableLocations = append(vulnerableLocations, &Point{x, fromLocation.y})
+        } else if toLocation.x < fromLocation.x {
+            for x := fromLocation.x - 1; x > toLocation.x; x-- {
+                location := &Point{x, fromLocation.y}
+                vulnerableLocations = append(vulnerableLocations, location)
             }
-        } else if yToKing > fromLocation.y {
-            for y := fromLocation.y + 1; y < yToKing; y++ {
-                vulnerableLocations = append(vulnerableLocations, &Point{fromLocation.x, y})
+        } else if toLocation.y > fromLocation.y {
+            for y := fromLocation.y + 1; y < toLocation.y; y++ {
+                location := &Point{fromLocation.x, y}
+                vulnerableLocations = append(vulnerableLocations, location)
             }
-        } else if yToKing < fromLocation.y {
-            for y := fromLocation.y - 1; y > yToKing; y-- {
-                vulnerableLocations = append(vulnerableLocations, &Point{fromLocation.x, y})
+        } else if toLocation.y < fromLocation.y {
+            for y := fromLocation.y - 1; y > toLocation.y; y-- {
+                location := &Point{fromLocation.x, y}
+                vulnerableLocations = append(vulnerableLocations, location)
             }
         }
 
 		castleMove, err := moveFactoryInstance.newCastleMove(
             b,
             fromLocation,
-            currentLocation,
-            &Point{xToKing, yToKing},
-            &Point{xToRook, yToRook},
+            fromRookLocation,
+            toLocation,
+            toRookLocation,
             vulnerableLocations,
         )
 		if err == nil {

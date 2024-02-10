@@ -389,12 +389,17 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
         {5, 3},
         {6, 3},
     }
-
     for _, p := range inPoints {
         board.On("getPiece", p).Return(nil, nil)
     }
 
-	board.On("Size").Return(&Point{8, 8})
+    outPoints := []*Point{
+        {-1, 3},
+        {8, 3},
+    }
+    for _, p := range outPoints {
+        board.On("getPiece", p).Return(nil, errors.New(""))
+    }
 
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{2, 2}).Return(nil, nil)
 	moveFactory.On("newSimpleMove", board, &Point{3, 3}, &Point{3, 2}).Return(nil, nil)
@@ -409,7 +414,6 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 	moveFactoryInstance = moveFactory
 
 	king := newKing("white", false, 0, 1)
-
 	rook := newRook("white", false)
 	board.On("getPiece", &Point{0, 3}).Return(rook, nil)
 	board.On("getPiece", &Point{7, 3}).Return(rook, nil)
