@@ -150,7 +150,7 @@ func Test_TwoPlayerCheckmate(t *testing.T) {
     err = game.Redo()
     assert.Nil(t, err)
 
-    moves, err := game.Moves()
+    moves, err := game.Moves("white")
     assert.Nil(t, err)
     err = game.Execute(moves[0].XFrom, moves[0].YFrom, moves[0].XTo, moves[0].YTo, moves[0].Promotion)
     assert.NotNil(t, err)
@@ -226,7 +226,7 @@ func Test_FourPlayerCheckmate(t *testing.T) {
     err = game.Redo()
     assert.Nil(t, err)
 
-    moves, err := game.Moves()
+    moves, err := game.Moves("white")
     assert.Nil(t, err)
     err = game.Execute(moves[0].XFrom, moves[0].YFrom, moves[0].XTo, moves[0].YTo, moves[0].Promotion)
     assert.NotNil(t, err)

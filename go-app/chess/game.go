@@ -11,7 +11,7 @@ type Game interface {
 	Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error // called when a player tries to make a move
     State() (*BoardData, error) // called to get the game state
     View(xFrom int, yFrom int) (*PieceState, error) // show valid moves of piece
-    Moves() ([]*MoveKey, error) // get all valid moves
+    Moves(color string) ([]*MoveKey, error) // get all valid moves
 	Undo() error
 	Redo() error
 	Print() string
@@ -214,9 +214,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     }
 }
 
-func (s *SimpleGame) Moves() ([]*MoveKey, error) {
-    // TODO find a new way to do this
-    return s.b.AvailableMoves("white")
+func (s *SimpleGame) Moves(color string) ([]*MoveKey, error) {
+    return s.b.AvailableMoves(color)
 }
 
 func (s *SimpleGame) Undo() error {
