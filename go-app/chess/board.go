@@ -201,6 +201,9 @@ func (s *SimpleBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
     moves := []Move{}
     
     for _, move := range s.fromToToToMoveMap[*fromLocation] {
+        if _, ok := move.(*AllyDefenseMove); ok {
+            continue
+        }
         moves = append(moves, move)
     }
 
@@ -212,6 +215,10 @@ func (s *SimpleBoard) AvailableMoves(color string) ([]*MoveKey, error) {
 
     for _, pieceLocation := range s.pieceLocationsMap[color] {
         for _, move := range s.fromToToToMoveMap[*pieceLocation] { 
+            if _, ok := move.(*AllyDefenseMove); ok {
+                continue
+            }
+
             action := move.getAction()
             promotion := ""
             if promotionMove, ok := move.(*PromotionMove); ok {
@@ -273,17 +280,23 @@ func (s *SimpleBoard) CalculateMoves() error {
 
     for _, toLocations := range s.fromToToToMoveMap {
         for _, move := range toLocations {
+            color := move.getNewPiece().getColor()
+            if _, ok := move.(*AllyDefenseMove); ok {
+                colorToMoveCountMap[color] -= 1
+                continue
+            }
+
             action := move.getAction()
             action.b = boardCopy
-            color := move.getNewPiece().getColor()
             fromLocationsToUpdate := boardCopy.getFromLocationsGivenToLocations([]*Point{action.toLocation, action.fromLocation})
 
             err = move.execute()
             if err != nil {
-                continue
+                return err
             }
             boardCopy.recalculateMovesFromLocations(fromLocationsToUpdate)
 
+            // TODO try to create a list of moves to include and exclude instead of recalculating stuff
             if boardCopy.isInCheck(color) {
                 delete(s.fromToToToMoveMap[*action.fromLocation], *action.toLocation)
                 delete(s.toToFromToMoveMap[*action.toLocation], *action.fromLocation)
@@ -292,23 +305,11 @@ func (s *SimpleBoard) CalculateMoves() error {
 
             err = move.undo()
             if err != nil {
-                continue
+                return err
             }
             boardCopy.recalculateMovesFromLocations(fromLocationsToUpdate)
 
             action.b = s
-        }
-    }
-
-    // TODO we don't really want to remove these ever. Bot can use them
-    for fromLocation, toLocations := range s.fromToToToMoveMap {
-        for toLocation, move := range toLocations {
-            if _, ok := move.(*AllyDefenseMove); ok {
-                color := move.getNewPiece().getColor()
-                delete(s.toToFromToMoveMap[toLocation], fromLocation)
-                delete(s.fromToToToMoveMap[fromLocation], toLocation)
-                colorToMoveCountMap[color] -= 1
-            }
         }
     }
 
