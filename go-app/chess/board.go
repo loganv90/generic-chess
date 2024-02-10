@@ -288,16 +288,15 @@ func (s *SimpleBoard) CalculateMoves() error {
 
             action := move.getAction()
             action.b = boardCopy
-            fromLocationsToUpdate := boardCopy.getFromLocationsGivenToLocations([]*Point{action.toLocation, action.fromLocation})
 
             err = move.execute()
             if err != nil {
                 return err
             }
-            boardCopy.recalculateMovesFromLocations(fromLocationsToUpdate)
 
-            // TODO try to create a list of moves to include and exclude instead of recalculating stuff
-            if boardCopy.isInCheck(color) {
+            fromLocationsToExclude := boardCopy.getFromLocationsGivenToLocations([]*Point{action.toLocation, action.fromLocation})
+            toLocationsToInclude := boardCopy.calculateToLocationsGivenFromLocations(color, fromLocationsToExclude)
+            if boardCopy.isInCheck(color, fromLocationsToExclude, toLocationsToInclude) {
                 delete(s.fromToToToMoveMap[*action.fromLocation], *action.toLocation)
                 delete(s.toToFromToMoveMap[*action.toLocation], *action.fromLocation)
                 colorToMoveCountMap[color] -= 1
@@ -307,14 +306,13 @@ func (s *SimpleBoard) CalculateMoves() error {
             if err != nil {
                 return err
             }
-            boardCopy.recalculateMovesFromLocations(fromLocationsToUpdate)
 
             action.b = s
         }
     }
 
     for color, moveCount := range colorToMoveCountMap {
-        s.checkMap[color] = s.isInCheck(color)
+        s.checkMap[color] = s.isInCheck(color, map[Point]bool{}, map[Point]bool{})
         s.checkmateMap[color] = s.checkMap[color] && moveCount <= 0
         s.stalemateMap[color] = !s.checkMap[color] && moveCount <= 0
     }
@@ -322,68 +320,68 @@ func (s *SimpleBoard) CalculateMoves() error {
     return nil
 }
 
-func (s *SimpleBoard) getFromLocationsGivenToLocations(toLocations []*Point) map[Point]bool {
-    fromLocations := map[Point]bool{}
-    for _, toLocation := range toLocations {
-        for fromLocation := range s.toToFromToMoveMap[*toLocation] {
-            fromLocations[fromLocation] = true
-        }
-    }
-    return fromLocations
-}
-
-func (s *SimpleBoard) recalculateMovesFromLocations(fromLocations map[Point]bool) error {
-    for fromLocation := range fromLocations {
-        for toLocation := range s.fromToToToMoveMap[fromLocation] {
-            delete(s.toToFromToMoveMap[toLocation], fromLocation)
-        }
-        delete(s.fromToToToMoveMap, fromLocation)
-    }
+func (s *SimpleBoard) calculateToLocationsGivenFromLocations(color string, fromLocations map[Point]bool) map[Point]bool {
+    toLocations := map[Point]bool{}
 
     for fromLocation := range fromLocations {
         piece, err := s.getPiece(&fromLocation)
-        if piece == nil || err != nil {
+        if piece == nil || err != nil || piece.getColor() == color {
             continue
         }
 
         moves := piece.moves(s, &fromLocation)
         for _, move := range moves {
             action := move.getAction()
-
-            if _, ok := s.fromToToToMoveMap[*action.fromLocation]; !ok {
-                s.fromToToToMoveMap[*action.fromLocation] = map[Point]Move{}
-            }
-            if _, ok := s.toToFromToMoveMap[*action.toLocation]; !ok {
-                s.toToFromToMoveMap[*action.toLocation] = map[Point]Move{}
-            }
-
-            s.fromToToToMoveMap[*action.fromLocation][*action.toLocation] = move
-            s.toToFromToMoveMap[*action.toLocation][*action.fromLocation] = move
+            toLocations[*action.toLocation] = true
         }
     }
 
-    return nil
+    return toLocations
 }
 
-func (s *SimpleBoard) isInCheck(color string) bool {
-    if kingLocation, ok1 := s.kingLocationMap[color]; ok1 {
-        if fromToMoveMap, ok2 := s.toToFromToMoveMap[*kingLocation]; ok2 {
-            for _, move := range fromToMoveMap {
-                if move.getNewPiece().getColor() != color {
-                    return true
-                }
+func (s *SimpleBoard) getFromLocationsGivenToLocations(toLocations []*Point) map[Point]bool {
+    fromLocations := map[Point]bool{}
+
+    for _, toLocation := range toLocations {
+        for fromLocation := range s.toToFromToMoveMap[*toLocation] {
+            fromLocations[fromLocation] = true
+        }
+    }
+
+    return fromLocations
+}
+
+func (s *SimpleBoard) isLocationAttacked(color string, fromLocationsToExclude map[Point]bool, toLocationsToInclude map[Point]bool, location *Point) bool {
+    if _, ok2 := toLocationsToInclude[*location]; ok2 {
+        return true
+    }
+
+    if fromToMoveMap, ok2 := s.toToFromToMoveMap[*location]; ok2 {
+        for fromLocation, move := range fromToMoveMap {
+            if _, ok3 := fromLocationsToExclude[fromLocation]; ok3 {
+                continue
             }
+
+            if move.getNewPiece().getColor() != color {
+                return true
+            }
+        }
+    }
+    
+    return false
+}
+
+func (s *SimpleBoard) isInCheck(color string, fromLocationsToExclude map[Point]bool, toLocationsToInclude map[Point]bool) bool {
+    if kingLocation, ok1 := s.kingLocationMap[color]; ok1 {
+        if s.isLocationAttacked(color, fromLocationsToExclude, toLocationsToInclude, kingLocation) {
+            return true
         }
     }
 
     if vulnerableLocations, ok1 := s.vulnerablesMap[color]; ok1 {
         for _, vulnerableLocation := range vulnerableLocations {
-            if fromToMoveMap, ok2 := s.toToFromToMoveMap[*vulnerableLocation]; ok2 {
-                for _, move := range fromToMoveMap {
-                    if move.getNewPiece().getColor() != color {
-                        return true
-                    }
-                }
+            if s.isLocationAttacked(color, fromLocationsToExclude, toLocationsToInclude, vulnerableLocation) {
+                return true
             }
         }
     }
@@ -510,16 +508,8 @@ func (s *SimpleBoard) copy() (*SimpleBoard, error) {
         simpleBoard.disabledLocations[k] = v
     }
 
-    for k, v := range s.kingLocationMap {
-        simpleBoard.kingLocationMap[k] = v
-    }
-
     for k, v := range s.enPassantMap {
         simpleBoard.enPassantMap[k] = v
-    }
-
-    for k, v := range s.vulnerablesMap {
-        simpleBoard.vulnerablesMap[k] = v
     }
 
     for k, v := range s.fromToToToMoveMap {
@@ -540,23 +530,11 @@ func (s *SimpleBoard) copy() (*SimpleBoard, error) {
         }
     }
 
-    for k, v := range s.checkMap {
-        simpleBoard.checkMap[k] = v
-    }
-
-    for k, v := range s.checkmateMap {
-        simpleBoard.checkmateMap[k] = v
-    }
-
-    for k, v := range s.stalemateMap {
-        simpleBoard.stalemateMap[k] = v
-    }
-
     return simpleBoard, nil
 }
 
 func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {
     _, ok := s.disabledLocations[*p]
-    return p.y < 0 || p.y >= s.size.y || p.x < 0 || p.x >= s.size.x || ok
+    return ok || p.y < 0 || p.y >= s.size.y || p.x < 0 || p.x >= s.size.x
 }
 

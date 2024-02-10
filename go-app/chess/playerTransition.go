@@ -167,7 +167,6 @@ func (s *IncrementalTransition) undo() error {
         }
     }
 
-    // TODO we don't have to do this here anymore
     err = s.b.CalculateMoves()
     if err != nil {
         return err
