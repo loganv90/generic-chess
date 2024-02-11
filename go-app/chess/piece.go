@@ -501,8 +501,8 @@ func newKing(color string, moved bool, xDir int, yDir int) *King {
 
 	if xDir == 1 || xDir == -1 {
 		castles = []*CastleDirection{
-			{Point{0, 1}, &Point{0, -2}, &Point{0, -3}},
-			{Point{0, -1}, &Point{0, 1}, &Point{0, 2}},
+			{Point{0, 1}, &Point{0, -1}, &Point{0, -2}},
+			{Point{0, -1}, &Point{0, 2}, &Point{0, 3}},
 		}
 	} else if yDir == 1 || yDir == -1 {
 		castles = []*CastleDirection{
