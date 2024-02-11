@@ -112,6 +112,105 @@ func Test_UndoAndRedo(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
+func Test_CastleWhenBlocked(t *testing.T) {
+    b, err := newSimpleBoard(&Point{4, 4})
+    assert.Nil(t, err)
+
+    b.setPiece(&Point{1, 3}, newPawn("white", false, 0, -1))
+    b.setPiece(&Point{2, 3}, newKing("white", false, 0, -1))
+    b.setPiece(&Point{3, 3}, newRook("white", false))
+    b.setPiece(&Point{0, 0}, newKing("black", false, 0, 1))
+    err = b.CalculateMoves()
+    assert.Nil(t, err)
+
+    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}})
+    assert.Nil(t, err)
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+
+    err = game.Execute(2, 3, 3, 3, "")
+    assert.NotNil(t, err)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+| K black    |            |            |            |
+|         0y |         0y |         0y |         0y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            |            |            |
+|         1y |         1y |         1y |         1y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            |            |            |
+|         2y |         2y |         2y |         2y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            | P white    | K white    | R white    |
+|         3y |         3y |         3y |         3y |
++---------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
+func Test_CastleCanUndo(t *testing.T) {
+    b, err := newSimpleBoard(&Point{4, 4})
+    assert.Nil(t, err)
+    b.setPiece(&Point{2, 3}, newKing("white", false, 0, -1))
+    b.setPiece(&Point{3, 3}, newRook("white", false))
+    b.setPiece(&Point{0, 0}, newKing("black", false, 0, 1))
+    err = b.CalculateMoves()
+    assert.Nil(t, err)
+
+    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}})
+    assert.Nil(t, err)
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+
+    err = game.Execute(2, 3, 3, 3, "")
+    assert.Nil(t, err)
+
+    err = game.Undo()
+    assert.Nil(t, err)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+| K black    |            |            |            |
+|         0y |         0y |         0y |         0y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            |            |            |
+|         1y |         1y |         1y |         1y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            |            |            |
+|         2y |         2y |         2y |         2y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            | K white    | R white    |
+|         3y |         3y |         3y |         3y |
++---------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
 func Test_TwoPlayerCheckmate(t *testing.T) {
     game, err := NewSimpleGame()
     assert.Nil(t, err)

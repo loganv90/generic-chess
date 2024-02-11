@@ -36,8 +36,6 @@ func createSimpleBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
     simpleBoard.setPiece(&Point{6, 6}, newPawn(color2, false, 0, -1))
     simpleBoard.setPiece(&Point{7, 6}, newPawn(color2, false, 0, -1))
 
-    // TODO add test case for castling out of the corner when piece is in the way
-    // TODO add test case for castling out of the corner and then undoing the move
     simpleBoard.setPiece(&Point{0, 7}, newRook(color2, false))
     simpleBoard.setPiece(&Point{1, 7}, newKnight(color2))
     simpleBoard.setPiece(&Point{2, 7}, newBishop(color2))
