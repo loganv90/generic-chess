@@ -1,6 +1,5 @@
 package chess
 
-
 import (
 	"testing"
     "slices"

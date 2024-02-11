@@ -369,16 +369,16 @@ func (c *CaptureEnPassantMove) execute() error {
 		return err
 	}
 
-	err = c.b.setPiece(c.toLocation, c.newPiece)
-	if err != nil {
-		return err
-	}
-
 	for _, enc := range c.encs {
         err = c.b.setPiece(enc.enPassant.pieceLocation, nil)
 		if err != nil {
 			return err
 		}
+	}
+
+	err = c.b.setPiece(c.toLocation, c.newPiece)
+	if err != nil {
+		return err
 	}
 
     c.b.setVulnerables(c.piece.getColor(), []*Point{})
@@ -456,22 +456,22 @@ func (c *CastleMove) execute() error {
 }
 
 func (c *CastleMove) undo() error {
-	err := c.b.setPiece(c.fromLocation, c.king)
-	if err != nil {
-		return err
-	}
-
-	err = c.b.setPiece(c.toLocation, c.rook)
-	if err != nil {
-		return err
-	}
-
-	err = c.b.setPiece(c.toRookLocation, nil)
+    err := c.b.setPiece(c.toRookLocation, nil)
 	if err != nil {
 		return err
 	}
 
 	err = c.b.setPiece(c.toKingLocation, nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.b.setPiece(c.fromLocation, c.king)
+	if err != nil {
+		return err
+	}
+
+	err = c.b.setPiece(c.toLocation, c.rook)
 	if err != nil {
 		return err
 	}

@@ -629,25 +629,25 @@ func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
         yToMax := max(toLocation.y, toRookLocation.y)
 
         clear := true
-        for x := xCheckedMin - 1; x > xToMin && clear; x-- {
+        for x := xCheckedMin - 1; x >= xToMin && clear; x-- {
             if piece, err := b.getPiece(&Point{x, fromLocation.y}); err != nil || piece != nil {
                 clear = false
                 break
             }
         }
-        for y := yCheckedMin - 1; y > yToMin && clear; y-- {
+        for y := yCheckedMin - 1; y >= yToMin && clear; y-- {
             if piece, err := b.getPiece(&Point{fromLocation.x, y}); err != nil || piece != nil {
                 clear = false
                 break
             }
         }
-        for x := xCheckedMax + 1; x < xToMax && clear; x++ {
+        for x := xCheckedMax + 1; x <= xToMax && clear; x++ {
             if piece, err := b.getPiece(&Point{x, fromLocation.y}); err != nil || piece != nil {
                 clear = false
                 break
             }
         }
-        for y := yCheckedMax + 1; y < yToMax && clear; y++ {
+        for y := yCheckedMax + 1; y <= yToMax && clear; y++ {
             if piece, err := b.getPiece(&Point{fromLocation.y, y}); err != nil || piece != nil {
                 clear = false
                 break
