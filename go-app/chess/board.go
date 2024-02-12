@@ -25,16 +25,19 @@ type Board interface {
     // these are for the playerTransition
     disablePieces(color string, disable bool) error
 
+    // these are for the bot
+    getPieceLocations() map[string][]*Point
+
     // these are for the game
     CalculateMoves() error // calcutes moves for every color
     ValidMoves(fromLocation *Point) ([]Move, error) // returns moves from a location
     AvailableMoves(color string) ([]*MoveKey, error) // returns moves for a color
-    Size() *Point
-	Print() string
     State() *BoardData
     Check(color string) bool
     Checkmate(color string) bool
     Stalemate(color string) bool
+
+	Print() string
 }
 
 func newSimpleBoard(size *Point) (*SimpleBoard, error) {
@@ -392,10 +395,6 @@ func (s *SimpleBoard) isInCheck(color string, fromLocationsToExclude map[Point]b
     return false
 }
 
-func (s *SimpleBoard) Size() *Point {
-    return s.size
-}
-
 func (s *SimpleBoard) Print() string {
 	var builder strings.Builder
 	var cellWidth int = 12
@@ -490,6 +489,10 @@ func (s *SimpleBoard) Stalemate(color string) bool {
         return stalemate
     }
     return false
+}
+
+func (s *SimpleBoard) getPieceLocations() map[string][]*Point {
+    return s.pieceLocationsMap
 }
 
 func (s *SimpleBoard) copy() (*SimpleBoard, error) {

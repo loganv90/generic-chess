@@ -18,7 +18,7 @@ Responsible for:
 - evaluating a board and returning a score
 */
 type Evaluator interface {
-    eval() int
+    eval(color string) int
 }
 
 func newSimpleEvaluator(b Board, p PlayerCollection) (*SimpleEvaluator, error) {
@@ -33,7 +33,7 @@ type SimpleEvaluator struct {
     p PlayerCollection
 }
 
-func (e *SimpleEvaluator) eval() (int, error) {
+func (e *SimpleEvaluator) eval(color string) (int, error) {
     gameOver, err := e.p.getGameOver()
     if err != nil {
         return 0, err
@@ -44,23 +44,22 @@ func (e *SimpleEvaluator) eval() (int, error) {
         return 0, err
     }
 
-    current, err := e.p.getCurrent()
-    if err != nil {
-        return 0, err
-    }
-
     if gameOver {
         if winner == "" {
             return 0, nil
-        } else if winner == current {
+        } else if winner == color {
             return 100000, nil
         } else {
             return -100000, nil
         }
     }
 
-    // Material comparison
-    // we need: the locations of each piece by player
+    pieceLocations := e.b.getPieceLocations()
+
+    materialScore, err := e.evalMaterial(color, pieceLocations)
+    if err != nil {
+        return 0, err
+    }
 
     // Piece position comparison (piece-square tables)
     // we need: the locations of each piece by player
@@ -68,6 +67,41 @@ func (e *SimpleEvaluator) eval() (int, error) {
     // Mobility comparison
     // we need: the moves each piece can make including attacking ally pieces
 
-    return 1, nil
+    return materialScore, nil
+}
+
+func (e *SimpleEvaluator) evalMaterial(ourColor string, pieceLocations map[string][]*Point) (int, error) {
+    // idea is to compare our material to the leading player's material
+
+    leadingMaterial := 0
+    ourMaterial := 0
+    totalMaterial := 0
+
+    for color, locations := range pieceLocations {
+        materialCount := 0
+        for _, location := range locations {
+            piece, err := e.b.getPiece(location)
+            if err != nil || piece == nil {
+                return 0, err
+            }
+            materialCount += piece.getValue()
+        }
+
+        if ourColor == color {
+            ourMaterial = materialCount
+        } else {
+            leadingMaterial = max(leadingMaterial, materialCount)
+        }
+        totalMaterial += materialCount
+    }
+
+    materialDifference := ourMaterial - leadingMaterial
+
+    // if we're leading in material, we incentivize low total material
+    // if we're behind in material, we incentivize high total material
+    // totalMaterialFactor := 1000 * materialDifference / totalMaterial // more + if winning, more - if losing
+    // return materialDifference + totalMaterialFactor, nil
+
+    return materialDifference, nil
 }
 

@@ -82,11 +82,6 @@ func (m *MockBoard) AvailableMoves(color string) ([]*MoveKey, error) {
     return args.Get(0).([]*MoveKey), args.Error(1)
 }
 
-func (m *MockBoard) Size() *Point {
-    args := m.Called()
-    return args.Get(0).(*Point)
-}
-
 func (m *MockBoard) Print() string {
     args := m.Called()
     return args.String(0)
@@ -110,6 +105,11 @@ func (m *MockBoard) Checkmate(color string) bool {
 func (m *MockBoard) Stalemate(color string) bool {
     args := m.Called(color)
     return args.Bool(0)
+}
+
+func (m *MockBoard) getPieceLocations() map[string][]*Point {
+    args := m.Called()
+    return args.Get(0).(map[string][]*Point)
 }
 
 func Test_NewSimpleBoard_DefaultFen(t *testing.T) {

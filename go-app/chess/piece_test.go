@@ -37,6 +37,11 @@ func (m *MockPiece) setMoved() error {
     return args.Error(0)
 }
 
+func (m *MockPiece) getValue() int {
+    args := m.Called()
+    return args.Int(0)
+}
+
 func (m *MockPiece) moves(board Board, location *Point) []Move {
     args := m.Called(board, location)
 	return args.Get(0).([]Move)

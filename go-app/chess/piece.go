@@ -33,6 +33,7 @@ func (d *Disableable) getDisabled() (bool, error) {
 
 type Piece interface {
 	getColor() string
+    getValue() int
 	copy() Piece
     setMoved() error
 	moves(Board, *Point) []Move
@@ -176,6 +177,10 @@ func (a *Pawn) setMoved() error {
     return nil
 }
 
+func (a *Pawn) getValue() int {
+    return 1000
+}
+
 func (a *Pawn) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
     if disabled, _ := a.getDisabled(); disabled {
@@ -315,6 +320,10 @@ func (n *Knight) setMoved() error {
     return nil
 }
 
+func (n *Knight) getValue() int {
+    return 3000
+}
+
 func (n *Knight) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
     if disabled, _ := n.getDisabled(); disabled {
@@ -362,6 +371,10 @@ func (s *Bishop) copy() Piece {
 
 func (s *Bishop) setMoved() error {
     return nil
+}
+
+func (s *Bishop) getValue() int {
+    return 3000
 }
 
 func (s *Bishop) moves(b Board, fromLocation *Point) []Move {
@@ -417,6 +430,10 @@ func (r *Rook) setMoved() error {
     return nil
 }
 
+func (r *Rook) getValue() int {
+    return 5000
+}
+
 func (r *Rook) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
     if disabled, _ := r.getDisabled(); disabled {
@@ -468,6 +485,10 @@ func (q *Queen) copy() Piece {
 
 func (q *Queen) setMoved() error {
     return nil
+}
+
+func (q *Queen) getValue() int {
+    return 9000
 }
 
 func (q *Queen) moves(b Board, fromLocation *Point) []Move {
@@ -544,6 +565,10 @@ func (k *King) copy() Piece {
 func (k *King) setMoved() error {
     k.moved = true
     return nil
+}
+
+func (k *King) getValue() int {
+    return 0
 }
 
 func (k *King) moves(b Board, fromLocation *Point) []Move {
