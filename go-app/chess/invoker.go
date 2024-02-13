@@ -21,6 +21,7 @@ type Invoker interface {
 	execute(m Move, b Board, p PlayerCollection) error
 	undo() error
 	redo() error
+    Copy() (Invoker, error)
 }
 
 type SimpleInvoker struct {
@@ -88,5 +89,12 @@ func (s *SimpleInvoker) redo() error {
 	s.index++
 
 	return nil
+}
+
+func (s *SimpleInvoker) Copy() (Invoker, error) {
+	return &SimpleInvoker{
+		history: []MoveAndPlayerTransition{},
+		index:   0,
+	}, nil
 }
 

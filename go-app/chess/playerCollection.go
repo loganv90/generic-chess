@@ -18,6 +18,7 @@ type PlayerCollection interface {
     setWinner(color string) error
     getGameOver() (bool, error)
     setGameOver(gameOver bool) error
+    Copy() (PlayerCollection, error)
 }
 
 func newSimplePlayerCollection(players []*Player) (*SimplePlayerCollection, error) {
@@ -140,5 +141,28 @@ func (s *SimplePlayerCollection) getGameOver() (bool, error) {
 func (s *SimplePlayerCollection) setGameOver(gameOver bool) error {
     s.gameOver = gameOver
     return nil
+}
+
+func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {
+    players := []*Player{}
+    for i, p := range s.players {
+        players[i] = &Player{
+            color: p.color,
+            alive: p.alive,
+        }
+    }
+
+    playerMap := map[string]int{}
+    for k, v := range s.playerMap {
+        playerMap[k] = v
+    }
+
+    return &SimplePlayerCollection{
+        players: players,
+        playerMap: playerMap,
+        currentPlayer: s.currentPlayer,
+        winningPlayer: s.winningPlayer,
+        gameOver: s.gameOver,
+    }, nil
 }
 

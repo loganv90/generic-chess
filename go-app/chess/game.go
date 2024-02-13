@@ -15,6 +15,7 @@ type Game interface {
 	Undo() error
 	Redo() error
 	Print() string
+    Copy() (Game, error)
 }
 
 func NewSimpleGame() (Game, error) {
@@ -238,5 +239,28 @@ func (s *SimpleGame) Redo() error {
 
 func (s *SimpleGame) Print() string {
 	return s.b.Print()
+}
+
+func (s *SimpleGame) Copy() (Game, error) {
+    newBoard, err := s.b.Copy()
+    if err != nil {
+        return nil, err
+    }
+
+    newPlayerCollection, err := s.p.Copy()
+    if err != nil {
+        return nil, err
+    }
+
+    newInvoker, err := s.i.Copy()
+    if err != nil {
+        return nil, err
+    }
+
+    return &SimpleGame{
+        b: newBoard,
+        p: newPlayerCollection,
+        i: newInvoker,
+    }, nil
 }
 

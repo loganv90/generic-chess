@@ -87,6 +87,11 @@ func (m *MockBoard) Print() string {
     return args.String(0)
 }
 
+func (m *MockBoard) Copy() (Board, error) {
+    args := m.Called()
+    return args.Get(0).(Board), args.Error(1)
+}
+
 func (m *MockBoard) State() *BoardData {
     args := m.Called()
     return args.Get(0).(*BoardData)

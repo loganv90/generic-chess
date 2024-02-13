@@ -17,5 +17,28 @@ Responsible for:
 - searching for moves given the current state of the game
 */
 type Searcher interface {
+    search(color string) (*MoveKey, error)
+}
+
+func newSimpleSearcher(g Game) (*SimpleSearcher, error) {
+    return &SimpleSearcher{
+        g: g,
+    }, nil
+}
+
+type SimpleSearcher struct {
+    g Game
+}
+
+func (s *SimpleSearcher) search(color string) (*MoveKey, error) {
+    _, err := s.g.Copy()
+    if err != nil {
+        return nil, err
+    }
+
+    // we should start by implementing adapting minimax to an arbitrary number of players
+    // we can just do recursive search and pass around a single game object while execuing and undoing moves
+    // first we need to make a copy of the game object
+    return nil, nil
 }
 

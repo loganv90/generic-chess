@@ -38,6 +38,7 @@ type Board interface {
     Stalemate(color string) bool
 
 	Print() string
+    Copy() (Board, error) 
 }
 
 func newSimpleBoard(size *Point) (*SimpleBoard, error) {
@@ -537,6 +538,11 @@ func (s *SimpleBoard) copy() (*SimpleBoard, error) {
     }
 
     return simpleBoard, nil
+}
+
+func (s *SimpleBoard) Copy() (Board, error) {
+    board, err := s.copy()
+    return board, err
 }
 
 func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {
