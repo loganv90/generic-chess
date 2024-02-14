@@ -211,6 +211,36 @@ func Test_CastleCanUndo(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
+func Test_CapturePieceGivingCheck(t *testing.T) {
+	game, err := NewSimpleFourPlayerGame()
+	assert.Nil(t, err)
+
+    err = game.Execute(7, 12, 7, 10, "") // white pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(1, 7, 3, 7, "") // red pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(7, 1, 7, 3, "") // black pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(12, 7, 10, 7, "") // blue pawn advance
+    assert.Nil(t, err)
+
+    err = game.Execute(6, 13, 13, 6, "") // white queen move
+    assert.Nil(t, err)
+
+    err = game.Execute(0, 6, 6, 12, "") // red queen move
+    assert.Nil(t, err)
+
+    err = game.Execute(6, 0, 12, 6, "") // black queen move
+    assert.Nil(t, err)
+
+    moves, err := game.Moves("white")
+    assert.Nil(t, err)
+    assert.Equal(t, 2, len(moves))
+}
+
 func Test_TwoPlayerCheckmate(t *testing.T) {
     game, err := NewSimpleGame()
     assert.Nil(t, err)

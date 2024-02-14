@@ -361,12 +361,17 @@ func (s *SimpleBoard) isLocationAttacked(color string, fromLocationsToExclude ma
     }
 
     if fromToMoveMap, ok2 := s.toToFromToMoveMap[*location]; ok2 {
-        for fromLocation, move := range fromToMoveMap {
+        for fromLocation := range fromToMoveMap {
             if _, ok3 := fromLocationsToExclude[fromLocation]; ok3 {
                 continue
             }
 
-            if move.getNewPiece().getColor() != color {
+            piece, err := s.getPiece(&fromLocation)
+            if piece == nil || err != nil {
+                continue
+            }
+
+            if piece.getColor() != color {
                 return true
             }
         }

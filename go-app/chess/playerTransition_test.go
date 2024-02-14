@@ -56,7 +56,6 @@ func Test_IncrementalTransition(t *testing.T) {
     playerCollection.On("getNext").Return(&Player{"white", true}, nil)
     playerCollection.On("setCurrent", "white").Return(nil)
     playerCollection.On("setCurrent", "black").Return(nil)
-    board.On("CalculateMoves").Return(nil)
     board.On("Checkmate", "black").Return(true)
     incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection)
     assert.Nil(t, err)
