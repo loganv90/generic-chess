@@ -46,11 +46,6 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
             break
         }
 
-        err = b.CalculateMoves()
-        if err != nil {
-            return nil, err
-        }
-
         if b.Checkmate(newPlayer.color) {
             eliminated = append(eliminated, newPlayer.color)
 
@@ -132,11 +127,6 @@ func (s *IncrementalTransition) execute() error {
         }
     }
 
-    err = s.b.CalculateMoves()
-    if err != nil {
-        return err
-    }
-
     return nil
 }
 
@@ -165,11 +155,6 @@ func (s *IncrementalTransition) undo() error {
         if err != nil {
             return err
         }
-    }
-
-    err = s.b.CalculateMoves()
-    if err != nil {
-        return err
     }
 
     return nil

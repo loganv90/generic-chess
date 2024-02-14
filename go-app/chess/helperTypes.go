@@ -13,9 +13,10 @@ type BoardData struct {
     Stalemate bool
 }
 
-type MoveAndPlayerTransition struct {
+type Command struct {
     m Move
     p PlayerTransition
+    b Board
 }
 
 type PieceData struct {

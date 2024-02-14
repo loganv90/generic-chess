@@ -26,9 +26,11 @@ func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
     playerTransition2.On("undo").Return(nil)
 
     board1 := &MockBoard{}
+    board1.On("CalculateMoves").Return(nil)
     playerCollection1 := &MockPlayerCollection{}
 
     board2 := &MockBoard{}
+    board2.On("CalculateMoves").Return(nil)
     playerCollection2 := &MockPlayerCollection{}
 
 	playerTransitionFactory := &MockPlayerTransitionFactory{}
@@ -103,12 +105,15 @@ func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
     playerTransition3.On("undo").Return(nil)
 
     board1 := &MockBoard{}
+    board1.On("CalculateMoves").Return(nil)
     playerCollection1 := &MockPlayerCollection{}
 
     board2 := &MockBoard{}
+    board2.On("CalculateMoves").Return(nil)
     playerCollection2 := &MockPlayerCollection{}
 
     board3 := &MockBoard{}
+    board3.On("CalculateMoves").Return(nil)
     playerCollection3 := &MockPlayerCollection{}
 
 	playerTransitionFactory := &MockPlayerTransitionFactory{}

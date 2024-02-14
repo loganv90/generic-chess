@@ -12,7 +12,7 @@ type ConcreteInvokerFactory struct{}
 
 func (f *ConcreteInvokerFactory) newSimpleInvoker() (*SimpleInvoker, error) {
 	return &SimpleInvoker{
-		history: []MoveAndPlayerTransition{},
+		history: []Command{},
 		index:   0,
 	}, nil
 }
@@ -25,7 +25,7 @@ type Invoker interface {
 }
 
 type SimpleInvoker struct {
-	history []MoveAndPlayerTransition
+	history []Command
 	index   int
 }
 
@@ -34,6 +34,11 @@ func (s *SimpleInvoker) execute(m Move, b Board, p PlayerCollection) error {
 	if err != nil {
 		return err
 	}
+
+    err = b.CalculateMoves()
+    if err != nil {
+        return err
+    }
 
     t, err := playerTransitionFactoryInstance.newIncrementalTransitionAsPlayerTransition(b, p)
     if err != nil {
@@ -45,7 +50,7 @@ func (s *SimpleInvoker) execute(m Move, b Board, p PlayerCollection) error {
         return err
     }
 
-	s.history = append(s.history[:s.index], MoveAndPlayerTransition{m, t})
+	s.history = append(s.history[:s.index], Command{m, t, b})
 	s.index++
 
 	return nil
@@ -60,6 +65,11 @@ func (s *SimpleInvoker) undo() error {
 	if err != nil {
 		return err
 	}
+
+    err = s.history[s.index-1].b.CalculateMoves()
+    if err != nil {
+        return err
+    }
 
 	err = s.history[s.index-1].p.undo()
 	if err != nil {
@@ -81,6 +91,11 @@ func (s *SimpleInvoker) redo() error {
 		return err
 	}
 
+    err = s.history[s.index].b.CalculateMoves()
+    if err != nil {
+        return err
+    }
+
 	err = s.history[s.index].p.execute()
 	if err != nil {
 		return err
@@ -93,7 +108,7 @@ func (s *SimpleInvoker) redo() error {
 
 func (s *SimpleInvoker) Copy() (Invoker, error) {
 	return &SimpleInvoker{
-		history: []MoveAndPlayerTransition{},
+		history: []Command{},
 		index:   0,
 	}, nil
 }
