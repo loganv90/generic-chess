@@ -10,6 +10,7 @@ Responsible for:
 */
 type PlayerCollection interface {
     getNext() (*Player, error)
+    getPlayerColors() []string
     eliminate(color string) error
     restore(color string) error
     getCurrent() (string, error)
@@ -67,6 +68,14 @@ func (s *SimplePlayerCollection) getNext() (*Player, error) {
     }
 
     return s.players[currentPlayer], nil
+}
+
+func (s *SimplePlayerCollection) getPlayerColors() []string {
+    colors := []string{}
+    for _, p := range s.players {
+        colors = append(colors, p.color)
+    }
+    return colors
 }
 
 func (s *SimplePlayerCollection) incrementOnce(start int) int {

@@ -21,6 +21,11 @@ func (m *MockPlayerCollection) getNext() (*Player, error) {
     }
 }
 
+func (m *MockPlayerCollection) getPlayerColors() []string {
+    args := m.Called()
+    return args.Get(0).([]string)
+}
+
 func (m *MockPlayerCollection) eliminate(color string) error {
     args := m.Called(color)
     return args.Error(0)

@@ -39,6 +39,64 @@ func (s *SimpleSearcher) search(color string) (*MoveKey, error) {
     // we should start by implementing adapting minimax to an arbitrary number of players
     // we can just do recursive search and pass around a single game object while execuing and undoing moves
     // first we need to make a copy of the game object
-    return nil, nil
+
+    _, moveKey, err := s.minimax(s.g, 3)
+    if err != nil {
+        return nil, err
+    }
+
+    return moveKey, nil
+}
+
+func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, *MoveKey, error) {
+    state, err := game.State()
+    if err != nil {
+        return nil, nil, err
+    }
+
+    if depth == 0 || state.GameOver {
+        evaluator, err := newSimpleEvaluator(game.getBoard(), game.getPlayerCollection())
+        if err != nil {
+            return nil, nil, err
+        }
+
+        score, err := evaluator.eval()
+        if err != nil {
+            return nil, nil, err
+        }
+
+        return score, nil, nil
+    }
+
+    moves, err := game.Moves(state.CurrentPlayer)
+    if err != nil {
+        return nil, nil, err
+    }
+
+    bestScore := map[string]int{state.CurrentPlayer: -1000000}
+    bestMove := &MoveKey{}
+    for _, move := range moves {
+        err := game.Execute(move.XFrom, move.YFrom, move.XTo, move.YTo, move.Promotion)
+        if err != nil {
+            return nil, nil, err
+        }
+
+        score, _, err := s.minimax(game, depth-1)
+        if err != nil {
+            return nil, nil, err
+        }
+
+        if score[state.CurrentPlayer] > bestScore[state.CurrentPlayer] {
+            bestScore = score
+            bestMove = move
+        }
+
+        err = game.Undo()
+        if err != nil {
+            return nil, nil, err
+        }
+    }
+
+    return bestScore, bestMove, nil
 }
 

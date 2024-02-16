@@ -16,10 +16,12 @@ func Test_Eval_Draw(t *testing.T) {
 
     playerCollection.On("getGameOver").Return(true, nil)
     playerCollection.On("getWinner").Return("", nil)
+    playerCollection.On("getPlayerColors").Return([]string{"white", "black"}, nil)
 
-    score, err := evaluator.eval("white")
+    score, err := evaluator.eval()
     assert.Nil(t, err)
-    assert.Equal(t, 0, score)
+    assert.Equal(t, 0, score["white"])
+    assert.Equal(t, 0, score["black"])
 
     playerCollection.AssertExpectations(t)
 }
@@ -33,10 +35,12 @@ func Test_Eval_Win(t *testing.T) {
 
     playerCollection.On("getGameOver").Return(true, nil)
     playerCollection.On("getWinner").Return("white", nil)
+    playerCollection.On("getPlayerColors").Return([]string{"white", "black"}, nil)
 
-    score, err := evaluator.eval("white")
+    score, err := evaluator.eval()
     assert.Nil(t, err)
-    assert.Equal(t, 100000, score)
+    assert.Equal(t, 100000, score["white"])
+    assert.Equal(t, -100000, score["black"])
 
     playerCollection.AssertExpectations(t)
 }
@@ -50,10 +54,12 @@ func Test_Eval_Lose(t *testing.T) {
 
     playerCollection.On("getGameOver").Return(true, nil)
     playerCollection.On("getWinner").Return("black", nil)
+    playerCollection.On("getPlayerColors").Return([]string{"white", "black"}, nil)
 
-    score, err := evaluator.eval("white")
+    score, err := evaluator.eval()
     assert.Nil(t, err)
-    assert.Equal(t, -100000, score)
+    assert.Equal(t, -100000, score["white"])
+    assert.Equal(t, 100000, score["black"])
 
     playerCollection.AssertExpectations(t)
 }
@@ -61,14 +67,17 @@ func Test_Eval_Lose(t *testing.T) {
 func Test_EvalMaterial(t *testing.T) {
     tests := []struct {
         whiteValue int
-        score int
+        whiteScore int
+        blackScore int
+        redScore int
+        blueScore int
     }{
-        {500, 300},
-        {100, -900},
+        {500, 0, -300, -600, -900},
+        {100, -900, 0, -300, -600},
     }
 
     for _, test := range tests {
-        testname := fmt.Sprintf("%d_%d", test.whiteValue, test.score)
+        testname := fmt.Sprintf("%d", test.whiteValue)
         t.Run(testname, func(t *testing.T) {
             board := &MockBoard{}
             playerCollection := &MockPlayerCollection{}
@@ -76,6 +85,7 @@ func Test_EvalMaterial(t *testing.T) {
             evaluator, err := newSimpleEvaluator(board, playerCollection)
             assert.Nil(t, err)
 
+            playerCollection.On("getPlayerColors").Return([]string{"white", "black", "red", "blue"}, nil)
             pieceLocations := map[string][]*Point{
                 "white": {{0,0}, {0,1}, {0,2}},
                 "black": {{1,0}, {1,1}, {1,2}},
@@ -107,9 +117,12 @@ func Test_EvalMaterial(t *testing.T) {
             board.On("getPiece", &Point{3, 1}).Return(bluePiece, nil)
             board.On("getPiece", &Point{3, 2}).Return(bluePiece, nil)
 
-            score, err := evaluator.evalMaterial("white", pieceLocations)
+            score, err := evaluator.evalMaterial(pieceLocations)
             assert.Nil(t, err)
-            assert.Equal(t, test.score, score)
+            assert.Equal(t, test.whiteScore, score["white"])
+            assert.Equal(t, test.blackScore, score["black"])
+            assert.Equal(t, test.redScore, score["red"])
+            assert.Equal(t, test.blueScore, score["blue"])
 
             board.AssertExpectations(t)
             whitePiece.AssertExpectations(t)

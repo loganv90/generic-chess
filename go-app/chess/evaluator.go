@@ -18,7 +18,7 @@ Responsible for:
 - evaluating a board and returning a score
 */
 type Evaluator interface {
-    eval(color string) int
+    eval() int
 }
 
 func newSimpleEvaluator(b Board, p PlayerCollection) (*SimpleEvaluator, error) {
@@ -33,32 +33,40 @@ type SimpleEvaluator struct {
     p PlayerCollection
 }
 
-func (e *SimpleEvaluator) eval(color string) (int, error) {
+func (e *SimpleEvaluator) eval() (map[string]int, error) {
     gameOver, err := e.p.getGameOver()
     if err != nil {
-        return 0, err
+        return nil, err
     }
 
     winner, err := e.p.getWinner()
     if err != nil {
-        return 0, err
+        return nil, err
+    }
+
+    scores := map[string]int{}
+    for _, player := range e.p.getPlayerColors() {
+        scores[player] = 0
     }
 
     if gameOver {
         if winner == "" {
-            return 0, nil
-        } else if winner == color {
-            return 100000, nil
+            return scores, nil
         } else {
-            return -100000, nil
+            for player := range scores {
+                scores[player] = -100000
+            }
+            scores[winner] = 100000
+
+            return scores, nil
         }
     }
 
     pieceLocations := e.b.getPieceLocations()
 
-    materialScore, err := e.evalMaterial(color, pieceLocations)
+    materialScore, err := e.evalMaterial(pieceLocations)
     if err != nil {
-        return 0, err
+        return nil, err
     }
 
     // Piece position comparison (piece-square tables)
@@ -70,38 +78,36 @@ func (e *SimpleEvaluator) eval(color string) (int, error) {
     return materialScore, nil
 }
 
-func (e *SimpleEvaluator) evalMaterial(ourColor string, pieceLocations map[string][]*Point) (int, error) {
+func (e *SimpleEvaluator) evalMaterial(pieceLocations map[string][]*Point) (map[string]int, error) {
     // idea is to compare our material to the leading player's material
 
     leadingMaterial := 0
-    ourMaterial := 0
-    totalMaterial := 0
+    material := map[string]int{}
+    scores := map[string]int{}
 
     for color, locations := range pieceLocations {
         materialCount := 0
         for _, location := range locations {
             piece, err := e.b.getPiece(location)
             if err != nil || piece == nil {
-                return 0, err
+                return nil, err
             }
             materialCount += piece.getValue()
         }
 
-        if ourColor == color {
-            ourMaterial = materialCount
-        } else {
-            leadingMaterial = max(leadingMaterial, materialCount)
-        }
-        totalMaterial += materialCount
+        material[color] = materialCount
+        leadingMaterial = max(leadingMaterial, materialCount)
     }
 
-    materialDifference := ourMaterial - leadingMaterial
+    for color, materialCount := range material {
+        scores[color] = materialCount - leadingMaterial
+    }
 
     // if we're leading in material, we incentivize low total material
     // if we're behind in material, we incentivize high total material
     // totalMaterialFactor := 1000 * materialDifference / totalMaterial // more + if winning, more - if losing
     // return materialDifference + totalMaterialFactor, nil
 
-    return materialDifference, nil
+    return scores, nil
 }
 
