@@ -153,7 +153,7 @@ func (s *SimplePlayerCollection) setGameOver(gameOver bool) error {
 }
 
 func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {
-    players := []*Player{}
+    players := make([]*Player, len(s.players))
     for i, p := range s.players {
         players[i] = &Player{
             color: p.color,

@@ -19,15 +19,14 @@ type SimpleBot struct {
 }
 
 func (b *SimpleBot) FindMove() (*MoveKey, error) {
-    // we should probably clone the game here before doing the engine stuff
+    gameCopy, err := b.game.Copy()
 
-    moveKey := &MoveKey{
-        XFrom: 4,
-        YFrom: 1,
-        XTo: 4,
-        YTo: 3,
-        Promotion: "",
-    } 
+    searcher, err := newSimpleSearcher(gameCopy)
+    if err != nil {
+        return nil, err
+    }
+
+    moveKey, err := searcher.search()
 
     return moveKey, nil
 }
