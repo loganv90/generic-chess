@@ -22,23 +22,23 @@ type Disableable struct {
     disabled bool
 }
 
-func (d *Disableable) setDisabled(disabled bool) error {
+func (d *Disableable) setDisabled(disabled bool) {
     d.disabled = disabled
-    return nil
 }
 
-func (d *Disableable) getDisabled() (bool, error) {
-    return d.disabled, nil
+func (d *Disableable) getDisabled() bool {
+    return d.disabled
 }
 
 type Piece interface {
 	getColor() string
     getValue() int
 	copy() Piece
-    setMoved() error
+    setMoved()
+    getMoved() bool
 	moves(Board, *Point) []Move
-    setDisabled(bool) error
-    getDisabled() (bool, error)
+    setDisabled(bool)
+    getDisabled() bool
 	print() string
 }
 
@@ -172,9 +172,12 @@ func (a *Pawn) copy() Piece {
 	}
 }
 
-func (a *Pawn) setMoved() error {
+func (a *Pawn) setMoved() {
     a.moved = true
-    return nil
+}
+
+func (a *Pawn) getMoved() bool {
+    return a.moved
 }
 
 func (a *Pawn) getValue() int {
@@ -183,7 +186,7 @@ func (a *Pawn) getValue() int {
 
 func (a *Pawn) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
-    if disabled, _ := a.getDisabled(); disabled {
+    if a.disabled {
         return *moves
     }
 	a.addForward(b, fromLocation, moves)
@@ -316,8 +319,11 @@ func (n *Knight) copy() Piece {
 	}
 }
 
-func (n *Knight) setMoved() error {
-    return nil
+func (n *Knight) setMoved() {
+}
+
+func (n *Knight) getMoved() bool {
+    return true
 }
 
 func (n *Knight) getValue() int {
@@ -326,7 +332,7 @@ func (n *Knight) getValue() int {
 
 func (n *Knight) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
-    if disabled, _ := n.getDisabled(); disabled {
+    if n.disabled {
         return *moves
     }
 	n.addSimples(b, fromLocation, moves)
@@ -369,8 +375,11 @@ func (s *Bishop) copy() Piece {
 	}
 }
 
-func (s *Bishop) setMoved() error {
-    return nil
+func (s *Bishop) setMoved() {
+}
+
+func (s *Bishop) getMoved() bool {
+    return true
 }
 
 func (s *Bishop) getValue() int {
@@ -379,7 +388,7 @@ func (s *Bishop) getValue() int {
 
 func (s *Bishop) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
-    if disabled, _ := s.getDisabled(); disabled {
+    if s.disabled {
         return *moves
     }
 	s.addDirections(b, fromLocation, moves)
@@ -425,9 +434,12 @@ func (r *Rook) copy() Piece {
 	}
 }
 
-func (r *Rook) setMoved() error {
+func (r *Rook) setMoved() {
     r.moved = true
-    return nil
+}
+
+func (r *Rook) getMoved() bool {
+    return r.moved
 }
 
 func (r *Rook) getValue() int {
@@ -436,7 +448,7 @@ func (r *Rook) getValue() int {
 
 func (r *Rook) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
-    if disabled, _ := r.getDisabled(); disabled {
+    if r.disabled {
         return *moves
     }
 	r.addDirections(b, fromLocation, moves)
@@ -483,8 +495,11 @@ func (q *Queen) copy() Piece {
 	}
 }
 
-func (q *Queen) setMoved() error {
-    return nil
+func (q *Queen) setMoved() {
+}
+
+func (q *Queen) getMoved() bool {
+    return true
 }
 
 func (q *Queen) getValue() int {
@@ -493,7 +508,7 @@ func (q *Queen) getValue() int {
 
 func (q *Queen) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
-    if disabled, _ := q.getDisabled(); disabled {
+    if q.disabled {
         return *moves
     }
 	q.addDirections(b, fromLocation, moves)
@@ -562,9 +577,12 @@ func (k *King) copy() Piece {
 	}
 }
 
-func (k *King) setMoved() error {
+func (k *King) setMoved() {
     k.moved = true
-    return nil
+}
+
+func (k *King) getMoved() bool {
+    return k.moved
 }
 
 func (k *King) getValue() int {
@@ -573,7 +591,7 @@ func (k *King) getValue() int {
 
 func (k *King) moves(b Board, fromLocation *Point) []Move {
 	moves := &[]Move{}
-    if disabled, _ := k.getDisabled(); disabled {
+    if k.disabled {
         return *moves
     }
 	k.addSimples(b, fromLocation, moves)

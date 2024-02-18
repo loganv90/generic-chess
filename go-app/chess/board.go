@@ -39,6 +39,7 @@ type Board interface {
 
 	Print() string
     Copy() (Board, error) 
+    UniqueString() string
 }
 
 func newSimpleBoard(size *Point) (*SimpleBoard, error) {
@@ -448,7 +449,7 @@ func (s *SimpleBoard) State() *BoardData {
         for x := range row {
             piece := s.pieces[y][x]
             if piece != nil {
-                disabled, _ := piece.getDisabled()
+                disabled := piece.getDisabled()
                 pieces = append(pieces, &PieceData{
                     T: piece.print(),
                     C: piece.getColor(),
@@ -548,6 +549,40 @@ func (s *SimpleBoard) copy() (*SimpleBoard, error) {
 func (s *SimpleBoard) Copy() (Board, error) {
     board, err := s.copy()
     return board, err
+}
+
+func (s *SimpleBoard) UniqueString() string {
+    builder := strings.Builder{}
+
+    counter := 0
+    for y, row := range s.pieces {
+        for x := range row {
+            piece := s.pieces[y][x]
+
+            if piece == nil {
+                counter += 1
+                continue
+            }
+
+            if counter > 0 {
+                builder.WriteString(fmt.Sprintf("%d", counter))
+                counter = 0
+            }
+
+            if piece.getDisabled() {
+                builder.WriteString("d")
+                continue
+            }
+
+            builder.WriteString(piece.print())
+            builder.WriteString(piece.getColor())
+            if !piece.getMoved() {
+                builder.WriteString("m")
+            }
+        }
+    }
+
+    return builder.String()
 }
 
 func (s *SimpleBoard) pointOutOfBounds(p *Point) bool {

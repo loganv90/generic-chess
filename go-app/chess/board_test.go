@@ -92,6 +92,11 @@ func (m *MockBoard) Copy() (Board, error) {
     return args.Get(0).(Board), args.Error(1)
 }
 
+func (m *MockBoard) UniqueString() string {
+    args := m.Called()
+    return args.String(0)
+}
+
 func (m *MockBoard) State() *BoardData {
     args := m.Called()
     return args.Get(0).(*BoardData)
@@ -474,5 +479,16 @@ func Test_CalculateMoves_promotion(t *testing.T) {
     assert.False(t, s.Checkmate("black"))
     assert.False(t, s.Stalemate("white"))
     assert.False(t, s.Stalemate("black"))
+}
+
+// TODO add en passant stuff to the unique string
+// TODO use shortened color names for the unique string
+func Test_MinimumString_Default(t *testing.T) {
+    s, err := createSimpleBoardWithDefaultPieceLocations()
+    assert.Nil(t, err)
+
+    expected := "RblackmNblackBblackQblackKblackmBblackNblackRblackmPblackmPblackmPblackmPblackmPblackmPblackmPblackmPblackm32PwhitemPwhitemPwhitemPwhitemPwhitemPwhitemPwhitemPwhitemRwhitemNwhiteBwhiteQwhiteKwhitemBwhiteNwhiteRwhitem"
+    actual := s.UniqueString()
+    assert.Equal(t, expected, actual)
 }
 

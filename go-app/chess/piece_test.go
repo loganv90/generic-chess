@@ -17,14 +17,13 @@ func (m *MockPiece) getColor() string {
 	return args.String(0)
 }
 
-func (m *MockPiece) setDisabled(disabled bool) error {
-    args := m.Called(disabled)
-    return args.Error(0)
+func (m *MockPiece) setDisabled(disabled bool) {
+    m.Called(disabled)
 }
 
-func (m *MockPiece) getDisabled() (bool, error) {
+func (m *MockPiece) getDisabled() bool {
     args := m.Called()
-    return args.Bool(0), args.Error(1)
+    return args.Bool(0)
 }
 
 func (m *MockPiece) copy() Piece {
@@ -32,9 +31,13 @@ func (m *MockPiece) copy() Piece {
     return args.Get(0).(Piece)
 }
 
-func (m *MockPiece) setMoved() error {
+func (m *MockPiece) setMoved() {
+    m.Called()
+}
+
+func (m *MockPiece) getMoved() bool {
     args := m.Called()
-    return args.Error(0)
+    return args.Bool(0)
 }
 
 func (m *MockPiece) getValue() int {
