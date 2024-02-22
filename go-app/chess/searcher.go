@@ -23,11 +23,15 @@ type Searcher interface {
 func newSimpleSearcher(g Game) (*SimpleSearcher, error) {
     return &SimpleSearcher{
         g: g,
+        transpositionMap: map[string]*MoveKeyAndScore{},
+        minimaxCalls: 0,
     }, nil
 }
 
 type SimpleSearcher struct {
     g Game
+    transpositionMap map[string]*MoveKeyAndScore
+    minimaxCalls int
 }
 
 func (s *SimpleSearcher) search() (*MoveKey, error) {
@@ -35,7 +39,7 @@ func (s *SimpleSearcher) search() (*MoveKey, error) {
     // we can just do recursive search and pass around a single game object while execuing and undoing moves
     // first we need to make a copy of the game object
 
-    _, moveKey, err := s.minimax(s.g, 3)
+    _, moveKey, err := s.minimax(s.g, 4)
     if err != nil {
         return nil, err
     }
@@ -44,13 +48,23 @@ func (s *SimpleSearcher) search() (*MoveKey, error) {
 }
 
 func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, *MoveKey, error) {
+    s.minimaxCalls++
+
     state, err := game.State()
     if err != nil {
         return nil, nil, err
     }
 
+    board := game.getBoard()
+    playerCollection := game.getPlayerCollection()
+
+    uniqueString := board.UniqueString()
+    if moveKeyAndScore, ok := s.transpositionMap[uniqueString]; ok {
+        return moveKeyAndScore.score, moveKeyAndScore.moveKey, nil
+    }
+
     if depth == 0 || state.GameOver {
-        evaluator, err := newSimpleEvaluator(game.getBoard(), game.getPlayerCollection())
+        evaluator, err := newSimpleEvaluator(board, playerCollection)
         if err != nil {
             return nil, nil, err
         }
@@ -76,9 +90,14 @@ func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, *MoveKey
             return nil, nil, err
         }
 
-        score, _, err := s.minimax(game, depth-1)
+        score, moveKey, err := s.minimax(game, depth-1)
         if err != nil {
             return nil, nil, err
+        }
+
+        s.transpositionMap[uniqueString] = &MoveKeyAndScore{
+            moveKey: moveKey,
+            score: score,
         }
 
         if score[state.CurrentPlayer] > bestScore[state.CurrentPlayer] {

@@ -19,6 +19,11 @@ type Command struct {
     b Board
 }
 
+type MoveKeyAndScore struct {
+    moveKey *MoveKey
+    score map[string]int
+}
+
 type PieceData struct {
     T string // Type
     C string // Color
