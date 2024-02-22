@@ -11,7 +11,7 @@ type Game interface {
 	Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error // called when a player tries to make a move
     State() (*BoardData, error) // called to get the game state
     View(xFrom int, yFrom int) (*PieceState, error) // show valid moves of piece
-    Moves(color string) ([]*MoveKey, error) // get all valid moves
+    Moves(color string) ([]MoveKey, error) // get all valid moves
 	Undo() error
 	Redo() error
 	Print() string
@@ -102,8 +102,8 @@ func (s *SimpleGame) State() (*BoardData, error) {
 }
 
 func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error {
-    fromLocation := &Point{xFrom, yFrom}
-    toLocation := &Point{xTo, yTo}
+    fromLocation := Point{xFrom, yFrom}
+    toLocation := Point{xTo, yTo}
 
     gameOver, err := s.p.getGameOver()
     if err != nil || gameOver {
@@ -128,7 +128,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
     return nil
 }
 
-func getMoveFromSlice(moves []Move, toLocation *Point, promotion string) Move {
+func getMoveFromSlice(moves []Move, toLocation Point, promotion string) Move {
 	for _, m := range moves {
         actionToLocation := m.getAction().toLocation
         if actionToLocation.equals(toLocation) {
@@ -152,10 +152,10 @@ func getMoveFromSlice(moves []Move, toLocation *Point, promotion string) Move {
 }
 
 func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
-    location := &Point{x, y}
+    location := Point{x, y}
 
-    piece, err := s.b.getPiece(location)
-    if err != nil || piece == nil {
+    piece, ok := s.b.getPiece(location)
+    if !ok || piece == nil {
         return &PieceState{
             X: x,
             Y: y,
@@ -218,7 +218,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     }
 }
 
-func (s *SimpleGame) Moves(color string) ([]*MoveKey, error) {
+func (s *SimpleGame) Moves(color string) ([]MoveKey, error) {
     return s.b.AvailableMoves(color)
 }
 

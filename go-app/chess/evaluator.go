@@ -1,5 +1,9 @@
 package chess
 
+import (
+    "fmt"
+)
+
 /*
 Chess Evaluation:
 Material count
@@ -78,7 +82,7 @@ func (e *SimpleEvaluator) eval() (map[string]int, error) {
     return materialScore, nil
 }
 
-func (e *SimpleEvaluator) evalMaterial(pieceLocations map[string][]*Point) (map[string]int, error) {
+func (e *SimpleEvaluator) evalMaterial(pieceLocations map[string][]Point) (map[string]int, error) {
     // idea is to compare our material to the leading player's material
 
     leadingMaterial := 0
@@ -88,9 +92,9 @@ func (e *SimpleEvaluator) evalMaterial(pieceLocations map[string][]*Point) (map[
     for color, locations := range pieceLocations {
         materialCount := 0
         for _, location := range locations {
-            piece, err := e.b.getPiece(location)
-            if err != nil || piece == nil {
-                return nil, err
+            piece, ok := e.b.getPiece(location)
+            if !ok || piece == nil {
+                return nil, fmt.Errorf("no piece at location")
             }
             materialCount += piece.getValue()
         }

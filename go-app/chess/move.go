@@ -6,8 +6,8 @@ import (
 
 type Action struct {
 	b Board
-    fromLocation *Point
-    toLocation *Point
+    fromLocation Point
+    toLocation Point
 }
 
 func (a *Action) getAction() *Action {
@@ -22,28 +22,28 @@ type EnPassantCapture struct {
 var moveFactoryInstance = MoveFactory(&ConcreteMoveFactory{})
 
 type MoveFactory interface {
-	newSimpleMove(b Board, fromLocation *Point, toLocation *Point) (*SimpleMove, error)
-	newRevealEnPassantMove(b Board, fromLocation *Point, toLocation *Point, target *Point) (*RevealEnPassantMove, error)
-	newCaptureEnPassantMove(b Board, fromLocation *Point, toLocation *Point) (*CaptureEnPassantMove, error)
-	newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point, newVulnerables []*Point) (*CastleMove, error)
+	newSimpleMove(b Board, fromLocation Point, toLocation Point) (*SimpleMove, error)
+	newRevealEnPassantMove(b Board, fromLocation Point, toLocation Point, target Point) (*RevealEnPassantMove, error)
+	newCaptureEnPassantMove(b Board, fromLocation Point, toLocation Point) (*CaptureEnPassantMove, error)
+	newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerables []Point) (*CastleMove, error)
     newPromotionMoves(move Move, promotionPieces []Piece) ([]*PromotionMove, error)
-    newAllyDefenseMove(b Board, fromLocation *Point, toLocation *Point) (*AllyDefenseMove, error)
+    newAllyDefenseMove(b Board, fromLocation Point, toLocation Point) (*AllyDefenseMove, error)
 }
 
 type ConcreteMoveFactory struct{}
 
-func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation *Point, toLocation *Point) (*SimpleMove, error) {
-	piece, err := b.getPiece(fromLocation)
-	if err != nil {
-		return nil, err
+func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation Point, toLocation Point) (*SimpleMove, error) {
+	piece, ok := b.getPiece(fromLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
 	newPiece := piece.copy()
     newPiece.setMoved()
 
-	capturedPiece, err := b.getPiece(toLocation)
-	if err != nil {
-		return nil, err
+	capturedPiece, ok := b.getPiece(toLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at toLocation")
 	}
 
 	en, err := b.getEnPassant(piece.getColor())
@@ -70,18 +70,18 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation *Point, toLoca
 	}, nil
 }
 
-func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation *Point, toLocation *Point, target *Point) (*RevealEnPassantMove, error) {
-	piece, err := b.getPiece(fromLocation)
-	if err != nil {
-		return nil, err
+func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point, toLocation Point, target Point) (*RevealEnPassantMove, error) {
+	piece, ok := b.getPiece(fromLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
 	newPiece := piece.copy()
     newPiece.setMoved()
 
-	capturedPiece, err := b.getPiece(toLocation)
-	if err != nil {
-		return nil, err
+	capturedPiece, ok := b.getPiece(toLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at toLocation")
 	}
 
 	en, err := b.getEnPassant(piece.getColor())
@@ -114,18 +114,18 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation *Poin
 	}, nil
 }
 
-func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Point, toLocation *Point) (*CaptureEnPassantMove, error) {
-	piece, err := b.getPiece(fromLocation)
-	if err != nil {
-		return nil, err
+func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Point, toLocation Point) (*CaptureEnPassantMove, error) {
+	piece, ok := b.getPiece(fromLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
 	newPiece := piece.copy()
     newPiece.setMoved()
 
-	capturedPiece, err := b.getPiece(toLocation)
-	if err != nil {
-		return nil, err
+	capturedPiece, ok := b.getPiece(toLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at toLocation")
 	}
 
 	en, err := b.getEnPassant(piece.getColor())
@@ -142,9 +142,9 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Poi
     possibleEnPassant, err := b.possibleEnPassant(piece.getColor(), toLocation)
     if err == nil {
         for _, enPassant := range possibleEnPassant {
-            capturedPiece, err := b.getPiece(enPassant.pieceLocation)
-            if err != nil {
-                return nil, err
+            capturedPiece, ok := b.getPiece(enPassant.pieceLocation)
+            if !ok {
+                return nil, fmt.Errorf("no piece at enPassant.pieceLocation")
             }
 
             encs = append(encs, &EnPassantCapture{
@@ -169,18 +169,18 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation *Poi
 	}, nil
 }
 
-func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation *Point, toLocation *Point, toKingLocation *Point, toRookLocation *Point, newVulnerables []*Point) (*CastleMove, error) {
-	king, err := b.getPiece(fromLocation)
-	if err != nil {
-		return nil, err
+func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerables []Point) (*CastleMove, error) {
+	king, ok := b.getPiece(fromLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
 	newKing := king.copy()
     newKing.setMoved()
 
-	rook, err := b.getPiece(toLocation)
-	if err != nil {
-		return nil, err
+	rook, ok := b.getPiece(toLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at toLocation")
 	}
 
 	newRook := rook.copy()
@@ -231,10 +231,10 @@ func (f *ConcreteMoveFactory) newPromotionMoves(move Move, promotionPieces []Pie
     return promotionMoves, nil
 }
 
-func (m *ConcreteMoveFactory) newAllyDefenseMove(b Board, fromLocation *Point, toLocation *Point) (*AllyDefenseMove, error) {
-	p, err := b.getPiece(fromLocation)
-	if err != nil {
-		return nil, err
+func (m *ConcreteMoveFactory) newAllyDefenseMove(b Board, fromLocation Point, toLocation Point) (*AllyDefenseMove, error) {
+	p, ok := b.getPiece(fromLocation)
+	if !ok {
+		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
     return &AllyDefenseMove{
@@ -260,7 +260,7 @@ type SimpleMove struct {
 	newPiece      Piece
 	capturedPiece Piece
 	en            *EnPassant
-    vulnerables   []*Point
+    vulnerables   []Point
 }
 
 func (s *SimpleMove) getNewPiece() Piece {
@@ -268,31 +268,31 @@ func (s *SimpleMove) getNewPiece() Piece {
 }
 
 func (s *SimpleMove) execute() error {
-	err := s.b.setPiece(s.fromLocation, nil)
-	if err != nil {
-		return err
+	ok := s.b.setPiece(s.fromLocation, nil)
+	if !ok {
+		return fmt.Errorf("no piece at fromLocation")
 	}
 
-	err = s.b.setPiece(s.toLocation, s.newPiece)
-	if err != nil {
-		return err
+	ok = s.b.setPiece(s.toLocation, s.newPiece)
+	if !ok {
+		return fmt.Errorf("no piece at toLocation")
 	}
 
-    s.b.setVulnerables(s.piece.getColor(), []*Point{})
+    s.b.setVulnerables(s.piece.getColor(), []Point{})
 	s.b.clearEnPassant(s.piece.getColor())
 
 	return nil
 }
 
 func (s *SimpleMove) undo() error {
-	err := s.b.setPiece(s.fromLocation, s.piece)
-	if err != nil {
-		return err
+	ok := s.b.setPiece(s.fromLocation, s.piece)
+	if !ok {
+		return fmt.Errorf("no piece at fromLocation")
 	}
 
-	err = s.b.setPiece(s.toLocation, s.capturedPiece)
-	if err != nil {
-		return err
+	ok = s.b.setPiece(s.toLocation, s.capturedPiece)
+	if !ok {
+		return fmt.Errorf("no piece at toLocation")
 	}
 
     s.b.setVulnerables(s.piece.getColor(), s.vulnerables)
@@ -308,7 +308,7 @@ type RevealEnPassantMove struct {
 	capturedPiece Piece
 	en            *EnPassant
 	newEn         *EnPassant
-    vulnerables   []*Point
+    vulnerables   []Point
 }
 
 func (r *RevealEnPassantMove) getNewPiece() Piece {
@@ -316,31 +316,31 @@ func (r *RevealEnPassantMove) getNewPiece() Piece {
 }
 
 func (r *RevealEnPassantMove) execute() error {
-	err := r.b.setPiece(r.fromLocation, nil)
-	if err != nil {
-		return err
+	ok := r.b.setPiece(r.fromLocation, nil)
+	if !ok {
+		return fmt.Errorf("no piece at fromLocation")
 	}
 
-	err = r.b.setPiece(r.toLocation, r.newPiece)
-	if err != nil {
-		return err
+	ok = r.b.setPiece(r.toLocation, r.newPiece)
+	if !ok {
+		return fmt.Errorf("no piece at toLocation")
 	}
 
-    r.b.setVulnerables(r.piece.getColor(), []*Point{})
+    r.b.setVulnerables(r.piece.getColor(), []Point{})
 	r.b.setEnPassant(r.piece.getColor(), r.newEn)
 
 	return nil
 }
 
 func (r *RevealEnPassantMove) undo() error {
-	err := r.b.setPiece(r.fromLocation, r.piece)
-	if err != nil {
-		return err
+	ok := r.b.setPiece(r.fromLocation, r.piece)
+	if !ok {
+		return fmt.Errorf("no piece at fromLocation")
 	}
 
-	err = r.b.setPiece(r.toLocation, r.capturedPiece)
-	if err != nil {
-		return err
+	ok = r.b.setPiece(r.toLocation, r.capturedPiece)
+	if !ok {
+		return fmt.Errorf("no piece at toLocation")
 	}
 
     r.b.setVulnerables(r.piece.getColor(), r.vulnerables)
@@ -356,7 +356,7 @@ type CaptureEnPassantMove struct {
 	capturedPiece Piece
 	en            *EnPassant
 	encs          []*EnPassantCapture
-    vulnerables   []*Point
+    vulnerables   []Point
 }
 
 func (c *CaptureEnPassantMove) getNewPiece() Piece {
@@ -364,44 +364,44 @@ func (c *CaptureEnPassantMove) getNewPiece() Piece {
 }
 
 func (c *CaptureEnPassantMove) execute() error {
-	err := c.b.setPiece(c.fromLocation, nil)
-	if err != nil {
-		return err
+	ok := c.b.setPiece(c.fromLocation, nil)
+	if !ok {
+		return fmt.Errorf("no piece at fromLocation")
 	}
 
 	for _, enc := range c.encs {
-        err = c.b.setPiece(enc.enPassant.pieceLocation, nil)
-		if err != nil {
-			return err
+        ok = c.b.setPiece(enc.enPassant.pieceLocation, nil)
+		if !ok {
+			return fmt.Errorf("no piece at enPassant.pieceLocation")
 		}
 	}
 
-	err = c.b.setPiece(c.toLocation, c.newPiece)
-	if err != nil {
-		return err
+	ok = c.b.setPiece(c.toLocation, c.newPiece)
+	if !ok {
+		return fmt.Errorf("no piece at toLocation")
 	}
 
-    c.b.setVulnerables(c.piece.getColor(), []*Point{})
+    c.b.setVulnerables(c.piece.getColor(), []Point{})
 	c.b.clearEnPassant(c.piece.getColor())
 
 	return nil
 }
 
 func (c *CaptureEnPassantMove) undo() error {
-	err := c.b.setPiece(c.fromLocation, c.piece)
-	if err != nil {
-		return err
+	ok := c.b.setPiece(c.fromLocation, c.piece)
+	if !ok {
+		return fmt.Errorf("no piece at fromLocation")
 	}
 
-	err = c.b.setPiece(c.toLocation, c.capturedPiece)
-	if err != nil {
-		return err
+	ok = c.b.setPiece(c.toLocation, c.capturedPiece)
+    if !ok {
+		return fmt.Errorf("no piece at toLocation")
 	}
 
 	for _, enc := range c.encs {
-        err = c.b.setPiece(enc.enPassant.pieceLocation, enc.capturedPiece)
-		if err != nil {
-			return err
+        ok = c.b.setPiece(enc.enPassant.pieceLocation, enc.capturedPiece)
+		if !ok {
+			return fmt.Errorf("no piece at enPassant.pieceLocation")
 		}
 	}
 
@@ -415,13 +415,13 @@ type CastleMove struct {
 	*Action
 	king    Piece
 	newKing Piece
-    toKingLocation *Point
+    toKingLocation Point
 	rook    Piece
 	newRook Piece
-    toRookLocation *Point
+    toRookLocation Point
 	en      *EnPassant
-    vulnerables   []*Point
-    newVulnerables []*Point
+    vulnerables   []Point
+    newVulnerables []Point
 }
 
 func (c *CastleMove) getNewPiece() Piece {
@@ -429,24 +429,24 @@ func (c *CastleMove) getNewPiece() Piece {
 }
 
 func (c *CastleMove) execute() error {
-	err := c.b.setPiece(c.fromLocation, nil)
-	if err != nil {
-		return err
+	ok := c.b.setPiece(c.fromLocation, nil)
+	if !ok {
+		return fmt.Errorf("no piece at fromLocation")
 	}
 
-	err = c.b.setPiece(c.toLocation, nil)
-	if err != nil {
-		return err
+	ok = c.b.setPiece(c.toLocation, nil)
+	if !ok {
+		return fmt.Errorf("no piece at toLocation")
 	}
 
-	err = c.b.setPiece(c.toRookLocation, c.newRook)
-	if err != nil {
-		return err
+	ok = c.b.setPiece(c.toRookLocation, c.newRook)
+	if !ok {
+		return fmt.Errorf("no piece at toRookLocation")
 	}
 
-	err = c.b.setPiece(c.toKingLocation, c.newKing)
-	if err != nil {
-		return err
+	ok = c.b.setPiece(c.toKingLocation, c.newKing)
+	if !ok {
+		return fmt.Errorf("no piece at toKingLocation")
 	}
 
     c.b.setVulnerables(c.king.getColor(), c.newVulnerables)
@@ -456,24 +456,24 @@ func (c *CastleMove) execute() error {
 }
 
 func (c *CastleMove) undo() error {
-    err := c.b.setPiece(c.toRookLocation, nil)
-	if err != nil {
-		return err
+    ok := c.b.setPiece(c.toRookLocation, nil)
+	if !ok {
+		return fmt.Errorf("no piece at toRookLocation")
 	}
 
-	err = c.b.setPiece(c.toKingLocation, nil)
-	if err != nil {
-		return err
+	ok = c.b.setPiece(c.toKingLocation, nil)
+	if !ok {
+		return fmt.Errorf("no piece at toKingLocation")
 	}
 
-	err = c.b.setPiece(c.fromLocation, c.king)
-	if err != nil {
-		return err
+	ok = c.b.setPiece(c.fromLocation, c.king)
+	if !ok {
+		return fmt.Errorf("no piece at fromLocation")
 	}
 
-	err = c.b.setPiece(c.toLocation, c.rook)
-	if err != nil {
-		return err
+	ok = c.b.setPiece(c.toLocation, c.rook)
+	if !ok {
+		return fmt.Errorf("no piece at toLocation")
 	}
 
     c.b.setVulnerables(c.king.getColor(), c.vulnerables)
@@ -516,10 +516,10 @@ func (m *AllyDefenseMove) getNewPiece() Piece {
 }
 
 func (m *AllyDefenseMove) execute() error {
-	return fmt.Errorf("AllyDefenseMove cannot be executed")
+	return nil
 }
 
 func (m *AllyDefenseMove) undo() error {
-	return fmt.Errorf("AllyDefenseMove cannot be undone")
+	return nil
 }
 

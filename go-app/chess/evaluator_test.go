@@ -86,7 +86,7 @@ func Test_EvalMaterial(t *testing.T) {
             assert.Nil(t, err)
 
             playerCollection.On("getPlayerColors").Return([]string{"white", "black", "red", "blue"}, nil)
-            pieceLocations := map[string][]*Point{
+            pieceLocations := map[string][]Point{
                 "white": {{0,0}, {0,1}, {0,2}},
                 "black": {{1,0}, {1,1}, {1,2}},
                 "red": {{2,0}, {2,1}, {2,2}},
@@ -95,27 +95,27 @@ func Test_EvalMaterial(t *testing.T) {
 
             whitePiece := &MockPiece{}
             whitePiece.On("getValue").Return(test.whiteValue)
-            board.On("getPiece", &Point{0, 0}).Return(whitePiece, nil)
-            board.On("getPiece", &Point{0, 1}).Return(whitePiece, nil)
-            board.On("getPiece", &Point{0, 2}).Return(whitePiece, nil)
+            board.On("getPiece", Point{0, 0}).Return(whitePiece, true)
+            board.On("getPiece", Point{0, 1}).Return(whitePiece, true)
+            board.On("getPiece", Point{0, 2}).Return(whitePiece, true)
 
             blackPiece := &MockPiece{}
             blackPiece.On("getValue").Return(400)
-            board.On("getPiece", &Point{1, 0}).Return(blackPiece, nil)
-            board.On("getPiece", &Point{1, 1}).Return(blackPiece, nil)
-            board.On("getPiece", &Point{1, 2}).Return(blackPiece, nil)
+            board.On("getPiece", Point{1, 0}).Return(blackPiece, true)
+            board.On("getPiece", Point{1, 1}).Return(blackPiece, true)
+            board.On("getPiece", Point{1, 2}).Return(blackPiece, true)
 
             redPiece := &MockPiece{}
             redPiece.On("getValue").Return(300)
-            board.On("getPiece", &Point{2, 0}).Return(redPiece, nil)
-            board.On("getPiece", &Point{2, 1}).Return(redPiece, nil)
-            board.On("getPiece", &Point{2, 2}).Return(redPiece, nil)
+            board.On("getPiece", Point{2, 0}).Return(redPiece, true)
+            board.On("getPiece", Point{2, 1}).Return(redPiece, true)
+            board.On("getPiece", Point{2, 2}).Return(redPiece, true)
 
             bluePiece := &MockPiece{}
             bluePiece.On("getValue").Return(200)
-            board.On("getPiece", &Point{3, 0}).Return(bluePiece, nil)
-            board.On("getPiece", &Point{3, 1}).Return(bluePiece, nil)
-            board.On("getPiece", &Point{3, 2}).Return(bluePiece, nil)
+            board.On("getPiece", Point{3, 0}).Return(bluePiece, true)
+            board.On("getPiece", Point{3, 1}).Return(bluePiece, true)
+            board.On("getPiece", Point{3, 2}).Return(bluePiece, true)
 
             score, err := evaluator.evalMaterial(pieceLocations)
             assert.Nil(t, err)

@@ -113,13 +113,13 @@ func Test_UndoAndRedo(t *testing.T) {
 }
 
 func Test_CastleWhenBlocked(t *testing.T) {
-    b, err := newSimpleBoard(&Point{4, 4})
+    b, err := newSimpleBoard(Point{4, 4})
     assert.Nil(t, err)
 
-    b.setPiece(&Point{1, 3}, newPawn("white", false, 0, -1))
-    b.setPiece(&Point{2, 3}, newKing("white", false, 0, -1))
-    b.setPiece(&Point{3, 3}, newRook("white", false))
-    b.setPiece(&Point{0, 0}, newKing("black", false, 0, 1))
+    b.setPiece(Point{1, 3}, newPawn("white", false, 0, -1))
+    b.setPiece(Point{2, 3}, newKing("white", false, 0, -1))
+    b.setPiece(Point{3, 3}, newRook("white", false))
+    b.setPiece(Point{0, 0}, newKing("black", false, 0, 1))
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
@@ -162,11 +162,11 @@ func Test_CastleWhenBlocked(t *testing.T) {
 }
 
 func Test_CastleCanUndo(t *testing.T) {
-    b, err := newSimpleBoard(&Point{4, 4})
+    b, err := newSimpleBoard(Point{4, 4})
     assert.Nil(t, err)
-    b.setPiece(&Point{2, 3}, newKing("white", false, 0, -1))
-    b.setPiece(&Point{3, 3}, newRook("white", false))
-    b.setPiece(&Point{0, 0}, newKing("black", false, 0, 1))
+    b.setPiece(Point{2, 3}, newKing("white", false, 0, -1))
+    b.setPiece(Point{3, 3}, newRook("white", false))
+    b.setPiece(Point{0, 0}, newKing("black", false, 0, 1))
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
@@ -362,14 +362,14 @@ func Test_FourPlayerCheckmate(t *testing.T) {
 }
 
 func Test_DisabledPieces(t *testing.T) {
-    b, err := newSimpleBoard(&Point{8, 8})
+    b, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
-    b.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
-    b.setPiece(&Point{7, 0}, newKing("black", false, 0, 1))
-    b.setPiece(&Point{4, 0}, newKing("gray", false, 0, 1))
-    b.setPiece(&Point{1, 7}, newQueen("black"))
-    b.setPiece(&Point{6, 6}, newQueen("white"))
-    b.setPiece(&Point{6, 7}, newQueen("white"))
+    b.setPiece(Point{0, 0}, newKing("white", false, 0, 1))
+    b.setPiece(Point{7, 0}, newKing("black", false, 0, 1))
+    b.setPiece(Point{4, 0}, newKing("gray", false, 0, 1))
+    b.setPiece(Point{1, 7}, newQueen("black"))
+    b.setPiece(Point{6, 6}, newQueen("white"))
+    b.setPiece(Point{6, 7}, newQueen("white"))
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
@@ -399,13 +399,13 @@ func Test_DisabledPieces(t *testing.T) {
 }
 
 func Test_Stalemate(t *testing.T) {
-    b, err := newSimpleBoard(&Point{8, 8})
+    b, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
-    b.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
-    b.setPiece(&Point{7, 0}, newKing("black", false, 0, 1))
-    b.setPiece(&Point{4, 0}, newKing("gray", false, 0, 1))
-    b.setPiece(&Point{6, 6}, newQueen("white"))
-    b.setPiece(&Point{6, 7}, newQueen("white"))
+    b.setPiece(Point{0, 0}, newKing("white", false, 0, 1))
+    b.setPiece(Point{7, 0}, newKing("black", false, 0, 1))
+    b.setPiece(Point{4, 0}, newKing("gray", false, 0, 1))
+    b.setPiece(Point{6, 6}, newQueen("white"))
+    b.setPiece(Point{6, 7}, newQueen("white"))
     err = b.CalculateMoves()
     assert.Nil(t, err)
 

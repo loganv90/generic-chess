@@ -1,13 +1,9 @@
 package chess
 
-import (
-    "fmt"
-)
-
 type CastleDirection struct {
 	Point
-	kingOffset *Point
-	rookOffset *Point
+	kingOffset Point
+	rookOffset Point
 }
 
 type Allegiant struct {
@@ -36,24 +32,24 @@ type Piece interface {
 	copy() Piece
     setMoved()
     getMoved() bool
-	moves(Board, *Point) []Move
+	moves(Board, Point) []Move
     setDisabled(bool)
     getDisabled() bool
 	print() string
 }
 
 func addDirection(
-    fromLocation *Point,
+    fromLocation Point,
 	b Board,
 	moves *[]Move,
-    direction *Point,
+    direction Point,
 	color string,
 ) {
     currentLocation := fromLocation.add(direction)
 
     for {
-        p, err := b.getPiece(currentLocation)
-        if err != nil {
+        p, ok := b.getPiece(currentLocation)
+        if !ok {
             break
         }
 
@@ -81,16 +77,16 @@ func addDirection(
 }
 
 func addSimple(
-    fromLocation *Point,
+    fromLocation Point,
 	b Board,
 	moves *[]Move,
-    direction *Point,
+    direction Point,
 	color string,
 ) {
     toLocation := fromLocation.add(direction)
 
-	p, err := b.getPiece(toLocation)
-	if err != nil {
+	p, ok := b.getPiece(toLocation)
+	if !ok {
 		return
 	}
 
@@ -113,21 +109,21 @@ func addSimple(
 }
 
 func newPawn(color string, moved bool, xDir int, yDir int) *Pawn {
-    var forward1 *Point
-    var forward2 *Point
-    var captures []*Point
+    var forward1 Point
+    var forward2 Point
+    var captures []Point
 
 	if xDir == 1 || xDir == -1 {
-		forward1 = &Point{xDir, 0}
-		forward2 = &Point{xDir * 2, 0}
-		captures = []*Point{
+		forward1 = Point{xDir, 0}
+		forward2 = Point{xDir * 2, 0}
+		captures = []Point{
 			{xDir, 1},
 			{xDir, -1},
 		}
 	} else if yDir == 1 || yDir == -1 {
-		forward1 = &Point{0, yDir}
-		forward2 = &Point{0, yDir * 2}
-		captures = []*Point{
+		forward1 = Point{0, yDir}
+		forward2 = Point{0, yDir * 2}
+		captures = []Point{
 			{1, yDir},
 			{-1, yDir},
 		}
@@ -142,7 +138,7 @@ func newPawn(color string, moved bool, xDir int, yDir int) *Pawn {
 		forward1,
 		forward2,
 		captures,
-        &Point{xDir, yDir},
+        Point{xDir, yDir},
 	}
 }
 
@@ -150,10 +146,10 @@ type Pawn struct {
 	Allegiant
     Disableable
 	moved bool
-	forward1 *Point
-	forward2 *Point
-	captures []*Point
-    direction *Point
+	forward1 Point
+	forward2 Point
+	captures []Point
+    direction Point
 }
 
 func (a *Pawn) print() string {
@@ -184,7 +180,7 @@ func (a *Pawn) getValue() int {
     return 1000
 }
 
-func (a *Pawn) moves(b Board, fromLocation *Point) []Move {
+func (a *Pawn) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
     if a.disabled {
         return *moves
@@ -194,10 +190,10 @@ func (a *Pawn) moves(b Board, fromLocation *Point) []Move {
 	return *moves
 }
 
-func (a *Pawn) nextLocationInvalid(b Board, toLocation *Point) bool {
+func (a *Pawn) nextLocationInvalid(b Board, toLocation Point) bool {
     nextLocation := toLocation.add(a.direction)
-    _, err := b.getPiece(nextLocation)
-    return err != nil
+    _, ok := b.getPiece(nextLocation)
+    return !ok
 }
 
 func (a *Pawn) appendPromotionMoves(move Move, moves *[]Move) {
@@ -218,9 +214,9 @@ func (a *Pawn) appendPromotionMoves(move Move, moves *[]Move) {
     }
 }
 
-func (a *Pawn) addForward(b Board, fromLocation *Point, moves *[]Move) {
+func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]Move) {
     to1Location := fromLocation.add(a.forward1)
-	if piece, err := b.getPiece(to1Location); err != nil || piece != nil { // if the square is invalid or occupied
+	if piece, ok := b.getPiece(to1Location); !ok || piece != nil { // if the square is invalid or occupied
 		return
 	} else {
 		simpleMove, err := moveFactoryInstance.newSimpleMove(b, fromLocation, to1Location)
@@ -238,7 +234,7 @@ func (a *Pawn) addForward(b Board, fromLocation *Point, moves *[]Move) {
 	}
 
     to2Location := fromLocation.add(a.forward2)
-	if piece, err := b.getPiece(to2Location); err != nil || piece != nil { // if the square is invalid or occupied
+	if piece, ok := b.getPiece(to2Location); !ok || piece != nil { // if the square is invalid or occupied
 		return
 	} else {
 		revealEnPassantMove, err := moveFactoryInstance.newRevealEnPassantMove(b, fromLocation, to2Location, to1Location)
@@ -252,11 +248,11 @@ func (a *Pawn) addForward(b Board, fromLocation *Point, moves *[]Move) {
 	}
 }
 
-func (a *Pawn) addCaptures(b Board, fromLocation *Point, moves *[]Move) {
+func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *[]Move) {
 	for _, capture := range a.captures {
         toLocation := fromLocation.add(capture)
 
-		if piece, err := b.getPiece(toLocation); err != nil { // if the square is invalid
+		if piece, ok := b.getPiece(toLocation); !ok { // if the square is invalid
 			continue
         } else if ens, err := b.possibleEnPassant(a.color, toLocation); err == nil && len(ens) > 0 { // if the square is an en passant target
 			captureEnPassantMove, err := moveFactoryInstance.newCaptureEnPassantMove(b, fromLocation, toLocation)
@@ -285,7 +281,7 @@ func (a *Pawn) addCaptures(b Board, fromLocation *Point, moves *[]Move) {
 	}
 }
 
-var knightSimples = []*Point{
+var knightSimples = []Point{
 	{1, 2},
 	{-1, 2},
 	{2, 1},
@@ -330,7 +326,7 @@ func (n *Knight) getValue() int {
     return 3000
 }
 
-func (n *Knight) moves(b Board, fromLocation *Point) []Move {
+func (n *Knight) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
     if n.disabled {
         return *moves
@@ -339,13 +335,13 @@ func (n *Knight) moves(b Board, fromLocation *Point) []Move {
 	return *moves
 }
 
-func (n *Knight) addSimples(b Board, fromLocation *Point, moves *[]Move) {
+func (n *Knight) addSimples(b Board, fromLocation Point, moves *[]Move) {
 	for _, simple := range knightSimples {
 		addSimple(fromLocation, b, moves, simple, n.color)
 	}
 }
 
-var bishopDirections = []*Point{
+var bishopDirections = []Point{
 	{1, 1},
 	{-1, 1},
 	{1, -1},
@@ -386,7 +382,7 @@ func (s *Bishop) getValue() int {
     return 3000
 }
 
-func (s *Bishop) moves(b Board, fromLocation *Point) []Move {
+func (s *Bishop) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
     if s.disabled {
         return *moves
@@ -395,13 +391,13 @@ func (s *Bishop) moves(b Board, fromLocation *Point) []Move {
 	return *moves
 }
 
-func (s *Bishop) addDirections(b Board, fromLocation *Point, moves *[]Move) {
+func (s *Bishop) addDirections(b Board, fromLocation Point, moves *[]Move) {
 	for _, direction := range bishopDirections {
 		addDirection(fromLocation, b, moves, direction, s.color)
 	}
 }
 
-var rookDirections = []*Point{
+var rookDirections = []Point{
 	{1, 0},
 	{-1, 0},
 	{0, 1},
@@ -446,7 +442,7 @@ func (r *Rook) getValue() int {
     return 5000
 }
 
-func (r *Rook) moves(b Board, fromLocation *Point) []Move {
+func (r *Rook) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
     if r.disabled {
         return *moves
@@ -455,13 +451,13 @@ func (r *Rook) moves(b Board, fromLocation *Point) []Move {
 	return *moves
 }
 
-func (r *Rook) addDirections(b Board, fromLocation *Point, moves *[]Move) {
+func (r *Rook) addDirections(b Board, fromLocation Point, moves *[]Move) {
 	for _, direction := range rookDirections {
 		addDirection(fromLocation, b, moves, direction, r.color)
 	}
 }
 
-var queenDirections = []*Point{
+var queenDirections = []Point{
 	{1, 0},
 	{-1, 0},
 	{0, 1},
@@ -506,7 +502,7 @@ func (q *Queen) getValue() int {
     return 9000
 }
 
-func (q *Queen) moves(b Board, fromLocation *Point) []Move {
+func (q *Queen) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
     if q.disabled {
         return *moves
@@ -515,13 +511,13 @@ func (q *Queen) moves(b Board, fromLocation *Point) []Move {
 	return *moves
 }
 
-func (q *Queen) addDirections(b Board, fromLocation *Point, moves *[]Move) {
+func (q *Queen) addDirections(b Board, fromLocation Point, moves *[]Move) {
 	for _, direction := range queenDirections {
 		addDirection(fromLocation, b, moves, direction, q.color)
 	}
 }
 
-var kingSimples = []*Point{
+var kingSimples = []Point{
 	{1, 0},
 	{-1, 0},
 	{0, 1},
@@ -537,13 +533,13 @@ func newKing(color string, moved bool, xDir int, yDir int) *King {
 
 	if xDir == 1 || xDir == -1 {
 		castles = []*CastleDirection{
-			{Point{0, 1}, &Point{0, -1}, &Point{0, -2}},
-			{Point{0, -1}, &Point{0, 2}, &Point{0, 3}},
+			{Point{0, 1}, Point{0, -1}, Point{0, -2}},
+			{Point{0, -1}, Point{0, 2}, Point{0, 3}},
 		}
 	} else if yDir == 1 || yDir == -1 {
 		castles = []*CastleDirection{
-			{Point{1, 0}, &Point{-1, 0}, &Point{-2, 0}},
-			{Point{-1, 0}, &Point{2, 0}, &Point{3, 0}},
+			{Point{1, 0}, Point{-1, 0}, Point{-2, 0}},
+			{Point{-1, 0}, Point{2, 0}, Point{3, 0}},
 		}
 	} else {
         panic("invalid direction")
@@ -589,7 +585,7 @@ func (k *King) getValue() int {
     return 0
 }
 
-func (k *King) moves(b Board, fromLocation *Point) []Move {
+func (k *King) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
     if k.disabled {
         return *moves
@@ -599,19 +595,19 @@ func (k *King) moves(b Board, fromLocation *Point) []Move {
 	return *moves
 }
 
-func (k *King) addSimples(b Board, fromLocation *Point, moves *[]Move) {
+func (k *King) addSimples(b Board, fromLocation Point, moves *[]Move) {
 	for _, simple := range kingSimples {
 		addSimple(fromLocation, b, moves, simple, k.color)
 	}
 }
 
-func (k *King) findRookForCastle(b Board, fromLocation *Point, direction *Point) (*Point, error) {
+func (k *King) findRookForCastle(b Board, fromLocation Point, direction Point) (Point, bool) {
     currentLocation := fromLocation.add(direction)
 
     for {
-        piece, err := b.getPiece(currentLocation)
-        if err != nil {
-            return nil, err
+        piece, ok := b.getPiece(currentLocation)
+        if !ok {
+            return Point{}, false
         }
 
         if piece == nil {
@@ -620,20 +616,20 @@ func (k *King) findRookForCastle(b Board, fromLocation *Point, direction *Point)
         }
 
         if rook, ok := piece.(*Rook); !ok || rook.moved || rook.color != k.color {
-            return nil, fmt.Errorf("no rook found")
+            return Point{}, false
         }
 
-        return currentLocation, nil
+        return currentLocation, true
     }
 }
 
-func (k *King) findEdgeForCastle(b Board, fromLocation *Point, direction *Point) (*Point, error) {
+func (k *King) findEdgeForCastle(b Board, fromLocation Point, direction Point) (Point, error) {
     previousLocation := fromLocation
     currentLocation := previousLocation.add(direction)
 
     for {
-        _, err := b.getPiece(currentLocation)
-        if err != nil {
+        _, ok := b.getPiece(currentLocation)
+        if !ok {
             return previousLocation, nil
         }
 
@@ -642,18 +638,18 @@ func (k *King) findEdgeForCastle(b Board, fromLocation *Point, direction *Point)
     }
 }
 
-func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
+func (k *King) addCastles(b Board, fromLocation Point, moves *[]Move) {
 	if k.moved {
 		return
 	}
 
 	for _, castle := range k.castles {
-        fromRookLocation, err := k.findRookForCastle(b, fromLocation, &castle.Point)
-        if err != nil {
+        fromRookLocation, ok := k.findRookForCastle(b, fromLocation, castle.Point)
+        if !ok {
             continue
         }
 
-        edgeLocation, err := k.findEdgeForCastle(b, fromRookLocation, &castle.Point)
+        edgeLocation, err := k.findEdgeForCastle(b, fromRookLocation, castle.Point)
         if err != nil {
             continue
         }
@@ -673,25 +669,25 @@ func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
 
         clear := true
         for x := xCheckedMin - 1; x >= xToMin && clear; x-- {
-            if piece, err := b.getPiece(&Point{x, fromLocation.y}); err != nil || piece != nil {
+            if piece, ok := b.getPiece(Point{x, fromLocation.y}); !ok || piece != nil {
                 clear = false
                 break
             }
         }
         for y := yCheckedMin - 1; y >= yToMin && clear; y-- {
-            if piece, err := b.getPiece(&Point{fromLocation.x, y}); err != nil || piece != nil {
+            if piece, ok := b.getPiece(Point{fromLocation.x, y}); !ok || piece != nil {
                 clear = false
                 break
             }
         }
         for x := xCheckedMax + 1; x <= xToMax && clear; x++ {
-            if piece, err := b.getPiece(&Point{x, fromLocation.y}); err != nil || piece != nil {
+            if piece, ok := b.getPiece(Point{x, fromLocation.y}); !ok || piece != nil {
                 clear = false
                 break
             }
         }
         for y := yCheckedMax + 1; y <= yToMax && clear; y++ {
-            if piece, err := b.getPiece(&Point{fromLocation.y, y}); err != nil || piece != nil {
+            if piece, ok := b.getPiece(Point{fromLocation.y, y}); !ok || piece != nil {
                 clear = false
                 break
             }
@@ -700,25 +696,25 @@ func (k *King) addCastles(b Board, fromLocation *Point, moves *[]Move) {
             continue
         }
 
-        vulnerableLocations := []*Point{}
+        vulnerableLocations := []Point{}
         if toLocation.x > fromLocation.x {
             for x := fromLocation.x + 1; x < toLocation.x; x++ {
-                location := &Point{x, fromLocation.y}
+                location := Point{x, fromLocation.y}
                 vulnerableLocations = append(vulnerableLocations, location)
             }
         } else if toLocation.x < fromLocation.x {
             for x := fromLocation.x - 1; x > toLocation.x; x-- {
-                location := &Point{x, fromLocation.y}
+                location := Point{x, fromLocation.y}
                 vulnerableLocations = append(vulnerableLocations, location)
             }
         } else if toLocation.y > fromLocation.y {
             for y := fromLocation.y + 1; y < toLocation.y; y++ {
-                location := &Point{fromLocation.x, y}
+                location := Point{fromLocation.x, y}
                 vulnerableLocations = append(vulnerableLocations, location)
             }
         } else if toLocation.y < fromLocation.y {
             for y := fromLocation.y - 1; y > toLocation.y; y-- {
-                location := &Point{fromLocation.x, y}
+                location := Point{fromLocation.x, y}
                 vulnerableLocations = append(vulnerableLocations, location)
             }
         }

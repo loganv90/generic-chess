@@ -17,42 +17,42 @@ Responsible for:
 - searching for moves given the current state of the game
 */
 type Searcher interface {
-    search() (*MoveKey, error)
+    search() (MoveKey, error)
 }
 
 func newSimpleSearcher(g Game) (*SimpleSearcher, error) {
     return &SimpleSearcher{
         g: g,
-        transpositionMap: map[string]*MoveKeyAndScore{},
+        transpositionMap: map[string]MoveKeyAndScore{},
         minimaxCalls: 0,
     }, nil
 }
 
 type SimpleSearcher struct {
     g Game
-    transpositionMap map[string]*MoveKeyAndScore
+    transpositionMap map[string]MoveKeyAndScore
     minimaxCalls int
 }
 
-func (s *SimpleSearcher) search() (*MoveKey, error) {
+func (s *SimpleSearcher) search() (MoveKey, error) {
     // we should start by implementing adapting minimax to an arbitrary number of players
     // we can just do recursive search and pass around a single game object while execuing and undoing moves
     // first we need to make a copy of the game object
 
     _, moveKey, err := s.minimax(s.g, 4)
     if err != nil {
-        return nil, err
+        return MoveKey{}, err
     }
 
     return moveKey, nil
 }
 
-func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, *MoveKey, error) {
+func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, MoveKey, error) {
     s.minimaxCalls++
 
     state, err := game.State()
     if err != nil {
-        return nil, nil, err
+        return nil, MoveKey{}, err
     }
 
     board := game.getBoard()
@@ -66,36 +66,36 @@ func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, *MoveKey
     if depth == 0 || state.GameOver {
         evaluator, err := newSimpleEvaluator(board, playerCollection)
         if err != nil {
-            return nil, nil, err
+            return nil, MoveKey{}, err
         }
 
         score, err := evaluator.eval()
         if err != nil {
-            return nil, nil, err
+            return nil, MoveKey{}, err
         }
 
-        return score, nil, nil
+        return score, MoveKey{}, nil
     }
 
     moves, err := game.Moves(state.CurrentPlayer)
     if err != nil {
-        return nil, nil, err
+        return nil, MoveKey{}, err
     }
 
     bestScore := map[string]int{state.CurrentPlayer: -1000000}
-    bestMove := &MoveKey{}
+    bestMove := MoveKey{}
     for _, move := range moves {
         err := game.Execute(move.XFrom, move.YFrom, move.XTo, move.YTo, move.Promotion)
         if err != nil {
-            return nil, nil, err
+            return nil, MoveKey{}, err
         }
 
         score, moveKey, err := s.minimax(game, depth-1)
         if err != nil {
-            return nil, nil, err
+            return nil, MoveKey{}, err
         }
 
-        s.transpositionMap[uniqueString] = &MoveKeyAndScore{
+        s.transpositionMap[uniqueString] = MoveKeyAndScore{
             moveKey: moveKey,
             score: score,
         }
@@ -107,7 +107,7 @@ func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, *MoveKey
 
         err = game.Undo()
         if err != nil {
-            return nil, nil, err
+            return nil, MoveKey{}, err
         }
     }
 

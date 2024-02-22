@@ -17,32 +17,32 @@ func (m *MockBoard) disablePieces(color string, disable bool) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) getPiece(location *Point) (Piece, error) {
+func (m *MockBoard) getPiece(location Point) (Piece, bool) {
 	args := m.Called(location)
 
 	if args.Get(0) == nil {
-		return nil, args.Error(1)
+		return nil, args.Bool(1)
 	} else {
-		return args.Get(0).(Piece), args.Error(1)
+		return args.Get(0).(Piece), args.Bool(1)
 	}
 }
 
-func (m *MockBoard) setPiece(location *Point, piece Piece) error {
+func (m *MockBoard) setPiece(location Point, piece Piece) bool {
 	args := m.Called(location, piece)
-	return args.Error(0)
+    return args.Bool(0)
 }
 
-func (m *MockBoard) disableLocation(location *Point) error {
+func (m *MockBoard) disableLocation(location Point) error {
     args := m.Called(location)
     return args.Error(0)
 }
 
-func (m *MockBoard) getVulnerables(color string) ([]*Point, error) {
+func (m *MockBoard) getVulnerables(color string) ([]Point, error) {
     args := m.Called(color)
-    return args.Get(0).([]*Point), args.Error(1)
+    return args.Get(0).([]Point), args.Error(1)
 }
 
-func (m *MockBoard) setVulnerables(color string, vulnerables []*Point) error {
+func (m *MockBoard) setVulnerables(color string, vulnerables []Point) error {
     args := m.Called(color, vulnerables)
     return args.Error(0)
 }
@@ -57,7 +57,7 @@ func (m *MockBoard) setEnPassant(color string, enPassant *EnPassant) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) possibleEnPassant(color string, location *Point) ([]*EnPassant, error) {
+func (m *MockBoard) possibleEnPassant(color string, location Point) ([]*EnPassant, error) {
     args := m.Called(color, location)
     return args.Get(0).([]*EnPassant), args.Error(1)
 }
@@ -67,7 +67,7 @@ func (m *MockBoard) clearEnPassant(color string) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) ValidMoves(fromLocation *Point) ([]Move, error) {
+func (m *MockBoard) ValidMoves(fromLocation Point) ([]Move, error) {
     args := m.Called(fromLocation)
     return args.Get(0).([]Move), args.Error(1)
 }
@@ -77,9 +77,9 @@ func (m *MockBoard) CalculateMoves() error {
     return args.Error(0)
 }
 
-func (m *MockBoard) AvailableMoves(color string) ([]*MoveKey, error) {
+func (m *MockBoard) AvailableMoves(color string) ([]MoveKey, error) {
     args := m.Called(color)
-    return args.Get(0).([]*MoveKey), args.Error(1)
+    return args.Get(0).([]MoveKey), args.Error(1)
 }
 
 func (m *MockBoard) Print() string {
@@ -117,9 +117,9 @@ func (m *MockBoard) Stalemate(color string) bool {
     return args.Bool(0)
 }
 
-func (m *MockBoard) getPieceLocations() map[string][]*Point {
+func (m *MockBoard) getPieceLocations() map[string][]Point {
     args := m.Called()
-    return args.Get(0).(map[string][]*Point)
+    return args.Get(0).(map[string][]Point)
 }
 
 func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
@@ -128,77 +128,77 @@ func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
 
 	for y := 2; y <= 5; y++ {
 		for x := 0; x <= 7; x++ {
-			piece, err := s.getPiece(&Point{x, y})
-			assert.Nil(t, err)
+			piece, ok := s.getPiece(Point{x, y})
+			assert.True(t, ok)
 			assert.Nil(t, piece)
 		}
 	}
 
 	for _, y := range []int{1, 6} {
 		for x := 0; x <= 7; x++ {
-			piece, err := s.getPiece(&Point{x, y})
+			piece, ok := s.getPiece(Point{x, y})
 			assert.Nil(t, err)
-			_, ok := piece.(*Pawn)
+			_, ok = piece.(*Pawn)
 			assert.True(t, ok)
 		}
 	}
 
 	for _, y := range []int{0, 7} {
-		piece, err := s.getPiece(&Point{0, y})
-		assert.Nil(t, err)
-		_, ok := piece.(*Rook)
+		piece, ok := s.getPiece(Point{0, y})
+		assert.True(t, ok)
+		_, ok = piece.(*Rook)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(&Point{1, y})
-		assert.Nil(t, err)
+		piece, ok = s.getPiece(Point{1, y})
+		assert.True(t, ok)
 		_, ok = piece.(*Knight)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(&Point{2, y})
-		assert.Nil(t, err)
+		piece, ok = s.getPiece(Point{2, y})
+		assert.True(t, ok)
 		_, ok = piece.(*Bishop)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(&Point{3, y})
-		assert.Nil(t, err)
+		piece, ok = s.getPiece(Point{3, y})
+		assert.True(t, ok)
 		_, ok = piece.(*Queen)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(&Point{4, y})
-		assert.Nil(t, err)
+		piece, ok = s.getPiece(Point{4, y})
+		assert.True(t, ok)
 		_, ok = piece.(*King)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(&Point{5, y})
-		assert.Nil(t, err)
+		piece, ok = s.getPiece(Point{5, y})
+		assert.True(t, ok)
 		_, ok = piece.(*Bishop)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(&Point{6, y})
-		assert.Nil(t, err)
+		piece, ok = s.getPiece(Point{6, y})
+		assert.True(t, ok)
 		_, ok = piece.(*Knight)
 		assert.True(t, ok)
 
-		piece, err = s.getPiece(&Point{7, y})
-		assert.Nil(t, err)
+		piece, ok = s.getPiece(Point{7, y})
+		assert.True(t, ok)
 		_, ok = piece.(*Rook)
 		assert.True(t, ok)
 	}
 }
 
 func Test_getAndSetPiece(t *testing.T) {
-    s, err := newSimpleBoard(&Point{8, 8})
+    s, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
 
     p := newPawn("white", false, 0, 1)
-    location := &Point{0, 0}
+    location := Point{0, 0}
 
     // adding piece to board
-    err = s.setPiece(location, p)
-    assert.Nil(t, err)
+    ok := s.setPiece(location, p)
+    assert.True(t, ok)
 
-    piece, err := s.getPiece(location)
-    assert.Nil(t, err)
+    piece, ok := s.getPiece(location)
+    assert.True(t, ok)
     assert.Equal(t, p, piece)
     pieceLocations, ok := s.pieceLocationsMap["white"]
     assert.True(t, ok)
@@ -206,11 +206,11 @@ func Test_getAndSetPiece(t *testing.T) {
     assert.True(t, exists)
 
     // removing piece from board
-    err = s.setPiece(location, nil)
-    assert.Nil(t, err)
+    ok = s.setPiece(location, nil)
+    assert.True(t, ok)
 
-    piece, err = s.getPiece(location)
-    assert.Nil(t, err)
+    piece, ok = s.getPiece(location)
+    assert.True(t, ok)
     assert.Nil(t, piece)
     pieceLocations, ok = s.pieceLocationsMap["white"]
     assert.True(t, ok)
@@ -253,12 +253,12 @@ func Test_CalculateMoves_default(t *testing.T) {
 }
 
 func Test_CalculateMoves_check(t *testing.T) {
-    s, err := newSimpleBoard(&Point{8, 8})
+    s, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
 
-    s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
-    s.setPiece(&Point{0, 1}, newQueen("black"))
-    s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
+    s.setPiece(Point{0, 0}, newKing("white", false, 0, 1))
+    s.setPiece(Point{0, 1}, newQueen("black"))
+    s.setPiece(Point{0, 7}, newKing("black", false, 0, -1))
 
     s.CalculateMoves()
 
@@ -291,12 +291,12 @@ func Test_CalculateMoves_check(t *testing.T) {
 }
 
 func Test_CalculateMoves_checkmate(t *testing.T) {
-    s, err := newSimpleBoard(&Point{8, 8})
+    s, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
 
-    s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
-    s.setPiece(&Point{0, 1}, newQueen("black"))
-    s.setPiece(&Point{0, 2}, newKing("black", false, 0, -1))
+    s.setPiece(Point{0, 0}, newKing("white", false, 0, 1))
+    s.setPiece(Point{0, 1}, newQueen("black"))
+    s.setPiece(Point{0, 2}, newKing("black", false, 0, -1))
 
     s.CalculateMoves()
 
@@ -329,12 +329,12 @@ func Test_CalculateMoves_checkmate(t *testing.T) {
 }
 
 func Test_CalculateMoves_stalemate(t *testing.T) {
-    s, err := newSimpleBoard(&Point{8, 8})
+    s, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
 
-    s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
-    s.setPiece(&Point{1, 2}, newQueen("black"))
-    s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
+    s.setPiece(Point{0, 0}, newKing("white", false, 0, 1))
+    s.setPiece(Point{1, 2}, newQueen("black"))
+    s.setPiece(Point{0, 7}, newKing("black", false, 0, -1))
 
     s.CalculateMoves()
 
@@ -367,13 +367,13 @@ func Test_CalculateMoves_stalemate(t *testing.T) {
 }
 
 func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
-    s, err := newSimpleBoard(&Point{8, 8})
+    s, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
 
-    s.setPiece(&Point{4, 0}, newKing("white", false, 0, 1))
-    s.setPiece(&Point{0, 0}, newRook("white", false))
-    s.setPiece(&Point{3, 7}, newRook("black", false))
-    s.setPiece(&Point{4, 7}, newKing("black", false, 0, -1))
+    s.setPiece(Point{4, 0}, newKing("white", false, 0, 1))
+    s.setPiece(Point{0, 0}, newRook("white", false))
+    s.setPiece(Point{3, 7}, newRook("black", false))
+    s.setPiece(Point{4, 7}, newKing("black", false, 0, -1))
 
     s.CalculateMoves()
 
@@ -406,12 +406,12 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
 }
 
 func Test_CalculateMoves_castle(t *testing.T) {
-    s, err := newSimpleBoard(&Point{8, 8})
+    s, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
 
-    s.setPiece(&Point{4, 0}, newKing("white", false, 0, 1))
-    s.setPiece(&Point{0, 0}, newRook("white", false))
-    s.setPiece(&Point{4, 7}, newKing("black", false, 0, -1))
+    s.setPiece(Point{4, 0}, newKing("white", false, 0, 1))
+    s.setPiece(Point{0, 0}, newRook("white", false))
+    s.setPiece(Point{4, 7}, newKing("black", false, 0, -1))
 
     s.CalculateMoves()
 
@@ -444,12 +444,12 @@ func Test_CalculateMoves_castle(t *testing.T) {
 }
 
 func Test_CalculateMoves_promotion(t *testing.T) {
-    s, err := newSimpleBoard(&Point{8, 8})
+    s, err := newSimpleBoard(Point{8, 8})
     assert.Nil(t, err)
 
-    s.setPiece(&Point{7, 6}, newPawn("white", true, 0, 1))
-    s.setPiece(&Point{0, 0}, newKing("white", false, 0, 1))
-    s.setPiece(&Point{0, 7}, newKing("black", false, 0, -1))
+    s.setPiece(Point{7, 6}, newPawn("white", true, 0, 1))
+    s.setPiece(Point{0, 0}, newKing("white", false, 0, 1))
+    s.setPiece(Point{0, 7}, newKing("black", false, 0, -1))
 
     s.CalculateMoves()
 

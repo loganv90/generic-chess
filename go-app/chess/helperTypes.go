@@ -20,7 +20,7 @@ type Command struct {
 }
 
 type MoveKeyAndScore struct {
-    moveKey *MoveKey
+    moveKey MoveKey
     score map[string]int
 }
 
@@ -68,21 +68,21 @@ type Point struct {
     y int
 }
 
-func (p *Point) equals(other *Point) bool {
+func (p Point) equals(other Point) bool {
     return p.x == other.x && p.y == other.y
 }
 
-func (p *Point) add(other *Point) *Point {
-    return &Point{p.x + other.x, p.y + other.y}
+func (p Point) add(other Point) Point {
+    return Point{p.x + other.x, p.y + other.y}
 }
 
 type EnPassant struct {
-    target *Point
-    pieceLocation *Point
+    target Point
+    pieceLocation Point
 }
 
 type PieceLocations struct {
-    ownPieceLocations []*Point
-    enemyPieceLocations []*Point
+    ownPieceLocations []Point
+    enemyPieceLocations []Point
 }
 
