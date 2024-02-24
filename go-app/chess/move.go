@@ -26,7 +26,7 @@ type MoveFactory interface {
 	newRevealEnPassantMove(b Board, fromLocation Point, toLocation Point, target Point) (*RevealEnPassantMove, error)
 	newCaptureEnPassantMove(b Board, fromLocation Point, toLocation Point) (*CaptureEnPassantMove, error)
 	newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerables []Point) (*CastleMove, error)
-    newPromotionMoves(move Move, promotionPieces []Piece) ([]*PromotionMove, error)
+    newPromotionMove(move Move) (*PromotionMove, error)
     newAllyDefenseMove(b Board, fromLocation Point, toLocation Point) (*AllyDefenseMove, error)
 }
 
@@ -214,21 +214,16 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocat
 	}, nil
 }
 
-func (f *ConcreteMoveFactory) newPromotionMoves(move Move, promotionPieces []Piece) ([]*PromotionMove, error) {
+func (f *ConcreteMoveFactory) newPromotionMove(move Move) (*PromotionMove, error) {
     action := move.getAction()
 
-    promotionMoves := []*PromotionMove{}
-    for _, promotionPiece := range promotionPieces {
-        promotionMove := &PromotionMove{
-            Action: action,
-            baseMove: move,
-            promotionPiece: promotionPiece,
-        }
-
-        promotionMoves = append(promotionMoves, promotionMove)
+    promotionMove := &PromotionMove{
+        Action: action,
+        baseMove: move,
+        promotionPiece: nil,
     }
 
-    return promotionMoves, nil
+    return promotionMove, nil
 }
 
 func (m *ConcreteMoveFactory) newAllyDefenseMove(b Board, fromLocation Point, toLocation Point) (*AllyDefenseMove, error) {
@@ -489,7 +484,13 @@ type PromotionMove struct {
 }
 
 func (p *PromotionMove) getNewPiece() Piece {
-    return p.promotionPiece
+    return p.baseMove.getNewPiece()
+}
+
+func (p *PromotionMove) setPromotionPiece(piece Piece) error {
+    p.promotionPiece = piece
+
+    return nil
 }
 
 func (p *PromotionMove) execute() error {

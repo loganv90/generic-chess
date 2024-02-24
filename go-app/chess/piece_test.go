@@ -164,13 +164,13 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
 
 	moveFactory := &MockMoveFactory{}
 	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-    moveFactory.On("newPromotionMoves", mock.Anything, mock.Anything).Return([]*PromotionMove{nil, nil, nil}, nil)
+    moveFactory.On("newPromotionMove", mock.Anything, mock.Anything).Return(&PromotionMove{nil, nil, nil}, nil)
 	moveFactoryInstance = moveFactory
 
 	pawn := newPawn("white", false, 0, 1)
 
 	moves := pawn.moves(board, Point{3, 3})
-	assert.Len(t, moves, 3)
+	assert.Len(t, moves, 1)
 
 	board.AssertExpectations(t)
 	moveFactory.AssertExpectations(t)

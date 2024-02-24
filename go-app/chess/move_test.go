@@ -51,13 +51,13 @@ func (m *MockMoveFactory) newCastleMove(b Board, fromLocation Point, toLocation 
 	}
 }
 
-func (m *MockMoveFactory) newPromotionMoves(move Move, promotionPieces []Piece) ([]*PromotionMove, error) {
-    args := m.Called(move, promotionPieces)
+func (m *MockMoveFactory) newPromotionMove(move Move) (*PromotionMove, error) {
+    args := m.Called(move)
 
     if args.Get(0) == nil {
         return nil, args.Error(1)
     } else {
-        return args.Get(0).([]*PromotionMove), args.Error(1)
+        return args.Get(0).(*PromotionMove), args.Error(1)
     }
 }
 
@@ -273,7 +273,9 @@ func Test_PromotionMove(t *testing.T) {
     board.On("getVulnerables", "white").Return([]Point{{2, 2}}, nil)
 	simpleMove, err := moveFactoryInstance.newSimpleMove(board, Point{0, 0}, Point{1, 1})
 	assert.Nil(t, err)
-    promotionMoves, err := moveFactoryInstance.newPromotionMoves(simpleMove, []Piece{queen})
+    promotionMove, err := moveFactoryInstance.newPromotionMove(simpleMove)
+    assert.Nil(t, err)
+    err = promotionMove.setPromotionPiece(queen)
     assert.Nil(t, err)
 
 	board.On("setPiece", Point{0, 0}, nil).Return(true)
@@ -281,7 +283,7 @@ func Test_PromotionMove(t *testing.T) {
     board.On("setPiece", Point{1, 1}, queen).Return(true)
 	board.On("clearEnPassant", "white").Return(nil)
     board.On("setVulnerables", "white", []Point{}).Return(nil)
-	err = promotionMoves[0].execute()
+	err = promotionMove.execute()
 	assert.Nil(t, err)
 
 	board.On("setPiece", Point{0, 0}, piece).Return(true)
@@ -289,7 +291,7 @@ func Test_PromotionMove(t *testing.T) {
 	board.On("setPiece", Point{1, 1}, capturedPiece).Return(true)
 	board.On("setEnPassant", "white", en).Return(nil)
     board.On("setVulnerables", "white", []Point{{2, 2}}).Return(nil)
-	err = promotionMoves[0].undo()
+	err = promotionMove.undo()
 	assert.Nil(t, err)
 
 	board.AssertExpectations(t)

@@ -196,24 +196,6 @@ func (a *Pawn) nextLocationInvalid(b Board, toLocation Point) bool {
     return !ok
 }
 
-func (a *Pawn) appendPromotionMoves(move Move, moves *[]Move) {
-    promotionMoves, err := moveFactoryInstance.newPromotionMoves(
-        move,
-        []Piece{
-            newQueen(a.color),
-            newRook(a.color, true),
-            newBishop(a.color),
-            newKnight(a.color),
-        },
-    )
-    if err != nil {
-        return
-    }
-    for _, promotionMove := range promotionMoves {
-        *moves = append(*moves, promotionMove)
-    }
-}
-
 func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]Move) {
     to1Location := fromLocation.add(a.forward1)
 	if piece, ok := b.getPiece(to1Location); !ok || piece != nil { // if the square is invalid or occupied
@@ -223,7 +205,9 @@ func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]Move) {
         if err != nil {
             return
         } else if a.nextLocationInvalid(b, to1Location) {
-            a.appendPromotionMoves(simpleMove, moves)
+            if promotionMove, err := moveFactoryInstance.newPromotionMove(simpleMove); err == nil {
+                *moves = append(*moves, promotionMove)
+            }
         } else {
 			*moves = append(*moves, simpleMove)
 		}
@@ -241,7 +225,9 @@ func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]Move) {
         if err != nil {
             return
         } else if a.nextLocationInvalid(b, to2Location) {
-            a.appendPromotionMoves(revealEnPassantMove, moves)
+            if promotionMove, err := moveFactoryInstance.newPromotionMove(revealEnPassantMove); err == nil {
+                *moves = append(*moves, promotionMove)
+            }
         } else {
 			*moves = append(*moves, revealEnPassantMove)
 		}
@@ -259,7 +245,9 @@ func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *[]Move) {
             if err != nil {
                 continue
             } else if a.nextLocationInvalid(b, toLocation) {
-                a.appendPromotionMoves(captureEnPassantMove, moves)
+                if promotionMove, err := moveFactoryInstance.newPromotionMove(captureEnPassantMove); err == nil {
+                    *moves = append(*moves, promotionMove)
+                }
             } else {
                 *moves = append(*moves, captureEnPassantMove)
             }
@@ -268,7 +256,9 @@ func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *[]Move) {
             if err != nil {
                 continue
             } else if a.nextLocationInvalid(b, toLocation) {
-                a.appendPromotionMoves(simpleMove, moves)
+                if promotionMove, err := moveFactoryInstance.newPromotionMove(simpleMove); err == nil {
+                    *moves = append(*moves, promotionMove)
+                }
             } else {
                 *moves = append(*moves, simpleMove)
             }

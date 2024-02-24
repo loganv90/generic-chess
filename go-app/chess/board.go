@@ -30,8 +30,10 @@ type Board interface {
 
     // these are for the game
     CalculateMoves() error // calcutes moves for every color
+    CalculateMovesPartial(move Move) error // recalculates moves affectedy by a move
     ValidMoves(fromLocation Point) ([]Move, error) // returns moves from a location
     AvailableMoves(color string) ([]MoveKey, error) // returns moves for a color
+    Move(fromLocation Point, toLocation Point, promotion string) (Move, error)
     State() *BoardData
     Check(color string) bool
     Checkmate(color string) bool
@@ -65,6 +67,7 @@ func newSimpleBoard(size Point) (*SimpleBoard, error) {
         checkMap: map[string]bool{},
         checkmateMap: map[string]bool{},
         stalemateMap: map[string]bool{},
+        test: false,
 	}, nil
 }
 
@@ -81,6 +84,7 @@ type SimpleBoard struct {
     checkMap map[string]bool
     checkmateMap map[string]bool
     stalemateMap map[string]bool
+    test bool
 }
 
 func (s *SimpleBoard) disablePieces(color string, disable bool) error {
@@ -215,6 +219,20 @@ func (s *SimpleBoard) ValidMoves(fromLocation Point) ([]Move, error) {
     return moves, nil
 }
 
+func (s *SimpleBoard) Move(fromLocation Point, toLocation Point, promotion string) (Move, error) {
+    toToMoveMap, ok := s.toToFromToMoveMap[toLocation]
+    if !ok {
+        return nil, fmt.Errorf("move not possible")
+    }
+
+    move, ok := toToMoveMap[fromLocation]
+    if !ok {
+        return nil, fmt.Errorf("move not possible")
+    }
+
+    return move, nil
+}
+
 func (s *SimpleBoard) AvailableMoves(color string) ([]MoveKey, error) {
     moveKeys := []MoveKey{}
 
@@ -225,16 +243,12 @@ func (s *SimpleBoard) AvailableMoves(color string) ([]MoveKey, error) {
             }
 
             action := move.getAction()
-            promotion := ""
-            if promotionMove, ok := move.(*PromotionMove); ok {
-                promotion = promotionMove.promotionPiece.print()
-            }
             moveKeys = append(moveKeys, MoveKey{
                 action.fromLocation.x,
                 action.fromLocation.y,
                 action.toLocation.x,
                 action.toLocation.y,
-                promotion,
+                "",
             })
         }
     }
@@ -245,6 +259,10 @@ func (s *SimpleBoard) AvailableMoves(color string) ([]MoveKey, error) {
 // TODO add rule to allow checks and only lose on king capture
 // TODO add rule to check for checkmate and stalemate on all players after every move
 func (s *SimpleBoard) CalculateMoves() error {
+    if s.test {
+        return nil
+    }
+
     colorToMoveCountMap := map[string]int{}
     s.fromToToToMoveMap = map[Point]map[Point]Move{}
     s.toToFromToMoveMap = map[Point]map[Point]Move{}
@@ -322,6 +340,44 @@ func (s *SimpleBoard) CalculateMoves() error {
         s.stalemateMap[color] = !s.checkMap[color] && moveCount <= 0
     }
     
+    return nil
+}
+
+func (s *SimpleBoard) CalculateMovesPartial(move Move) error {
+    action := move.getAction()
+    relevantLocations := []Point{action.fromLocation, action.toLocation}
+
+    fromLocationsToRecalculate := s.getFromLocationsGivenToLocations(relevantLocations)
+
+    for fromLocation := range fromLocationsToRecalculate {
+        s.fromToToToMoveMap[fromLocation] = map[Point]Move{}
+        for toLocation := range s.toToFromToMoveMap[fromLocation] {
+            delete(s.toToFromToMoveMap[toLocation], fromLocation)
+        }
+    }
+
+    for fromLocation := range fromLocationsToRecalculate {
+        piece, ok := s.getPiece(fromLocation)
+        if piece == nil || !ok {
+            continue
+        }
+
+        moves := piece.moves(s, fromLocation)
+        for _, move := range moves {
+            action := move.getAction()
+
+            if _, ok := s.fromToToToMoveMap[action.fromLocation]; !ok {
+                s.fromToToToMoveMap[action.fromLocation] = map[Point]Move{}
+            }
+            if _, ok := s.toToFromToMoveMap[action.toLocation]; !ok {
+                s.toToFromToMoveMap[action.toLocation] = map[Point]Move{}
+            }
+
+            s.fromToToToMoveMap[action.fromLocation][action.toLocation] = move
+            s.toToFromToMoveMap[action.toLocation][action.fromLocation] = move
+        }
+    }
+
     return nil
 }
 

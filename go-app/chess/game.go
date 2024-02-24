@@ -110,14 +110,32 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return fmt.Errorf("game is over")
     }
 
-    moves, err := s.b.ValidMoves(fromLocation)
+    move, err := s.b.Move(fromLocation, toLocation, promotion)
     if err != nil {
         return err
     }
 
-    move := getMoveFromSlice(moves, toLocation, promotion)
-    if move == nil {
-        return fmt.Errorf("move not possible")
+    if _, ok := move.(*AllyDefenseMove); ok {
+        return fmt.Errorf("AllyDefenseMove not possible")
+    }
+
+    if promotionMove, ok := move.(*PromotionMove); ok {
+        color := promotionMove.getNewPiece().getColor()
+
+        var promotionPiece Piece
+        if promotion == "Q" {
+            promotionPiece = newQueen(color)
+        } else if promotion == "R" {
+            promotionPiece = newRook(color, true)
+        } else if promotion == "B" {
+            promotionPiece = newBishop(color)
+        } else if promotion == "N" {
+            promotionPiece = newKnight(color)
+        } else {
+            return fmt.Errorf("invalid promotion piece")
+        }
+
+        promotionMove.setPromotionPiece(promotionPiece)
     }
 
     err = s.i.execute(move, s.b, s.p)
@@ -126,29 +144,6 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
     }
 
     return nil
-}
-
-func getMoveFromSlice(moves []Move, toLocation Point, promotion string) Move {
-	for _, m := range moves {
-        actionToLocation := m.getAction().toLocation
-        if actionToLocation.equals(toLocation) {
-            if promotionMove, ok := m.(*PromotionMove); ok {
-                if p, ok := promotionMove.promotionPiece.(*Queen); ok && promotion == p.print() {
-                    return m
-                } else if p, ok := promotionMove.promotionPiece.(*Rook); ok && promotion == p.print() {
-                    return m
-                } else if p, ok := promotionMove.promotionPiece.(*Bishop); ok && promotion == p.print() {
-                    return m
-                } else if p, ok := promotionMove.promotionPiece.(*Knight); ok && promotion == p.print() {
-                    return m
-                }
-            } else {
-                return m
-            }
-		}
-	}
-
-	return nil
 }
 
 func (s *SimpleGame) View(x int, y int) (*PieceState, error) {

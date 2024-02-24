@@ -71,9 +71,19 @@ func (m *MockBoard) ValidMoves(fromLocation Point) ([]Move, error) {
     args := m.Called(fromLocation)
     return args.Get(0).([]Move), args.Error(1)
 }
+ 
+func (m *MockBoard) Move(fromLocation Point, toLocation Point, promotion string) (Move, error) {
+    args := m.Called(fromLocation, toLocation, promotion)
+    return args.Get(0).(Move), args.Error(1)
+}
 
 func (m *MockBoard) CalculateMoves() error {
     args := m.Called()
+    return args.Error(0)
+}
+
+func (m *MockBoard) CalculateMovesPartial(move Move) error {
+    args := m.Called(move)
     return args.Error(0)
 }
 

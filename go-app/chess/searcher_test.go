@@ -4,6 +4,7 @@ import (
     "testing"
     "strings"
     "fmt"
+    "time"
 
     "github.com/stretchr/testify/assert"
 )
@@ -64,7 +65,7 @@ func Test_Minimax(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
-// go test ./chess -bench='Benchmark_Minimax' -cpuprofile='cpu.prof' -memprofile='mem.prof' -trace='trace.out'
+// go test ./chess -bench='Benchmark_Minimax' -cpuprofile='cpu.prof' -memprofile='mem.prof' -trace='trace.out' -run NONE
 // go tool pprof cpu.prof
 // go tool trace trace.out
 // web
@@ -112,6 +113,10 @@ func Benchmark_Minimax(t *testing.B) {
 
         err = b.CalculateMoves()
         assert.Nil(t, err)
+
+        // without calculateMoves, the time falls to ~2s for depth 7
+        // without calculateToLocations, the time stays the same
+        // b.test = true
 
         p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}})
         assert.Nil(t, err)
@@ -172,4 +177,63 @@ func Benchmark_Minimax(t *testing.B) {
         assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
     }
 }
+
+// without calculateMoves, the time falls to ~2s for depth 7
+// without calculateToLocations, the time stays the same
+// first we should try to calculate move for affected squared only then we can try more extreme solutions
+func Benchmark_CalculateMoves(t *testing.B) {
+    for i := 0; i < t.N; i++ {
+        b, err := newSimpleBoard(Point{8, 8})
+        assert.Nil(t, err)
+
+        b.setPiece(Point{0, 0}, newQueen("black"))
+        b.setPiece(Point{3, 0}, newKing("black", true, 0, 1))
+        b.setPiece(Point{6, 0}, newQueen("black"))
+
+        b.setPiece(Point{2, 1}, newKnight("black"))
+        b.setPiece(Point{3, 1}, newQueen("black"))
+        b.setPiece(Point{4, 1}, newKnight("black"))
+        b.setPiece(Point{7, 1}, newBishop("black"))
+
+        b.setPiece(Point{1, 2}, newKnight("black"))
+        b.setPiece(Point{3, 2}, newPawn("white", true, 0, -1))
+        b.setPiece(Point{5, 2}, newKnight("black"))
+        b.setPiece(Point{7, 2}, newBishop("black"))
+
+        b.setPiece(Point{2, 3}, newRook("black", true))
+        b.setPiece(Point{3, 3}, newKnight("black"))
+        b.setPiece(Point{4, 3}, newRook("black", true))
+        b.setPiece(Point{7, 3}, newQueen("white"))
+
+        b.setPiece(Point{1, 4}, newKnight("white"))
+        b.setPiece(Point{2, 4}, newQueen("white"))
+        b.setPiece(Point{4, 4}, newQueen("white"))
+        b.setPiece(Point{5, 4}, newKnight("white"))
+        b.setPiece(Point{7, 4}, newQueen("white"))
+
+        b.setPiece(Point{3, 5}, newQueen("white"))
+        b.setPiece(Point{7, 5}, newBishop("white"))
+
+        b.setPiece(Point{2, 6}, newRook("white", true))
+        b.setPiece(Point{3, 6}, newQueen("white"))
+        b.setPiece(Point{4, 6}, newRook("white", true))
+        b.setPiece(Point{7, 6}, newBishop("white"))
+
+        b.setPiece(Point{0, 7}, newQueen("white"))
+        b.setPiece(Point{3, 7}, newKing("white", true, 0, -1))
+        b.setPiece(Point{6, 7}, newQueen("white"))
+
+        // the time is around 1ms right now
+        // when we skip the calculation it's around 40ns
+        // b.test = true
+
+        start := time.Now()
+        err = b.CalculateMoves()
+        end := time.Now()
+
+        assert.Nil(t, err)
+        fmt.Println("time", end.Sub(start))
+    }
+}
+
 
