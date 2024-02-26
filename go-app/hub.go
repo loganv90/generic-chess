@@ -192,7 +192,7 @@ func (h *Hub) handleMoveMessage(messageData json.RawMessage) {
         moveData.Promotion,
     )
     if err != nil {
-        fmt.Println("error executing move")
+        fmt.Println(err)
         return
     }
 
@@ -218,7 +218,7 @@ func (h *Hub) handleViewMessage(messageData json.RawMessage) {
         viewData.Y,
     )
     if err != nil {
-        fmt.Println("error viewing piece")
+        fmt.Println(err)
         return
     }
 
@@ -234,7 +234,7 @@ func (h *Hub) handleViewMessage(messageData json.RawMessage) {
 func (h *Hub) handleUndoMessage() {
     err := h.game.Undo()
     if err != nil {
-        fmt.Println("error undoing move")
+        fmt.Println(err)
         return
     }
         
@@ -250,7 +250,7 @@ func (h *Hub) handleUndoMessage() {
 func (h *Hub) handleRedoMessage() {
     err := h.game.Redo()
     if err != nil {
-        fmt.Println("error redoing move")
+        fmt.Println(err)
         return
     }
         
@@ -266,7 +266,7 @@ func (h *Hub) handleRedoMessage() {
 func (h *Hub) createBoardStateMessage() ([]byte, error) {
     state, err := h.game.State()
     if err != nil {
-        fmt.Println("error getting board state")
+        fmt.Println(err)
         return nil, err
     }
 

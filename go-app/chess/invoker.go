@@ -13,12 +13,12 @@ type ConcreteInvokerFactory struct{}
 func (f *ConcreteInvokerFactory) newSimpleInvoker() (*SimpleInvoker, error) {
 	return &SimpleInvoker{
 		history: []Command{},
-		index:   0,
+		index: -1,
 	}, nil
 }
 
 type Invoker interface {
-	execute(m Move, b Board, p PlayerCollection) error
+	execute(m Move, p PlayerTransition) error
 	undo() error
 	redo() error
     Copy() (Invoker, error)
@@ -26,55 +26,82 @@ type Invoker interface {
 
 type SimpleInvoker struct {
 	history []Command
-	index   int
+	index int
 }
 
-func (s *SimpleInvoker) execute(m Move, b Board, p PlayerCollection) error {
-	err := m.execute()
-	if err != nil {
-		return err
-	}
+func (s *SimpleInvoker) execute(m Move, p PlayerTransition) error {
+    fullMove := true
 
-    err = b.CalculateMoves()
-    if err != nil {
-        return err
+    if m != nil {
+        err := m.execute()
+        if err != nil {
+            return err
+        }
+    } else {
+        fullMove = false
     }
 
-    t, err := playerTransitionFactoryInstance.newIncrementalTransitionAsPlayerTransition(b, p)
-    if err != nil {
-        return err
+    if p != nil {
+        err := p.execute()
+        if err != nil {
+            return err
+        }
+    } else {
+        fullMove = false
     }
 
-    err = t.execute()
-    if err != nil {
-        return err
-    }
-
-	s.history = append(s.history[:s.index], Command{m, t, b})
-	s.index++
+	s.history = append(s.history[:s.index+1], Command{m, p, fullMove})
+    s.index++
 
 	return nil
 }
 
 func (s *SimpleInvoker) undo() error {
-	if s.index <= 0 {
+	if s.index < 0 {
 		return fmt.Errorf("no moves to undo")
 	}
+    commandToUndo := s.history[s.index]
 
-	err := s.history[s.index-1].m.undo()
-	if err != nil {
-		return err
-	}
+    for !commandToUndo.fullMove {
+        err := s.undoHelper()
+        if err != nil {
+            return err
+        }
 
-    err = s.history[s.index-1].b.CalculateMoves()
+        if s.index < 0 {
+            return fmt.Errorf("no moves to undo")
+        }
+        commandToUndo = s.history[s.index]
+    }
+
+    err := s.undoHelper()
     if err != nil {
         return err
     }
 
-	err = s.history[s.index-1].p.undo()
-	if err != nil {
-		return err
+    return nil
+}
+
+func (s *SimpleInvoker) undoHelper() error {
+	if s.index < 0 {
+		return fmt.Errorf("no moves to undo")
 	}
+
+    command := s.history[s.index]
+
+    if command.m != nil {
+        err := command.m.undo()
+        if err != nil {
+            return err
+        }
+    }
+
+    if command.p != nil {
+        err := command.p.undo()
+        if err != nil {
+            return err
+        }
+    }
 
 	s.index--
 
@@ -82,24 +109,51 @@ func (s *SimpleInvoker) undo() error {
 }
 
 func (s *SimpleInvoker) redo() error {
-	if s.index >= len(s.history) {
-		return fmt.Errorf("no moves to redo")
-	}
-
-	err := s.history[s.index].m.execute()
-	if err != nil {
-		return err
-	}
-
-    err = s.history[s.index].b.CalculateMoves()
+    err := s.redoHelper()
     if err != nil {
         return err
     }
 
-	err = s.history[s.index].p.execute()
-	if err != nil {
-		return err
+	if s.index+1 > len(s.history)-1 {
+		return nil
 	}
+    commandToRedo := s.history[s.index+1]
+
+    for !commandToRedo.fullMove {
+        err := s.redoHelper()
+        if err != nil {
+            return err
+        }
+
+        if s.index+1 > len(s.history)-1 {
+            return nil
+        }
+        commandToRedo = s.history[s.index+1]
+    }
+
+    return nil
+}
+
+func (s *SimpleInvoker) redoHelper() error {
+	if s.index+1 > len(s.history)-1 {
+		return fmt.Errorf("no moves to redo")
+	}
+
+    command := s.history[s.index+1]
+
+    if command.m != nil {
+        err := command.m.execute()
+        if err != nil {
+            return err
+        }
+    }
+
+    if command.p != nil {
+        err := command.p.execute()
+        if err != nil {
+            return err
+        }
+    }
 
 	s.index++
 
@@ -109,7 +163,7 @@ func (s *SimpleInvoker) redo() error {
 func (s *SimpleInvoker) Copy() (Invoker, error) {
 	return &SimpleInvoker{
 		history: []Command{},
-		index:   0,
+		index: -1,
 	}, nil
 }
 

@@ -9,7 +9,7 @@ Responsible for:
 - keeping track of the players in the game
 */
 type PlayerCollection interface {
-    getNext() (*Player, error)
+    getNext() ([]*Player, error)
     getPlayerColors() []string
     eliminate(color string) error
     restore(color string) error
@@ -19,6 +19,8 @@ type PlayerCollection interface {
     setWinner(color string) error
     getGameOver() (bool, error)
     setGameOver(gameOver bool) error
+
+    GetTransition(b Board, inCheckmate bool, inStalemate bool) (PlayerTransition, error)
     Copy() (PlayerCollection, error)
 }
 
@@ -52,22 +54,23 @@ type SimplePlayerCollection struct {
     gameOver bool
 }
 
-func (s *SimplePlayerCollection) getNext() (*Player, error) {
+func (s *SimplePlayerCollection) getNext() ([]*Player, error) {
+    next := []*Player{}
     currentPlayer := s.currentPlayer
 
     for {
         currentPlayer = s.incrementOnce(currentPlayer)
 
-        if s.currentPlayer == currentPlayer {
-            break
+        if s.players[currentPlayer].alive {
+            next = append(next, s.players[currentPlayer])
         }
 
-        if s.players[currentPlayer].alive {
+        if s.currentPlayer == currentPlayer {
             break
         }
     }
 
-    return s.players[currentPlayer], nil
+    return next, nil
 }
 
 func (s *SimplePlayerCollection) getPlayerColors() []string {
@@ -150,6 +153,10 @@ func (s *SimplePlayerCollection) getGameOver() (bool, error) {
 func (s *SimplePlayerCollection) setGameOver(gameOver bool) error {
     s.gameOver = gameOver
     return nil
+}
+
+func (s *SimplePlayerCollection) GetTransition(b Board, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
+    return playerTransitionFactoryInstance.newIncrementalTransition(b, s, inCheckmate, inStalemate)
 }
 
 func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {

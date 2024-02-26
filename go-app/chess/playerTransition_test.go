@@ -11,8 +11,8 @@ type MockPlayerTransitionFactory struct {
 	mock.Mock
 }
 
-func (m *MockPlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection) (PlayerTransition, error) {
-	args := m.Called(b, p)
+func (m *MockPlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
+    args := m.Called(b, p, inCheckmate, inStalemate)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -21,8 +21,8 @@ func (m *MockPlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition
 	}
 }
 
-func (m *MockPlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection) (*IncrementalTransition, error) {
-	args := m.Called(b, p)
+func (m *MockPlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (*IncrementalTransition, error) {
+    args := m.Called(b, p, inCheckmate, inStalemate)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -45,32 +45,57 @@ func (m *MockPlayerTransition) undo() error {
 	return args.Error(0)
 }
 
-func Test_IncrementalTransition(t *testing.T) {
+func Test_IncrementalTransition_inCheckmate(t *testing.T) {
+	board := &MockBoard{}
+    playerCollection := &MockPlayerCollection{}
+
+    playerCollection.On("getCurrent").Return("white", nil).Once()
+    playerCollection.On("getWinner").Return("", nil).Once()
+    playerCollection.On("getGameOver").Return(false, nil).Once()
+    playerCollection.On("getNext").Return([]*Player{{"black", true}, {"white", true}}, nil).Once()
+    incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection, true, false)
+    assert.Nil(t, err)
+
+    playerCollection.On("setCurrent", "black").Return(nil)
+    playerCollection.On("setWinner", "black").Return(nil)
+    playerCollection.On("setGameOver", true).Return(nil)
+    playerCollection.On("eliminate", "white").Return(nil)
+    board.On("disablePieces", "white", true).Return(nil)
+    err = incrementalTransition.execute()
+    assert.Nil(t, err)
+
+    playerCollection.On("setCurrent", "white").Return(nil)
+    playerCollection.On("setWinner", "").Return(nil)
+    playerCollection.On("setGameOver", false).Return(nil)
+    playerCollection.On("restore", "white").Return(nil)
+    board.On("disablePieces", "white", false).Return(nil)
+    err = incrementalTransition.undo()
+    assert.Nil(t, err)
+
+	board.AssertExpectations(t)
+	playerCollection.AssertExpectations(t)
+}
+
+func Test_IncrementalTransition_noCheckmate(t *testing.T) {
 	board := &MockBoard{}
     playerCollection := &MockPlayerCollection{}
 
     playerCollection.On("getCurrent").Return("white", nil)
     playerCollection.On("getWinner").Return("", nil)
     playerCollection.On("getGameOver").Return(false, nil)
-    playerCollection.On("getNext").Return(&Player{"black", true}, nil).Once()
-    playerCollection.On("getNext").Return(&Player{"white", true}, nil)
-    playerCollection.On("setCurrent", "white").Return(nil)
-    playerCollection.On("setCurrent", "black").Return(nil)
-    board.On("Checkmate", "black").Return(true)
-    incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection)
+    playerCollection.On("getNext").Return([]*Player{{"black", true}, {"white", true}}, nil)
+    incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection, false, false)
     assert.Nil(t, err)
 
-    playerCollection.On("setWinner", "white").Return(nil)
-    playerCollection.On("eliminate", "black").Return(nil)
-    playerCollection.On("setGameOver", true).Return(nil)
-    board.On("disablePieces", "black", true).Return(nil)
+    playerCollection.On("setCurrent", "black").Return(nil)
+    playerCollection.On("setWinner", "").Return(nil)
+    playerCollection.On("setGameOver", false).Return(nil)
     err = incrementalTransition.execute()
     assert.Nil(t, err)
 
+    playerCollection.On("setCurrent", "white").Return(nil)
     playerCollection.On("setWinner", "").Return(nil)
-    playerCollection.On("restore", "black").Return(nil)
     playerCollection.On("setGameOver", false).Return(nil)
-    board.On("disablePieces", "black", false).Return(nil)
     err = incrementalTransition.undo()
     assert.Nil(t, err)
 

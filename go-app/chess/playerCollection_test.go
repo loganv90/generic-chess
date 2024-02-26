@@ -11,13 +11,13 @@ type MockPlayerCollection struct {
 	mock.Mock
 }
 
-func (m *MockPlayerCollection) getNext() (*Player, error) {
+func (m *MockPlayerCollection) getNext() ([]*Player, error) {
     args := m.Called()
 
     if args.Get(0) == nil {
         return nil, args.Error(1)
     } else {
-        return args.Get(0).(*Player), args.Error(1)
+        return args.Get(0).([]*Player), args.Error(1)
     }
 }
 
@@ -71,6 +71,11 @@ func (m *MockPlayerCollection) Copy() (PlayerCollection, error) {
     return args.Get(0).(PlayerCollection), args.Error(1)
 }
 
+func (m *MockPlayerCollection) GetTransition(b Board, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
+    args := m.Called(b, inCheckmate, inStalemate)
+    return args.Get(0).(PlayerTransition), args.Error(1)
+}
+
 func Test_getNext(t *testing.T) {
     s, err := newSimplePlayerCollection(
         []*Player{
@@ -83,9 +88,13 @@ func Test_getNext(t *testing.T) {
     assert.Nil(t, err)
     playerColor, err := s.getCurrent()
     assert.Equal(t, "white", playerColor)
-    player, err := s.getNext()
+    players, err := s.getNext()
     assert.Nil(t, err)
-    assert.Equal(t, "black", player.color)
+    assert.Equal(t, 4, len(players))
+    assert.Equal(t, "black", players[0].color)
+    assert.Equal(t, "blue", players[1].color)
+    assert.Equal(t, "red", players[2].color)
+    assert.Equal(t, "white", players[3].color)
 
     s, err = newSimplePlayerCollection(
         []*Player{
@@ -98,9 +107,11 @@ func Test_getNext(t *testing.T) {
     assert.Nil(t, err)
     playerColor, err = s.getCurrent()
     assert.Equal(t, "white", playerColor)
-    player, err = s.getNext()
+    players, err = s.getNext()
     assert.Nil(t, err)
-    assert.Equal(t, "blue", player.color)
+    assert.Equal(t, 2, len(players))
+    assert.Equal(t, "blue", players[0].color)
+    assert.Equal(t, "white", players[1].color)
 
     s, err = newSimplePlayerCollection(
         []*Player{
@@ -113,9 +124,9 @@ func Test_getNext(t *testing.T) {
     assert.Nil(t, err)
     playerColor, err = s.getCurrent()
     assert.Equal(t, "white", playerColor)
-    player, err = s.getNext()
+    players, err = s.getNext()
+    assert.Equal(t, 0, len(players))
     assert.Nil(t, err)
-    assert.Equal(t, "white", player.color)
 
     s, err = newSimplePlayerCollection(
         []*Player{
@@ -128,8 +139,9 @@ func Test_getNext(t *testing.T) {
     assert.Nil(t, err)
     playerColor, err = s.getCurrent()
     assert.Equal(t, "white", playerColor)
-    player, err = s.getNext()
+    players, err = s.getNext()
     assert.Nil(t, err)
-    assert.Equal(t, "red", player.color)
+    assert.Equal(t, 1, len(players))
+    assert.Equal(t, "red", players[0].color)
 }
 

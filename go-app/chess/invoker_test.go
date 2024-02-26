@@ -41,11 +41,11 @@ func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
 	simpleInvoker, err := invokerFactoryInstance.newSimpleInvoker()
 	assert.Nil(t, err)
 
-	err = simpleInvoker.execute(move1, board1, playerCollection1)
+	err = simpleInvoker.execute(move1, playerTransition1)
 	assert.Nil(t, err)
 	move1.AssertNumberOfCalls(t, "execute", 1)
 
-	err = simpleInvoker.execute(move2, board2, playerCollection2)
+	err = simpleInvoker.execute(move2, playerTransition2)
 	assert.Nil(t, err)
 	move2.AssertNumberOfCalls(t, "execute", 1)
 
@@ -125,9 +125,9 @@ func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
 	simpleInvoker, err := invokerFactoryInstance.newSimpleInvoker()
 	assert.Nil(t, err)
 
-	err = simpleInvoker.execute(move1, board1, playerCollection1)
+	err = simpleInvoker.execute(move1, playerTransition1)
 	assert.Nil(t, err)
-	err = simpleInvoker.execute(move2, board2, playerCollection2)
+	err = simpleInvoker.execute(move2, playerTransition2)
 	assert.Nil(t, err)
 
 	err = simpleInvoker.undo()
@@ -135,7 +135,7 @@ func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
 	err = simpleInvoker.undo()
 	assert.Nil(t, err)
 
-	err = simpleInvoker.execute(move3, board3, playerCollection3)
+	err = simpleInvoker.execute(move3, playerTransition3)
 	assert.Nil(t, err)
 	err = simpleInvoker.redo()
 	assert.NotNil(t, err)

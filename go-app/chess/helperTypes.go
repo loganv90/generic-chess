@@ -16,7 +16,7 @@ type BoardData struct {
 type Command struct {
     m Move
     p PlayerTransition
-    b Board
+    fullMove bool
 }
 
 type MoveKeyAndScore struct {

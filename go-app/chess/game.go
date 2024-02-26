@@ -138,9 +138,57 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         promotionMove.setPromotionPiece(promotionPiece)
     }
 
-    err = s.i.execute(move, s.b, s.p)
+    transition, err := s.p.GetTransition(s.b, false, false)
     if err != nil {
         return err
+    }
+
+    err = s.i.execute(move, transition)
+    if err != nil {
+        return err
+    }
+
+    err = s.b.CalculateMoves()
+    if err != nil {
+        return err
+    }
+
+    for {
+        currentPlayer, err := s.p.getCurrent()
+        if err != nil {
+            return err
+        }
+
+        checkmate, stalemate, err := s.b.Mate(currentPlayer)
+        if err != nil {
+            return err
+        }
+
+        if checkmate {
+            transition, err := s.p.GetTransition(s.b, true, false)
+            if err != nil {
+                return err
+            }
+
+            err = s.i.execute(nil, transition)
+            if err != nil {
+                return err
+            }
+
+            continue
+        } else if stalemate {
+            transition, err := s.p.GetTransition(s.b, false, true)
+            if err != nil {
+                return err
+            }
+
+            err = s.i.execute(nil, transition)
+            if err != nil {
+                return err
+            }
+        }
+
+        break
     }
 
     return nil
@@ -214,11 +262,33 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
 }
 
 func (s *SimpleGame) Moves(color string) ([]MoveKey, error) {
-    return s.b.AvailableMoves(color)
+    moveKeys := make([]MoveKey, 0)
+    
+    moves, err := s.b.LegalMoves(color)
+    if err != nil {
+        return nil, err
+    }
+
+    for _, move := range moves {
+        moveKeys = append(moveKeys, MoveKey{
+            XFrom: move.getAction().fromLocation.x,
+            YFrom: move.getAction().fromLocation.y,
+            XTo: move.getAction().toLocation.x,
+            YTo: move.getAction().toLocation.y,
+            Promotion: "",
+        })
+    }
+
+    return moveKeys, nil
 }
 
 func (s *SimpleGame) Undo() error {
     err := s.i.undo()
+    if err != nil {
+        return err
+    }
+
+    err = s.b.CalculateMoves()
     if err != nil {
         return err
     }
@@ -228,6 +298,11 @@ func (s *SimpleGame) Undo() error {
 
 func (s *SimpleGame) Redo() error {
     err := s.i.redo()
+    if err != nil {
+        return err
+    }
+
+    err = s.b.CalculateMoves()
     if err != nil {
         return err
     }

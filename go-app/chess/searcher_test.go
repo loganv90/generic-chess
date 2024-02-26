@@ -225,6 +225,7 @@ func Benchmark_CalculateMoves(t *testing.B) {
 
         // the time is around 1ms right now
         // when we skip the calculation it's around 40ns
+        // when we skip the calculating checks, it's around 100us
         // b.test = true
 
         start := time.Now()

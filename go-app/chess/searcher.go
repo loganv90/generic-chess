@@ -114,3 +114,77 @@ func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, MoveKey,
     return bestScore, bestMove, nil
 }
 
+func (s *SimpleSearcher) minimax2(b Board, p PlayerCollection, depth int) (map[string]int, Move, error) {
+    if depth == 0 {
+        evaluator, err := newSimpleEvaluator(b, p)
+        if err != nil {
+            return nil, nil, err
+        }
+
+        score, err := evaluator.eval()
+        if err != nil {
+            return nil, nil, err
+        }
+
+        return score, nil, nil
+    }
+
+    currentPlayer, err := p.getCurrent()
+    if err != nil {
+        return nil, nil, err
+    }
+
+    moves, err := b.AvailableMoves(currentPlayer)
+    if err != nil {
+        return nil, nil, err
+    }
+
+    bestScore := map[string]int{currentPlayer: -1000000}
+    var bestMove Move
+    playersEliminated := []string{}
+    canMove := false
+
+    for _, move := range moves {
+        err := move.execute()
+        if err != nil {
+            return nil, nil, err
+        }
+
+        err = b.CalculateMoves()
+        if err != nil {
+            return nil, nil, err
+        }
+
+        if b.Check(currentPlayer) {
+            err := move.undo()
+            if err != nil {
+                return nil, nil, err
+            }
+            continue
+        }
+
+        canMove = true
+
+        score, _, err := s.minimax2(b, p, depth-1)
+        if err != nil {
+            return nil, nil, err
+        }
+
+        if score[currentPlayer] > bestScore[currentPlayer] {
+            bestScore = score
+            bestMove = move
+        }
+
+        err = move.undo()
+        if err != nil {
+            return nil, nil, err
+        }
+    }
+
+    if !canMove {
+        playersEliminated = append(playersEliminated, currentPlayer)
+    }
+
+    return bestScore, bestMove, nil
+}
+

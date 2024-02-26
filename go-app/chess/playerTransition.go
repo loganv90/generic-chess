@@ -3,17 +3,17 @@ package chess
 var playerTransitionFactoryInstance = PlayerTransitionFactory(&ConcretePlayerTransitionFactory{})
 
 type PlayerTransitionFactory interface {
-	newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection) (PlayerTransition, error)
-    newIncrementalTransition(b Board, p PlayerCollection) (*IncrementalTransition, error)
+	newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (PlayerTransition, error)
+    newIncrementalTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (*IncrementalTransition, error)
 }
 
 type ConcretePlayerTransitionFactory struct{}
 
-func (f *ConcretePlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection) (PlayerTransition, error) {
-    return f.newIncrementalTransition(b, p)
+func (f *ConcretePlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
+    return f.newIncrementalTransition(b, p, inCheckmate, inStalemate)
 }
 
-func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection) (*IncrementalTransition, error) {
+func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (*IncrementalTransition, error) {
     oldCurrent, err := p.getCurrent()
     if err != nil {
         return nil, err
@@ -29,45 +29,41 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
         return nil, err
     }
 
-    newCurrent := ""
-    newWinner := ""
-    newGameOver := false
-    eliminated := []string{}
-    for {
-        newPlayer, err := p.getNext()
-        if err != nil {
-            return nil, err
-        }
-
-        if newPlayer.color == oldCurrent {
-            newCurrent = newPlayer.color
-            newWinner = newPlayer.color
-            newGameOver = true
-            break
-        }
-
-        if b.Checkmate(newPlayer.color) {
-            eliminated = append(eliminated, newPlayer.color)
-
-            err = p.setCurrent(newPlayer.color)
-            if err != nil {
-                return nil, err
-            }
-
-            continue
-        } else if b.Stalemate(newPlayer.color) {
-            newCurrent = newPlayer.color
-            newGameOver = true
-            break
-        } else {
-            newCurrent = newPlayer.color
-            break
-        }
-    }
-    
-    err = p.setCurrent(oldCurrent)
+    nextPlayers, err := p.getNext()
     if err != nil {
         return nil, err
+    }
+
+    var newCurrent string
+    var newWinner string
+    var newGameOver bool
+
+    if inStalemate {
+        newCurrent = oldCurrent
+        newWinner = ""
+        newGameOver = true
+    } else if len(nextPlayers) < 1 {
+        newCurrent = oldCurrent
+        newWinner = oldWinner
+        newGameOver = true
+    } else if len(nextPlayers) == 1 {
+        newCurrent = nextPlayers[0].color
+        newWinner = nextPlayers[0].color
+        newGameOver = true
+    } else if len(nextPlayers) == 2 {
+        if inCheckmate {
+            newCurrent = nextPlayers[0].color
+            newWinner = nextPlayers[0].color
+            newGameOver = true
+        } else {
+            newCurrent = nextPlayers[0].color
+            newWinner = ""
+            newGameOver = false
+        }
+    } else {
+        newCurrent = nextPlayers[0].color
+        newWinner = ""
+        newGameOver = false
     }
 
     return &IncrementalTransition{
@@ -77,9 +73,9 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
         newCurrent: newCurrent,
         newWinner: newWinner,
         oldWinner: oldWinner,
-        eliminated: eliminated,
         oldGameOver: oldGameOver,
         newGameOver: newGameOver,
+        eliminated: inCheckmate,
     }, nil
 }
 
@@ -95,9 +91,9 @@ type IncrementalTransition struct {
     newCurrent string
     oldWinner string
     newWinner string
-    eliminated []string
     oldGameOver bool
     newGameOver bool
+    eliminated bool
 }
 
 func (s *IncrementalTransition) execute() error {
@@ -116,15 +112,18 @@ func (s *IncrementalTransition) execute() error {
         return err
     }
 
-    for _, color := range s.eliminated {
-        err = s.p.eliminate(color)
-        if err != nil {
-            return err
-        }
-        err = s.b.disablePieces(color, true)
-        if err != nil {
-            return err
-        }
+    if !s.eliminated {
+        return nil
+    }
+
+    err = s.p.eliminate(s.oldCurrent)
+    if err != nil {
+        return err
+    }
+
+    err = s.b.disablePieces(s.oldCurrent, true)
+    if err != nil {
+        return err
     }
 
     return nil
@@ -146,15 +145,18 @@ func (s *IncrementalTransition) undo() error {
         return err
     }
 
-    for _, color := range s.eliminated {
-        err = s.p.restore(color)
-        if err != nil {
-            return err
-        }
-        err = s.b.disablePieces(color, false)
-        if err != nil {
-            return err
-        }
+    if !s.eliminated {
+        return nil
+    }
+
+    err = s.p.restore(s.oldCurrent)
+    if err != nil {
+        return err
+    }
+
+    err = s.b.disablePieces(s.oldCurrent, false)
+    if err != nil {
+        return err
     }
 
     return nil

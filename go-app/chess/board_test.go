@@ -87,9 +87,14 @@ func (m *MockBoard) CalculateMovesPartial(move Move) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) AvailableMoves(color string) ([]MoveKey, error) {
+func (m *MockBoard) AvailableMoves(color string) ([]Move, error) {
     args := m.Called(color)
-    return args.Get(0).([]MoveKey), args.Error(1)
+    return args.Get(0).([]Move), args.Error(1)
+}
+
+func (m *MockBoard) LegalMoves(color string) ([]Move, error) {
+    args := m.Called(color)
+    return args.Get(0).([]Move), args.Error(1)
 }
 
 func (m *MockBoard) Print() string {
@@ -125,6 +130,11 @@ func (m *MockBoard) Checkmate(color string) bool {
 func (m *MockBoard) Stalemate(color string) bool {
     args := m.Called(color)
     return args.Bool(0)
+}
+
+func (m *MockBoard) Mate(color string) (bool, bool, error) {
+    args := m.Called(color)
+    return args.Bool(0), args.Bool(1), args.Error(2)
 }
 
 func (m *MockBoard) getPieceLocations() map[string][]Point {
