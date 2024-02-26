@@ -110,9 +110,22 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return fmt.Errorf("game is over")
     }
 
-    move, err := s.b.Move(fromLocation, toLocation, promotion)
+    var move Move
+
+    moves, err := s.b.LegalMovesOfLocation(fromLocation)
     if err != nil {
         return err
+    }
+
+    for _, m := range moves {
+        if m.getAction().fromLocation == fromLocation && m.getAction().toLocation == toLocation {
+            move = m
+            break
+        }
+    }
+
+    if move == nil {
+        return fmt.Errorf("invalid move")
     }
 
     if _, ok := move.(*AllyDefenseMove); ok {
@@ -159,7 +172,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
             return err
         }
 
-        checkmate, stalemate, err := s.b.Mate(currentPlayer)
+        checkmate, stalemate, err := s.b.CheckmateAndStalemate(currentPlayer)
         if err != nil {
             return err
         }
@@ -219,7 +232,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
 
     currentPlayer, err := s.p.getCurrent()
     if err == nil && currentPlayer == piece.getColor() {
-        moves, err := s.b.ValidMoves(location)
+        moves, err := s.b.LegalMovesOfLocation(location)
         if err != nil {
             return &PieceState{
                 X: x,
@@ -264,7 +277,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
 func (s *SimpleGame) Moves(color string) ([]MoveKey, error) {
     moveKeys := make([]MoveKey, 0)
     
-    moves, err := s.b.LegalMoves(color)
+    moves, err := s.b.LegalMovesOfColor(color)
     if err != nil {
         return nil, err
     }

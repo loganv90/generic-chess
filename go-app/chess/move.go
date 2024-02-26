@@ -51,10 +51,7 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation Point, toLocat
 		return nil, err
 	}
 
-    vulnerables, err := b.getVulnerables(piece.getColor())
-    if err != nil {
-        return nil, err
-    }
+    vulnerables := b.getVulnerables(piece.getColor())
 
 	return &SimpleMove{
 		&Action{
@@ -89,10 +86,7 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
 		return nil, err
 	}
 
-    vulnerables, err := b.getVulnerables(piece.getColor())
-    if err != nil {
-        return nil, err
-    }
+    vulnerables := b.getVulnerables(piece.getColor())
 
 	newEn := &EnPassant{
         target: target,
@@ -133,10 +127,7 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
 		return nil, err
 	}
     
-    vulnerables, err := b.getVulnerables(piece.getColor())
-    if err != nil {
-        return nil, err
-    }
+    vulnerables := b.getVulnerables(piece.getColor())
 
 	encs := []*EnPassantCapture{}
     possibleEnPassant, err := b.possibleEnPassant(piece.getColor(), toLocation)
@@ -191,10 +182,7 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocat
 		return nil, err
 	}
 
-    vulnerables, err := b.getVulnerables(king.getColor())
-    if err != nil {
-        return nil, err
-    }
+    vulnerables := b.getVulnerables(king.getColor())
 
 	return &CastleMove{
 		&Action{

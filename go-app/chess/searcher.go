@@ -134,7 +134,7 @@ func (s *SimpleSearcher) minimax2(b Board, p PlayerCollection, depth int) (map[s
         return nil, nil, err
     }
 
-    moves, err := b.AvailableMoves(currentPlayer)
+    moves, err := b.LegalMovesOfColor(currentPlayer)
     if err != nil {
         return nil, nil, err
     }
@@ -155,13 +155,14 @@ func (s *SimpleSearcher) minimax2(b Board, p PlayerCollection, depth int) (map[s
             return nil, nil, err
         }
 
-        if b.Check(currentPlayer) {
-            err := move.undo()
-            if err != nil {
-                return nil, nil, err
-            }
-            continue
-        }
+        // fix lol
+        // if b.check(currentPlayer) {
+        //     err := move.undo()
+        //     if err != nil {
+        //         return nil, nil, err
+        //     }
+        //     continue
+        // }
 
         canMove = true
 

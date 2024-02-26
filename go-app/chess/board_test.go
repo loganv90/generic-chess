@@ -37,14 +37,13 @@ func (m *MockBoard) disableLocation(location Point) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) getVulnerables(color string) ([]Point, error) {
+func (m *MockBoard) getVulnerables(color string) []Point {
     args := m.Called(color)
-    return args.Get(0).([]Point), args.Error(1)
+    return args.Get(0).([]Point)
 }
 
-func (m *MockBoard) setVulnerables(color string, vulnerables []Point) error {
-    args := m.Called(color, vulnerables)
-    return args.Error(0)
+func (m *MockBoard) setVulnerables(color string, vulnerables []Point) {
+    m.Called(color, vulnerables)
 }
 
 func (m *MockBoard) getEnPassant(color string) (*EnPassant, error) {
@@ -67,16 +66,6 @@ func (m *MockBoard) clearEnPassant(color string) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) ValidMoves(fromLocation Point) ([]Move, error) {
-    args := m.Called(fromLocation)
-    return args.Get(0).([]Move), args.Error(1)
-}
- 
-func (m *MockBoard) Move(fromLocation Point, toLocation Point, promotion string) (Move, error) {
-    args := m.Called(fromLocation, toLocation, promotion)
-    return args.Get(0).(Move), args.Error(1)
-}
-
 func (m *MockBoard) CalculateMoves() error {
     args := m.Called()
     return args.Error(0)
@@ -87,14 +76,24 @@ func (m *MockBoard) CalculateMovesPartial(move Move) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) AvailableMoves(color string) ([]Move, error) {
+func (m *MockBoard) MovesOfColor(color string) ([]Move, error) {
     args := m.Called(color)
     return args.Get(0).([]Move), args.Error(1)
 }
 
-func (m *MockBoard) LegalMoves(color string) ([]Move, error) {
+func (m *MockBoard) LegalMovesOfColor(color string) ([]Move, error) {
     args := m.Called(color)
     return args.Get(0).([]Move), args.Error(1)
+}
+
+func (m *MockBoard) LegalMovesOfLocation(location Point) ([]Move, error) {
+    args := m.Called(location)
+    return args.Get(0).([]Move), args.Error(1)
+}
+
+func (m *MockBoard) CheckmateAndStalemate(color string) (bool, bool, error) {
+    args := m.Called(color)
+    return args.Bool(0), args.Bool(1), args.Error(2)
 }
 
 func (m *MockBoard) Print() string {
@@ -115,26 +114,6 @@ func (m *MockBoard) UniqueString() string {
 func (m *MockBoard) State() *BoardData {
     args := m.Called()
     return args.Get(0).(*BoardData)
-}
-
-func (m *MockBoard) Check(color string) bool {
-    args := m.Called()
-    return args.Bool(0)
-}
-
-func (m *MockBoard) Checkmate(color string) bool {
-    args := m.Called(color)
-    return args.Bool(0)
-}
-
-func (m *MockBoard) Stalemate(color string) bool {
-    args := m.Called(color)
-    return args.Bool(0)
-}
-
-func (m *MockBoard) Mate(color string) (bool, bool, error) {
-    args := m.Called(color)
-    return args.Bool(0), args.Bool(1), args.Error(2)
 }
 
 func (m *MockBoard) getPieceLocations() map[string][]Point {
@@ -256,20 +235,23 @@ func Test_CalculateMoves_default(t *testing.T) {
     }
     assert.Equal(t, 80, toMoveCount)
     
-    whiteMoveKeys, err := s.AvailableMoves("white")
+    whiteMoveKeys, err := s.LegalMovesOfColor("white")
     assert.Nil(t, err)
     assert.Equal(t, 20, len(whiteMoveKeys))
 
-    blackMoveKeys, err := s.AvailableMoves("black")
+    blackMoveKeys, err := s.LegalMovesOfColor("black")
     assert.Nil(t, err)
     assert.Equal(t, 20, len(blackMoveKeys))
 
-    assert.False(t, s.Check("white"))
-    assert.False(t, s.Check("black"))
-    assert.False(t, s.Checkmate("white"))
-    assert.False(t, s.Checkmate("black"))
-    assert.False(t, s.Stalemate("white"))
-    assert.False(t, s.Stalemate("black"))
+    checkmate, stalemate, err := s.CheckmateAndStalemate("white")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
+
+    checkmate, stalemate, err = s.CheckmateAndStalemate("black")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
 }
 
 func Test_CalculateMoves_check(t *testing.T) {
@@ -286,28 +268,31 @@ func Test_CalculateMoves_check(t *testing.T) {
     for _, toToMoveMap := range s.fromToToToMoveMap {
         fromMoveCount += len(toToMoveMap)
     }
-    assert.Equal(t, 25, fromMoveCount)
+    assert.Equal(t, 27, fromMoveCount)
 
     toMoveCount := 0
     for _, toToMoveMap := range s.toToFromToMoveMap {
         toMoveCount += len(toToMoveMap)
     }
-    assert.Equal(t, 25, toMoveCount)
+    assert.Equal(t, 27, toMoveCount)
     
-    whiteMoveKeys, err := s.AvailableMoves("white")
+    whiteMoveKeys, err := s.LegalMovesOfColor("white")
     assert.Nil(t, err)
     assert.Equal(t, 1, len(whiteMoveKeys))
 
-    blackMoveKeys, err := s.AvailableMoves("black")
+    blackMoveKeys, err := s.LegalMovesOfColor("black")
     assert.Nil(t, err)
     assert.Equal(t, 23, len(blackMoveKeys))
 
-    assert.True(t, s.Check("white"))
-    assert.False(t, s.Check("black"))
-    assert.False(t, s.Checkmate("white"))
-    assert.False(t, s.Checkmate("black"))
-    assert.False(t, s.Stalemate("white"))
-    assert.False(t, s.Stalemate("black"))
+    checkmate, stalemate, err := s.CheckmateAndStalemate("white")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
+
+    checkmate, stalemate, err = s.CheckmateAndStalemate("black")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
 }
 
 func Test_CalculateMoves_checkmate(t *testing.T) {
@@ -324,28 +309,31 @@ func Test_CalculateMoves_checkmate(t *testing.T) {
     for _, toToMoveMap := range s.fromToToToMoveMap {
         fromMoveCount += len(toToMoveMap)
     }
-    assert.Equal(t, 20, fromMoveCount)
+    assert.Equal(t, 24, fromMoveCount)
 
     toMoveCount := 0
     for _, toToMoveMap := range s.toToFromToMoveMap {
         toMoveCount += len(toToMoveMap)
     }
-    assert.Equal(t, 20, toMoveCount)
+    assert.Equal(t, 24, toMoveCount)
     
-    whiteMoveKeys, err := s.AvailableMoves("white")
+    whiteMoveKeys, err := s.LegalMovesOfColor("white")
     assert.Nil(t, err)
     assert.Equal(t, 0, len(whiteMoveKeys))
 
-    blackMoveKeys, err := s.AvailableMoves("black")
+    blackMoveKeys, err := s.LegalMovesOfColor("black")
     assert.Nil(t, err)
     assert.Equal(t, 18, len(blackMoveKeys))
 
-    assert.True(t, s.Check("white"))
-    assert.False(t, s.Check("black"))
-    assert.True(t, s.Checkmate("white"))
-    assert.False(t, s.Checkmate("black"))
-    assert.False(t, s.Stalemate("white"))
-    assert.False(t, s.Stalemate("black"))
+    checkmate, stalemate, err := s.CheckmateAndStalemate("white")
+    assert.Nil(t, err)
+    assert.True(t, checkmate)
+    assert.False(t, stalemate)
+
+    checkmate, stalemate, err = s.CheckmateAndStalemate("black")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
 }
 
 func Test_CalculateMoves_stalemate(t *testing.T) {
@@ -362,28 +350,31 @@ func Test_CalculateMoves_stalemate(t *testing.T) {
     for _, toToMoveMap := range s.fromToToToMoveMap {
         fromMoveCount += len(toToMoveMap)
     }
-    assert.Equal(t, 26, fromMoveCount)
+    assert.Equal(t, 29, fromMoveCount)
 
     toMoveCount := 0
     for _, toToMoveMap := range s.toToFromToMoveMap {
         toMoveCount += len(toToMoveMap)
     }
-    assert.Equal(t, 26, toMoveCount)
+    assert.Equal(t, 29, toMoveCount)
     
-    whiteMoveKeys, err := s.AvailableMoves("white")
+    whiteMoveKeys, err := s.LegalMovesOfColor("white")
     assert.Nil(t, err)
     assert.Equal(t, 0, len(whiteMoveKeys))
 
-    blackMoveKeys, err := s.AvailableMoves("black")
+    blackMoveKeys, err := s.LegalMovesOfColor("black")
     assert.Nil(t, err)
     assert.Equal(t, 26, len(blackMoveKeys))
 
-    assert.False(t, s.Check("white"))
-    assert.False(t, s.Check("black"))
-    assert.False(t, s.Checkmate("white"))
-    assert.False(t, s.Checkmate("black"))
-    assert.True(t, s.Stalemate("white"))
-    assert.False(t, s.Stalemate("black"))
+    checkmate, stalemate, err := s.CheckmateAndStalemate("white")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.True(t, stalemate)
+
+    checkmate, stalemate, err = s.CheckmateAndStalemate("black")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
 }
 
 func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
@@ -401,28 +392,31 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
     for _, toToMoveMap := range s.fromToToToMoveMap {
         fromMoveCount += len(toToMoveMap)
     }
-    assert.Equal(t, 30, fromMoveCount)
+    assert.Equal(t, 33, fromMoveCount)
 
     toMoveCount := 0
     for _, toToMoveMap := range s.toToFromToMoveMap {
         toMoveCount += len(toToMoveMap)
     }
-    assert.Equal(t, 30, toMoveCount)
+    assert.Equal(t, 33, toMoveCount)
     
-    whiteMoveKeys, err := s.AvailableMoves("white")
+    whiteMoveKeys, err := s.LegalMovesOfColor("white")
     assert.Nil(t, err)
     assert.Equal(t, 13, len(whiteMoveKeys))
 
-    blackMoveKeys, err := s.AvailableMoves("black")
+    blackMoveKeys, err := s.LegalMovesOfColor("black")
     assert.Nil(t, err)
     assert.Equal(t, 15, len(blackMoveKeys))
 
-    assert.False(t, s.Check("white"))
-    assert.False(t, s.Check("black"))
-    assert.False(t, s.Checkmate("white"))
-    assert.False(t, s.Checkmate("black"))
-    assert.False(t, s.Stalemate("white"))
-    assert.False(t, s.Stalemate("black"))
+    checkmate, stalemate, err := s.CheckmateAndStalemate("white")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
+
+    checkmate, stalemate, err = s.CheckmateAndStalemate("black")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
 }
 
 func Test_CalculateMoves_castle(t *testing.T) {
@@ -447,20 +441,23 @@ func Test_CalculateMoves_castle(t *testing.T) {
     }
     assert.Equal(t, 22, toMoveCount)
     
-    whiteMoveKeys, err := s.AvailableMoves("white")
+    whiteMoveKeys, err := s.LegalMovesOfColor("white")
     assert.Nil(t, err)
     assert.Equal(t, 16, len(whiteMoveKeys))
 
-    blackMoveKeys, err := s.AvailableMoves("black")
+    blackMoveKeys, err := s.LegalMovesOfColor("black")
     assert.Nil(t, err)
     assert.Equal(t, 5, len(blackMoveKeys))
 
-    assert.False(t, s.Check("white"))
-    assert.False(t, s.Check("black"))
-    assert.False(t, s.Checkmate("white"))
-    assert.False(t, s.Checkmate("black"))
-    assert.False(t, s.Stalemate("white"))
-    assert.False(t, s.Stalemate("black"))
+    checkmate, stalemate, err := s.CheckmateAndStalemate("white")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
+
+    checkmate, stalemate, err = s.CheckmateAndStalemate("black")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
 }
 
 func Test_CalculateMoves_promotion(t *testing.T) {
@@ -485,20 +482,23 @@ func Test_CalculateMoves_promotion(t *testing.T) {
     }
     assert.Equal(t, 7, toMoveCount)
     
-    whiteMoveKeys, err := s.AvailableMoves("white")
+    whiteMoveKeys, err := s.LegalMovesOfColor("white")
     assert.Nil(t, err)
     assert.Equal(t, 4, len(whiteMoveKeys))
 
-    blackMoveKeys, err := s.AvailableMoves("black")
+    blackMoveKeys, err := s.LegalMovesOfColor("black")
     assert.Nil(t, err)
     assert.Equal(t, 3, len(blackMoveKeys))
 
-    assert.False(t, s.Check("white"))
-    assert.False(t, s.Check("black"))
-    assert.False(t, s.Checkmate("white"))
-    assert.False(t, s.Checkmate("black"))
-    assert.False(t, s.Stalemate("white"))
-    assert.False(t, s.Stalemate("black"))
+    checkmate, stalemate, err := s.CheckmateAndStalemate("white")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
+
+    checkmate, stalemate, err = s.CheckmateAndStalemate("black")
+    assert.Nil(t, err)
+    assert.False(t, checkmate)
+    assert.False(t, stalemate)
 }
 
 // TODO add en passant stuff to the unique string
