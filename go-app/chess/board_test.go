@@ -96,6 +96,11 @@ func (m *MockBoard) CheckmateAndStalemate(color string) (bool, bool, error) {
     return args.Bool(0), args.Bool(1), args.Error(2)
 }
 
+func (m *MockBoard) Check(color string) bool {
+    args := m.Called(color)
+    return args.Bool(0)
+}
+
 func (m *MockBoard) Print() string {
     args := m.Called()
     return args.String(0)

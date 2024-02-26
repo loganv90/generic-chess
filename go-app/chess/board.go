@@ -35,6 +35,7 @@ type Board interface {
     LegalMovesOfColor(color string) ([]Move, error) // calculates and returns moves that do not result in check
     LegalMovesOfLocation(fromLocation Point) ([]Move, error) // calculates and returns moves that do not result in check
     CheckmateAndStalemate(color string) (bool, bool, error) // calculates legal moves to return checkmate and stalemate
+    Check(color string) bool // returns whether the player is in check
 
     State() *BoardData
 	Print() string
@@ -554,14 +555,14 @@ func (s *SimpleBoard) CheckmateAndStalemate(color string) (bool, bool, error) {
         return false, false, nil
     }
 
-    if s.check(color) {
+    if s.Check(color) {
         return true, false, nil
     }
 
     return false, true, nil
 }
 
-func (s *SimpleBoard) check(color string) bool {
+func (s *SimpleBoard) Check(color string) bool {
     for _, vulnerableLocation := range s.getVulnerables(color) {
         if fromToMoveMap, ok := s.toToFromToMoveMap[vulnerableLocation]; ok {
             for fromLocation := range fromToMoveMap {

@@ -9,6 +9,7 @@ import (
     "github.com/stretchr/testify/assert"
 )
 
+// TODO this test fails randomly and rarely it will move to 3 3 for some reason it is broken
 func Test_Minimax(t *testing.T) {
     b, err := newSimpleBoard(Point{4, 4})
     assert.Nil(t, err)
@@ -34,13 +35,13 @@ func Test_Minimax(t *testing.T) {
     searcher, err := newSimpleSearcher(game)
     assert.Nil(t, err)
 
-    score, moveKey, err := searcher.minimax(game, 3)
+    score, move, err := searcher.minimax(b, p, 4)
     assert.Nil(t, err)
 
     assert.Equal(t, 100000, score["white"])
     assert.Equal(t, -100000, score["black"])
-    assert.Equal(t, 1, moveKey.XTo)
-    assert.Equal(t, 2, moveKey.YTo)
+    assert.Equal(t, 1, move.getAction().toLocation.x)
+    assert.Equal(t, 2, move.getAction().toLocation.y)
 
     actualPrintedBoard := game.Print()
     expectedPrintedBoard := strings.Trim(`
@@ -133,10 +134,8 @@ func Benchmark_Minimax(t *testing.B) {
         searcher, err := newSimpleSearcher(game)
         assert.Nil(t, err)
 
-        _, _, err = searcher.minimax(game, 2)
+        _, _, err = searcher.minimax(b, p, 2)
         assert.Nil(t, err)
-
-        fmt.Println("calls", searcher.minimaxCalls)
 
         actualPrintedBoard := game.Print()
         expectedPrintedBoard := strings.Trim(`
@@ -236,5 +235,4 @@ func Benchmark_CalculateMoves(t *testing.B) {
         fmt.Println("time", end.Sub(start))
     }
 }
-
 

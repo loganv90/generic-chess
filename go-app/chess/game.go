@@ -118,7 +118,8 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
     }
 
     for _, m := range moves {
-        if m.getAction().fromLocation == fromLocation && m.getAction().toLocation == toLocation {
+        action := m.getAction()
+        if action.fromLocation == fromLocation && action.toLocation == toLocation {
             move = m
             break
         }

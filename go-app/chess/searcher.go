@@ -39,83 +39,33 @@ func (s *SimpleSearcher) search() (MoveKey, error) {
     // we can just do recursive search and pass around a single game object while execuing and undoing moves
     // first we need to make a copy of the game object
 
-    _, moveKey, err := s.minimax(s.g, 4)
+    b := s.g.getBoard()
+    p := s.g.getPlayerCollection()
+
+    _, move, err := s.minimax(b, p, 3)
     if err != nil {
         return MoveKey{}, err
     }
 
-    return moveKey, nil
+    action := move.getAction()
+
+    return MoveKey{
+        XFrom: action.fromLocation.x,
+        YFrom: action.fromLocation.y,
+        XTo: action.toLocation.x,
+        YTo: action.toLocation.y,
+        Promotion: "Q",
+    }, nil
 }
 
-func (s *SimpleSearcher) minimax(game Game, depth int) (map[string]int, MoveKey, error) {
-    s.minimaxCalls++
-
-    state, err := game.State()
+func (s *SimpleSearcher) minimax(b Board, p PlayerCollection, depth int) (map[string]int, Move, error) {
+    gameOver, err := p.getGameOver()
     if err != nil {
-        return nil, MoveKey{}, err
+        return nil, nil, err
     }
 
-    board := game.getBoard()
-    playerCollection := game.getPlayerCollection()
-
-    uniqueString := board.UniqueString()
-    if moveKeyAndScore, ok := s.transpositionMap[uniqueString]; ok {
-        return moveKeyAndScore.score, moveKeyAndScore.moveKey, nil
-    }
-
-    if depth == 0 || state.GameOver {
-        evaluator, err := newSimpleEvaluator(board, playerCollection)
-        if err != nil {
-            return nil, MoveKey{}, err
-        }
-
-        score, err := evaluator.eval()
-        if err != nil {
-            return nil, MoveKey{}, err
-        }
-
-        return score, MoveKey{}, nil
-    }
-
-    moves, err := game.Moves(state.CurrentPlayer)
-    if err != nil {
-        return nil, MoveKey{}, err
-    }
-
-    bestScore := map[string]int{state.CurrentPlayer: -1000000}
-    bestMove := MoveKey{}
-    for _, move := range moves {
-        err := game.Execute(move.XFrom, move.YFrom, move.XTo, move.YTo, move.Promotion)
-        if err != nil {
-            return nil, MoveKey{}, err
-        }
-
-        score, moveKey, err := s.minimax(game, depth-1)
-        if err != nil {
-            return nil, MoveKey{}, err
-        }
-
-        s.transpositionMap[uniqueString] = MoveKeyAndScore{
-            moveKey: moveKey,
-            score: score,
-        }
-
-        if score[state.CurrentPlayer] > bestScore[state.CurrentPlayer] {
-            bestScore = score
-            bestMove = move
-        }
-
-        err = game.Undo()
-        if err != nil {
-            return nil, MoveKey{}, err
-        }
-    }
-
-    return bestScore, bestMove, nil
-}
-
-func (s *SimpleSearcher) minimax2(b Board, p PlayerCollection, depth int) (map[string]int, Move, error) {
-    if depth == 0 {
+    if depth == 0 || gameOver {
+        // TODO do not make a new evaluator every time
         evaluator, err := newSimpleEvaluator(b, p)
         if err != nil {
             return nil, nil, err
@@ -134,17 +84,24 @@ func (s *SimpleSearcher) minimax2(b Board, p PlayerCollection, depth int) (map[s
         return nil, nil, err
     }
 
-    moves, err := b.LegalMovesOfColor(currentPlayer)
+    moves, err := b.MovesOfColor(currentPlayer)
     if err != nil {
         return nil, nil, err
     }
 
-    bestScore := map[string]int{currentPlayer: -1000000}
     var bestMove Move
-    playersEliminated := []string{}
-    canMove := false
+    bestScore := map[string]int{currentPlayer: -1000000}
 
     for _, move := range moves {
+        if _, ok := move.(*AllyDefenseMove); ok {
+            continue
+        }
+
+        if promotionMove, ok := move.(*PromotionMove); ok {
+            // TODO do not make a new queen every time
+            promotionMove.setPromotionPiece(newQueen(currentPlayer))
+        }
+
         err := move.execute()
         if err != nil {
             return nil, nil, err
@@ -155,18 +112,25 @@ func (s *SimpleSearcher) minimax2(b Board, p PlayerCollection, depth int) (map[s
             return nil, nil, err
         }
 
-        // fix lol
-        // if b.check(currentPlayer) {
-        //     err := move.undo()
-        //     if err != nil {
-        //         return nil, nil, err
-        //     }
-        //     continue
-        // }
+        if b.Check(currentPlayer) {
+            err := move.undo()
+            if err != nil {
+                return nil, nil, err
+            }
+            continue
+        }
 
-        canMove = true
+        transition, err := p.GetTransition(b, false, false)
+        if err != nil {
+            return nil, nil, err
+        }
 
-        score, _, err := s.minimax2(b, p, depth-1)
+        err = transition.execute()
+        if err != nil {
+            return nil, nil, err
+        }
+
+        score, _, err := s.minimax(b, p, depth-1)
         if err != nil {
             return nil, nil, err
         }
@@ -180,10 +144,41 @@ func (s *SimpleSearcher) minimax2(b Board, p PlayerCollection, depth int) (map[s
         if err != nil {
             return nil, nil, err
         }
+
+        err = transition.undo()
+        if err != nil {
+            return nil, nil, err
+        }
     }
 
-    if !canMove {
-        playersEliminated = append(playersEliminated, currentPlayer)
+    if bestMove == nil {
+        // stalemate
+        if !b.Check(currentPlayer) {
+            return map[string]int{}, nil, nil
+        }
+
+        // checkmate
+        transition, err := p.GetTransition(b, true, false)
+        if err != nil {
+            return nil, nil, err
+        }
+
+        err = transition.execute()
+        if err != nil {
+            return nil, nil, err
+        }
+
+        score, _, err := s.minimax(b, p, depth-1)
+        if err != nil {
+            return nil, nil, err
+        }
+
+        err = transition.undo()
+        if err != nil {
+            return nil, nil, err
+        }
+
+        return score, nil, nil
     }
 
     return bestScore, bestMove, nil
