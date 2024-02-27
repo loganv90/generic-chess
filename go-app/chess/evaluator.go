@@ -22,7 +22,7 @@ Responsible for:
 - evaluating a board and returning a score
 */
 type Evaluator interface {
-    eval() int
+    eval() (map[string]int, error)
 }
 
 func newSimpleEvaluator(b Board, p PlayerCollection) (*SimpleEvaluator, error) {

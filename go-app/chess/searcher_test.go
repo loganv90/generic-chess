@@ -9,7 +9,6 @@ import (
     "github.com/stretchr/testify/assert"
 )
 
-// TODO this test fails randomly and rarely it will move to 3 3 for some reason it is broken
 func Test_Minimax(t *testing.T) {
     b, err := newSimpleBoard(Point{4, 4})
     assert.Nil(t, err)
@@ -35,7 +34,7 @@ func Test_Minimax(t *testing.T) {
     searcher, err := newSimpleSearcher(game)
     assert.Nil(t, err)
 
-    score, move, err := searcher.minimax(b, p, 4)
+    score, move, err := searcher.minimax(4)
     assert.Nil(t, err)
 
     assert.Equal(t, 100000, score["white"])
@@ -134,7 +133,7 @@ func Benchmark_Minimax(t *testing.B) {
         searcher, err := newSimpleSearcher(game)
         assert.Nil(t, err)
 
-        _, _, err = searcher.minimax(b, p, 2)
+        _, _, err = searcher.minimax(3)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()
@@ -174,6 +173,8 @@ func Benchmark_Minimax(t *testing.B) {
 +-------------------------------------------------------------------------------------------------------+
         `, " \t\n") + "\n"
         assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+
+        fmt.Println("minimaxCalls", searcher.minimaxCalls)
     }
 }
 
