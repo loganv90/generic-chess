@@ -342,9 +342,9 @@ func (s *SimpleBoard) CalculateMoves() error {
     return nil
 }
 
+// TODO implement dynamic move calculations based on previous move
+// TODO how about we don't create massive move objects with pieces and stuff
 func (s *SimpleBoard) CalculateMovesPartial(move Move) error {
-    // TODO implement dynamic move calculations based on previous move
-    // TODO implement delayed check calculation system for bot
     action := move.getAction()
     relevantLocations := []Point{action.fromLocation, action.toLocation}
 

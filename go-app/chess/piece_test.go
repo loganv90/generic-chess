@@ -164,7 +164,7 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
 
 	moveFactory := &MockMoveFactory{}
 	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-    moveFactory.On("newPromotionMove", mock.Anything, mock.Anything).Return(&PromotionMove{nil, nil, nil}, nil)
+    moveFactory.On("newPromotionMove", mock.Anything, mock.Anything).Return(&PromotionMove{Action{}, nil, nil}, nil)
 	moveFactoryInstance = moveFactory
 
 	pawn := newPawn("white", false, 0, 1)

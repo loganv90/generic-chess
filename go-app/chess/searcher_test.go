@@ -140,6 +140,7 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
 // go tool pprof cpu.prof
 // go tool trace trace.out
 // web
+// go tool pprof -http=:8000 cpu.prof
 func Benchmark_Minimax(t *testing.B) {
     for i := 0; i < t.N; i++ {
         b, err := newSimpleBoard(Point{8, 8})
@@ -204,7 +205,7 @@ func Benchmark_Minimax(t *testing.B) {
         searcher, err := newSimpleSearcher(game)
         assert.Nil(t, err)
 
-        _, _, err = searcher.minimax(2)
+        _, _, err = searcher.minimax(3)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()

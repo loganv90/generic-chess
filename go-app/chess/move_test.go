@@ -85,9 +85,9 @@ func (m *MockMove) undo() error {
 	return args.Error(0)
 }
 
-func (m *MockMove) getAction() *Action {
+func (m *MockMove) getAction() Action {
     args := m.Called()
-    return args.Get(0).(*Action)
+    return args.Get(0).(Action)
 }
 
 func (m *MockMove) getNewPiece() Piece {

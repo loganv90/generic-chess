@@ -10,7 +10,7 @@ type Action struct {
     toLocation Point
 }
 
-func (a *Action) getAction() *Action {
+func (a Action) getAction() Action {
 	return a
 }
 
@@ -54,7 +54,7 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation Point, toLocat
     vulnerables := b.getVulnerables(piece.getColor())
 
 	return &SimpleMove{
-		&Action{
+		Action{
 			b: b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -94,7 +94,7 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
 	}
 
 	return &RevealEnPassantMove{
-		&Action{
+		Action{
 			b:     b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -146,7 +146,7 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
     }
 
 	return &CaptureEnPassantMove{
-		&Action{
+		Action{
 			b:     b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -185,7 +185,7 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocat
     vulnerables := b.getVulnerables(king.getColor())
 
 	return &CastleMove{
-		&Action{
+		Action{
 			b: b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -221,7 +221,7 @@ func (m *ConcreteMoveFactory) newAllyDefenseMove(b Board, fromLocation Point, to
 	}
 
     return &AllyDefenseMove{
-        &Action{
+        Action{
             b: b,
             fromLocation: fromLocation,
             toLocation: toLocation,
@@ -233,12 +233,12 @@ func (m *ConcreteMoveFactory) newAllyDefenseMove(b Board, fromLocation Point, to
 type Move interface {
 	execute() error
 	undo() error
-	getAction() *Action
+	getAction() Action
     getNewPiece() Piece
 }
 
 type SimpleMove struct {
-    *Action
+    Action
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
@@ -285,7 +285,7 @@ func (s *SimpleMove) undo() error {
 }
 
 type RevealEnPassantMove struct {
-	*Action
+	Action
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
@@ -333,7 +333,7 @@ func (r *RevealEnPassantMove) undo() error {
 }
 
 type CaptureEnPassantMove struct {
-	*Action
+	Action
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
@@ -395,7 +395,7 @@ func (c *CaptureEnPassantMove) undo() error {
 }
 
 type CastleMove struct {
-	*Action
+	Action
 	king    Piece
 	newKing Piece
     toKingLocation Point
@@ -466,7 +466,7 @@ func (c *CastleMove) undo() error {
 }
 
 type PromotionMove struct {
-    *Action
+    Action
     baseMove Move
     promotionPiece Piece
 }
@@ -496,7 +496,7 @@ func (p *PromotionMove) undo() error {
 }
 
 type AllyDefenseMove struct {
-    *Action
+    Action
     piece Piece
 }
 
