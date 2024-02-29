@@ -9,7 +9,7 @@ Responsible for:
 - keeping track of the players in the game
 */
 type PlayerCollection interface {
-    getNext() ([]*Player, error)
+    getNext() ([]Player, error)
     getPlayerColors() []string
     eliminate(color string) error
     restore(color string) error
@@ -24,7 +24,7 @@ type PlayerCollection interface {
     Copy() (PlayerCollection, error)
 }
 
-func newSimplePlayerCollection(players []*Player) (*SimplePlayerCollection, error) {
+func newSimplePlayerCollection(players []Player) (*SimplePlayerCollection, error) {
     if len(players) <= 1 {
         return nil, fmt.Errorf("not enough players")
     }
@@ -47,15 +47,15 @@ func newSimplePlayerCollection(players []*Player) (*SimplePlayerCollection, erro
 }
 
 type SimplePlayerCollection struct {
-    players []*Player
+    players []Player
     playerMap map[string]int
     currentPlayer int
     winningPlayer int
     gameOver bool
 }
 
-func (s *SimplePlayerCollection) getNext() ([]*Player, error) {
-    next := []*Player{}
+func (s *SimplePlayerCollection) getNext() ([]Player, error) {
+    next := []Player{}
     currentPlayer := s.currentPlayer
 
     for {
@@ -160,21 +160,13 @@ func (s *SimplePlayerCollection) GetTransition(b Board, inCheckmate bool, inStal
 }
 
 func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {
-    players := make([]*Player, len(s.players))
-    for i, p := range s.players {
-        players[i] = &Player{
-            color: p.color,
-            alive: p.alive,
-        }
-    }
-
     playerMap := map[string]int{}
     for k, v := range s.playerMap {
         playerMap[k] = v
     }
 
     return &SimplePlayerCollection{
-        players: players,
+        players: s.players,
         playerMap: playerMap,
         currentPlayer: s.currentPlayer,
         winningPlayer: s.winningPlayer,

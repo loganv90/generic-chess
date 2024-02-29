@@ -46,19 +46,19 @@ func (m *MockBoard) setVulnerables(color string, vulnerables []Point) {
     m.Called(color, vulnerables)
 }
 
-func (m *MockBoard) getEnPassant(color string) (*EnPassant, error) {
+func (m *MockBoard) getEnPassant(color string) (EnPassant, error) {
 	args := m.Called(color)
-	return args.Get(0).(*EnPassant), args.Error(1)
+	return args.Get(0).(EnPassant), args.Error(1)
 }
 
-func (m *MockBoard) setEnPassant(color string, enPassant *EnPassant) error {
+func (m *MockBoard) setEnPassant(color string, enPassant EnPassant) error {
     args := m.Called(color, enPassant)
     return args.Error(0)
 }
 
-func (m *MockBoard) possibleEnPassant(color string, location Point) ([]*EnPassant, error) {
+func (m *MockBoard) possibleEnPassant(color string, location Point) ([]EnPassant, error) {
     args := m.Called(color, location)
-    return args.Get(0).([]*EnPassant), args.Error(1)
+    return args.Get(0).([]EnPassant), args.Error(1)
 }
 
 func (m *MockBoard) clearEnPassant(color string) error {
@@ -78,6 +78,11 @@ func (m *MockBoard) CalculateMovesPartial(move Move) error {
 
 func (m *MockBoard) MovesOfColor(color string) ([]Move, error) {
     args := m.Called(color)
+    return args.Get(0).([]Move), args.Error(1)
+}
+
+func (m *MockBoard) MovesOfLocation(fromLocation Point) ([]Move, error) {
+    args := m.Called(fromLocation)
     return args.Get(0).([]Move), args.Error(1)
 }
 

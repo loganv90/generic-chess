@@ -123,7 +123,7 @@ func Test_CastleWhenBlocked(t *testing.T) {
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}})
+    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}})
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -170,7 +170,7 @@ func Test_CastleCanUndo(t *testing.T) {
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}})
+    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}})
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -373,7 +373,7 @@ func Test_DisabledPieces(t *testing.T) {
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}, {"gray", true}})
+    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}, {"gray", true}})
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -409,7 +409,7 @@ func Test_Stalemate(t *testing.T) {
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}, {"gray", true}})
+    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}, {"gray", true}})
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()

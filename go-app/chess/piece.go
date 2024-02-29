@@ -416,7 +416,7 @@ func (r *Rook) copy() Piece {
 	return &Rook{
 		Allegiant{r.color},
         Disableable{r.disabled},
-		true,
+		r.moved,
 	}
 }
 

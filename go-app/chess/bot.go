@@ -20,6 +20,9 @@ type SimpleBot struct {
 
 func (b *SimpleBot) FindMove() (MoveKey, error) {
     gameCopy, err := b.game.Copy()
+    if err != nil {
+        return MoveKey{}, err
+    }
 
     searcher, err := newSimpleSearcher(gameCopy)
     if err != nil {

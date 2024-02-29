@@ -11,13 +11,13 @@ type MockPlayerCollection struct {
 	mock.Mock
 }
 
-func (m *MockPlayerCollection) getNext() ([]*Player, error) {
+func (m *MockPlayerCollection) getNext() ([]Player, error) {
     args := m.Called()
 
     if args.Get(0) == nil {
         return nil, args.Error(1)
     } else {
-        return args.Get(0).([]*Player), args.Error(1)
+        return args.Get(0).([]Player), args.Error(1)
     }
 }
 
@@ -78,7 +78,7 @@ func (m *MockPlayerCollection) GetTransition(b Board, inCheckmate bool, inStalem
 
 func Test_getNext(t *testing.T) {
     s, err := newSimplePlayerCollection(
-        []*Player{
+        []Player{
             {"white", true},
             {"black", true},
             {"blue", true},
@@ -97,7 +97,7 @@ func Test_getNext(t *testing.T) {
     assert.Equal(t, "white", players[3].color)
 
     s, err = newSimplePlayerCollection(
-        []*Player{
+        []Player{
             {"white", true},
             {"black", false},
             {"blue", true},
@@ -114,7 +114,7 @@ func Test_getNext(t *testing.T) {
     assert.Equal(t, "white", players[1].color)
 
     s, err = newSimplePlayerCollection(
-        []*Player{
+        []Player{
             {"white", false},
             {"black", false},
             {"blue", false},
@@ -129,7 +129,7 @@ func Test_getNext(t *testing.T) {
     assert.Nil(t, err)
 
     s, err = newSimplePlayerCollection(
-        []*Player{
+        []Player{
             {"white", false},
             {"black", false},
             {"blue", false},

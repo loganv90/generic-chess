@@ -100,7 +100,7 @@ func Test_SimpleMove(t *testing.T) {
 	piece := &MockPiece{}
 	newPiece := &MockPiece{}
 	capturedPiece := &MockPiece{}
-	en := &EnPassant{}
+	en := EnPassant{}
 
 	board.On("getPiece", Point{0, 0}).Return(piece, true)
 	piece.On("copy").Return(newPiece)
@@ -136,7 +136,7 @@ func Test_RevealEnPassantMove(t *testing.T) {
 	piece := &MockPiece{}
 	newPiece := &MockPiece{}
 	capturedPiece := &MockPiece{}
-	en := &EnPassant{}
+	en := EnPassant{}
 
 	board.On("getPiece", Point{0, 0}).Return(piece, true)
 	piece.On("copy").Return(newPiece)
@@ -150,7 +150,7 @@ func Test_RevealEnPassantMove(t *testing.T) {
 
 	board.On("setPiece", Point{0, 0}, nil).Return(true)
 	board.On("setPiece", Point{2, 2}, newPiece).Return(true)
-	board.On("setEnPassant", "white", &EnPassant{Point{1, 1}, Point{2, 2}}).Return(nil)
+	board.On("setEnPassant", "white", EnPassant{Point{1, 1}, Point{2, 2}}).Return(nil)
     board.On("setVulnerables", "white", []Point{}).Return(nil)
 	err = revealEnPassantMove.execute()
 	assert.Nil(t, err)
@@ -172,7 +172,7 @@ func Test_CaptureEnPassantMove(t *testing.T) {
 	piece := &MockPiece{}
 	newPiece := &MockPiece{}
 	capturedPiece := &MockPiece{}
-	en := &EnPassant{}
+	en := EnPassant{}
 	encPiece := &MockPiece{}
 
 	board.On("getPiece", Point{0, 0}).Return(piece, true)
@@ -181,7 +181,7 @@ func Test_CaptureEnPassantMove(t *testing.T) {
 	board.On("getPiece", Point{1, 1}).Return(capturedPiece, true)
 	board.On("getEnPassant", "white").Return(en, nil)
 	piece.On("getColor").Return("white")
-	board.On("possibleEnPassant", "white", Point{1, 1}).Return([]*EnPassant{{Point{1, 1}, Point{2, 2}}}, nil)
+	board.On("possibleEnPassant", "white", Point{1, 1}).Return([]EnPassant{{Point{1, 1}, Point{2, 2}}}, nil)
 	board.On("getPiece", Point{2, 2}).Return(encPiece, true)
     board.On("getVulnerables", "white").Return([]Point{{2, 2}})
 	captureEnPassantMove, err := moveFactoryInstance.newCaptureEnPassantMove(board, Point{0, 0}, Point{1, 1})
@@ -216,7 +216,7 @@ func Test_CastleMove(t *testing.T) {
 	newKing := &MockPiece{}
 	rook := &MockPiece{}
 	newRook := &MockPiece{}
-	en := &EnPassant{}
+	en := EnPassant{}
     newVulnerables := []Point{{4, 4}}
 
 	board.On("getPiece", Point{0, 0}).Return(king, true)
@@ -261,7 +261,7 @@ func Test_PromotionMove(t *testing.T) {
 	piece := &MockPiece{}
 	newPiece := &MockPiece{}
 	capturedPiece := &MockPiece{}
-	en := &EnPassant{}
+	en := EnPassant{}
     queen := &MockPiece{}
 
 	board.On("getPiece", Point{0, 0}).Return(piece, true)

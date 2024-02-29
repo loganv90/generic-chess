@@ -185,7 +185,7 @@ func createSimpleFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error
 }
 
 func createSimplePlayerCollectionWithDefaultPlayers() (*SimplePlayerCollection, error) {
-    players := []*Player{
+    players := []Player{
         {"white", true},
         {"black", true},
     }
@@ -194,7 +194,7 @@ func createSimplePlayerCollectionWithDefaultPlayers() (*SimplePlayerCollection, 
 }
 
 func createSimpleFourPlayerPlayerCollectionWithDefaultPlayers() (*SimplePlayerCollection, error) {
-    players := []*Player{
+    players := []Player{
         {"white", true},
         {"red", true},
         {"black", true},

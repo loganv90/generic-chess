@@ -1,5 +1,9 @@
 package chess
 
+import (
+    "fmt"
+)
+
 /*
 Chess Search:
 Alpha beta search
@@ -48,9 +52,18 @@ func (s *SimpleSearcher) search() (MoveKey, error) {
     // we can just do recursive search and pass around a single game object while execuing and undoing moves
     // first we need to make a copy of the game object
 
+    err := s.b.CalculateMoves()
+    if err != nil {
+        return MoveKey{}, err
+    }
+
     _, move, err := s.minimax(4)
     if err != nil {
         return MoveKey{}, err
+    }
+
+    if move == nil {
+        return MoveKey{}, fmt.Errorf("no move found")
     }
 
     action := move.getAction()

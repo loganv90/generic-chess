@@ -52,7 +52,7 @@ func Test_IncrementalTransition_inCheckmate(t *testing.T) {
     playerCollection.On("getCurrent").Return("white", nil).Once()
     playerCollection.On("getWinner").Return("", nil).Once()
     playerCollection.On("getGameOver").Return(false, nil).Once()
-    playerCollection.On("getNext").Return([]*Player{{"black", true}, {"white", true}}, nil).Once()
+    playerCollection.On("getNext").Return([]Player{{"black", true}, {"white", true}}, nil).Once()
     incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection, true, false)
     assert.Nil(t, err)
 
@@ -83,7 +83,7 @@ func Test_IncrementalTransition_noCheckmate(t *testing.T) {
     playerCollection.On("getCurrent").Return("white", nil)
     playerCollection.On("getWinner").Return("", nil)
     playerCollection.On("getGameOver").Return(false, nil)
-    playerCollection.On("getNext").Return([]*Player{{"black", true}, {"white", true}}, nil)
+    playerCollection.On("getNext").Return([]Player{{"black", true}, {"white", true}}, nil)
     incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection, false, false)
     assert.Nil(t, err)
 

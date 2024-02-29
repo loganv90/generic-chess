@@ -19,7 +19,7 @@ func Test_Minimax(t *testing.T) {
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}})
+    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}})
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -61,6 +61,77 @@ func Test_Minimax(t *testing.T) {
 |XXXXXXXXXXXX|            | K white    | R white    |
 |         3y |         3y |         3y |         3y |
 +---------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
+func Test_Minimax_AvoidMateInOne(t *testing.T) {
+    b, err := createSimpleBoardWithDefaultPieceLocations()
+    assert.Nil(t, err)
+    b.setPiece(Point{5, 4}, newQueen("white"))
+    b.setPiece(Point{5, 3}, newQueen("white"))
+    b.setPiece(Point{3, 2}, newPawn("black", true, 0, 1))
+    b.setPiece(Point{6, 0}, nil)
+    err = b.CalculateMoves()
+    assert.Nil(t, err)
+
+    p, err := createSimplePlayerCollectionWithDefaultPlayers()
+    assert.Nil(t, err)
+    p.setCurrent("black")
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+
+    searcher, err := newSimpleSearcher(game)
+    assert.Nil(t, err)
+
+    _, move, err := searcher.minimax(3)
+    assert.Nil(t, err)
+
+    assert.Equal(t, 5, move.getAction().toLocation.x)
+    assert.Equal(t, 2, move.getAction().toLocation.y)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R black    | N black    | B black    | Q black    | K black    | B black    |            | R black    |
+|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |
+|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            | P black    |            |            |            |            |
+|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            | Q white    |            |            |
+|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            | Q white    |            |            |
+|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P white    | P white    | P white    | P white    | P white    | P white    | P white    | P white    |
+|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
+|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
++-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
@@ -118,7 +189,7 @@ func Benchmark_Minimax(t *testing.B) {
         // without calculateToLocations, the time stays the same
         // b.test = true
 
-        p, err := newSimplePlayerCollection([]*Player{{"white", true}, {"black", true}})
+        p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}})
         assert.Nil(t, err)
 
         i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -133,7 +204,7 @@ func Benchmark_Minimax(t *testing.B) {
         searcher, err := newSimpleSearcher(game)
         assert.Nil(t, err)
 
-        _, _, err = searcher.minimax(3)
+        _, _, err = searcher.minimax(2)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()

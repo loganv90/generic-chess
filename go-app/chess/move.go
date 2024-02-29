@@ -15,7 +15,7 @@ func (a *Action) getAction() *Action {
 }
 
 type EnPassantCapture struct {
-	enPassant     *EnPassant
+	enPassant EnPassant
 	capturedPiece Piece
 }
 
@@ -88,7 +88,7 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
 
     vulnerables := b.getVulnerables(piece.getColor())
 
-	newEn := &EnPassant{
+	newEn := EnPassant{
         target: target,
         pieceLocation: toLocation,
 	}
@@ -129,7 +129,7 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
     
     vulnerables := b.getVulnerables(piece.getColor())
 
-	encs := []*EnPassantCapture{}
+	encs := []EnPassantCapture{}
     possibleEnPassant, err := b.possibleEnPassant(piece.getColor(), toLocation)
     if err == nil {
         for _, enPassant := range possibleEnPassant {
@@ -138,7 +138,7 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
                 return nil, fmt.Errorf("no piece at enPassant.pieceLocation")
             }
 
-            encs = append(encs, &EnPassantCapture{
+            encs = append(encs, EnPassantCapture{
                 enPassant,
                 capturedPiece,
             })
@@ -242,7 +242,7 @@ type SimpleMove struct {
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
-	en            *EnPassant
+	en            EnPassant
     vulnerables   []Point
 }
 
@@ -289,8 +289,8 @@ type RevealEnPassantMove struct {
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
-	en            *EnPassant
-	newEn         *EnPassant
+	en            EnPassant
+	newEn         EnPassant
     vulnerables   []Point
 }
 
@@ -337,8 +337,8 @@ type CaptureEnPassantMove struct {
 	piece         Piece
 	newPiece      Piece
 	capturedPiece Piece
-	en            *EnPassant
-	encs          []*EnPassantCapture
+	en            EnPassant
+	encs          []EnPassantCapture
     vulnerables   []Point
 }
 
@@ -402,7 +402,7 @@ type CastleMove struct {
 	rook    Piece
 	newRook Piece
     toRookLocation Point
-	en      *EnPassant
+	en      EnPassant
     vulnerables   []Point
     newVulnerables []Point
 }
