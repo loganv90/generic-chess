@@ -38,8 +38,10 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation Point, toLocat
 		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
-	newPiece := piece.copy()
-    newPiece.setMoved()
+	newPiece, err := piece.copy()
+    if err != nil {
+        return nil, err
+    }
 
 	capturedPiece, ok := b.getPiece(toLocation)
 	if !ok {
@@ -76,8 +78,10 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
 		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
-	newPiece := piece.copy()
-    newPiece.setMoved()
+	newPiece, err := piece.copy()
+    if err != nil {
+        return nil, err
+    }
 
 	capturedPiece, ok := b.getPiece(toLocation)
 	if !ok {
@@ -120,8 +124,10 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
 		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
-	newPiece := piece.copy()
-    newPiece.setMoved()
+	newPiece, err := piece.copy()
+    if err != nil {
+        return nil, err
+    }
 
 	capturedPiece, ok := b.getPiece(toLocation)
 	if !ok {
@@ -175,16 +181,20 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocat
 		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
-	newKing := king.copy()
-    newKing.setMoved()
+	newKing, err := king.copy()
+    if err != nil {
+        return nil, err
+    }
 
 	rook, ok := b.getPiece(toLocation)
 	if !ok {
 		return nil, fmt.Errorf("no piece at toLocation")
 	}
 
-	newRook := rook.copy()
-    newRook.setMoved()
+	newRook, err := rook.copy()
+    if err != nil {
+        return nil, err
+    }
 
 	en, err := b.getEnPassant(king.getColor())
 	if err != nil {

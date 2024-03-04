@@ -16,22 +16,14 @@ func (m *MockPiece) getColor() int {
 	return args.Int(0)
 }
 
-func (m *MockPiece) setDisabled(disabled bool) {
-    m.Called(disabled)
-}
-
-func (m *MockPiece) getDisabled() bool {
+func (m *MockPiece) getValue() int {
     args := m.Called()
-    return args.Bool(0)
+    return args.Int(0)
 }
 
-func (m *MockPiece) copy() Piece {
+func (m *MockPiece) copy() (Piece, error) {
     args := m.Called()
-    return args.Get(0).(Piece)
-}
-
-func (m *MockPiece) setMoved() {
-    m.Called()
+    return args.Get(0).(Piece), args.Error(1)
 }
 
 func (m *MockPiece) getMoved() bool {
@@ -39,14 +31,18 @@ func (m *MockPiece) getMoved() bool {
     return args.Bool(0)
 }
 
-func (m *MockPiece) getValue() int {
-    args := m.Called()
-    return args.Int(0)
-}
-
 func (m *MockPiece) moves(board Board, location Point) []Move {
     args := m.Called(board, location)
 	return args.Get(0).([]Move)
+}
+
+func (m *MockPiece) setDisabled(disabled bool) {
+    m.Called(disabled)
+}
+
+func (m *MockPiece) getDisabled() bool {
+    args := m.Called()
+    return args.Bool(0)
 }
 
 func (m *MockPiece) print() string {
@@ -119,6 +115,7 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
 	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
+    // TODO remove all the times we create new pieces
 	pawn := newPawn(white, false, 0, 1)
 
 	blackPawn := newPawn(black, false, 0, 1)

@@ -1,5 +1,90 @@
 package chess
 
+import (
+    "fmt"
+)
+
+const (
+    PR_EMPTY = 0
+    PR_PAWN_R = 1
+    PR_PAWN_L = 2
+    PR_PAWN_U = 3
+    PR_PAWN_D = 4
+    PR_PAWN_R_M = 5
+    PR_PAWN_L_M = 6
+    PR_PAWN_U_M = 7
+    PR_PAWN_D_M = 8
+    PR_KNIGHT = 9
+    PR_BISHOP = 10
+    PR_ROOK = 11
+    PR_ROOK_M = 12
+    PR_QUEEN = 13
+    PR_KING_R = 14
+    PR_KING_L = 15
+    PR_KING_U = 16
+    PR_KING_D = 17
+    PR_KING_R_M = 18
+    PR_KING_L_M = 19
+    PR_KING_U_M = 20
+    PR_KING_D_M = 21
+)
+
+var PR_Instance = newPieceReference()
+
+func newPieceReference() *PieceReference {
+    var pieceInstances = make([][]Piece, 4)
+    for color := range pieceInstances {
+        pieceInstances[color] = generateRowForPieceReference(color)
+    }
+
+    return &PieceReference{
+        pieceInstances: pieceInstances,
+    }
+}
+
+func generateRowForPieceReference(color int) []Piece {
+    return []Piece{
+        nil,
+        newPawn(color, false, 1, 0),
+        newPawn(color, false, -1, 0),
+        newPawn(color, false, 0, 1),
+        newPawn(color, false, 0, -1),
+        newPawn(color, true, 1, 0),
+        newPawn(color, true, -1, 0),
+        newPawn(color, true, 0, 1),
+        newPawn(color, true, 0, -1),
+        newKnight(color),
+        newBishop(color),
+        newRook(color, false),
+        newRook(color, true),
+        newQueen(color),
+        newKing(color, false, 1, 0),
+        newKing(color, false, -1, 0),
+        newKing(color, false, 0, 1),
+        newKing(color, false, 0, -1),
+        newKing(color, true, 1, 0),
+        newKing(color, true, -1, 0),
+        newKing(color, true, 0, 1),
+        newKing(color, true, 0, -1),
+    }
+}
+
+type PieceReference struct {
+    pieceInstances [][]Piece
+}
+
+func (r *PieceReference) get(color int, pieceType int) (Piece, error) {
+    if color < 0 || color >= len(r.pieceInstances) {
+        return nil, fmt.Errorf("invalid color")
+    }
+
+    if pieceType < 0 || pieceType >= len(r.pieceInstances[color]) {
+        return nil, fmt.Errorf("invalid piece type")
+    }
+
+    return r.pieceInstances[color][pieceType], nil
+}
+
 type CastleDirection struct {
 	Point
 	kingOffset Point
@@ -14,27 +99,12 @@ func (a *Allegiant) getColor() int {
 	return a.color
 }
 
-type Disableable struct {
-    disabled bool
-}
-
-func (d *Disableable) setDisabled(disabled bool) {
-    d.disabled = disabled
-}
-
-func (d *Disableable) getDisabled() bool {
-    return d.disabled
-}
-
 type Piece interface {
 	getColor() int
     getValue() int
-	copy() Piece
-    setMoved()
+	copy() (Piece, error) // returns the moved version of the piece
     getMoved() bool
 	moves(Board, Point) []Move
-    setDisabled(bool)
-    getDisabled() bool
 	print() string
 }
 
@@ -133,7 +203,6 @@ func newPawn(color int, moved bool, xDir int, yDir int) *Pawn {
 
 	return &Pawn{
 		Allegiant{color},
-        Disableable{false},
 		moved,
 		forward1,
 		forward2,
@@ -144,7 +213,6 @@ func newPawn(color int, moved bool, xDir int, yDir int) *Pawn {
 
 type Pawn struct {
 	Allegiant
-    Disableable
 	moved bool
 	forward1 Point
 	forward2 Point
@@ -156,20 +224,18 @@ func (a *Pawn) print() string {
 	return "P"
 }
 
-func (a *Pawn) copy() Piece {
-	return &Pawn{
-		Allegiant{a.color},
-        Disableable{a.disabled},
-		a.moved,
-		a.forward1,
-		a.forward2,
-		a.captures,
-        a.direction,
-	}
-}
+func (a *Pawn) copy() (Piece, error) {
+    if a.direction.x == 1 {
+        return PR_Instance.get(a.color, PR_PAWN_R)
+    } else if a.direction.x == -1 {
+        return PR_Instance.get(a.color, PR_PAWN_L)
+    } else if a.direction.y == 1 {
+        return PR_Instance.get(a.color, PR_PAWN_U)
+    } else if a.direction.y == -1 {
+        return PR_Instance.get(a.color, PR_PAWN_D)
+    } 
 
-func (a *Pawn) setMoved() {
-    a.moved = true
+    return nil, fmt.Errorf("invalid direction")
 }
 
 func (a *Pawn) getMoved() bool {
@@ -182,9 +248,6 @@ func (a *Pawn) getValue() int {
 
 func (a *Pawn) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
-    if a.disabled {
-        return *moves
-    }
 	a.addForward(b, fromLocation, moves)
 	a.addCaptures(b, fromLocation, moves)
 	return *moves
@@ -285,27 +348,19 @@ var knightSimples = []Point{
 func newKnight(color int) *Knight {
 	return &Knight{
 		Allegiant{color},
-        Disableable{false},
 	}
 }
 
 type Knight struct {
 	Allegiant
-    Disableable
 }
 
 func (n *Knight) print() string {
 	return "N"
 }
 
-func (n *Knight) copy() Piece {
-	return &Knight{
-		Allegiant{n.color},
-        Disableable{n.disabled},
-	}
-}
-
-func (n *Knight) setMoved() {
+func (n *Knight) copy() (Piece, error) {
+    return PR_Instance.get(n.color, PR_KNIGHT)
 }
 
 func (n *Knight) getMoved() bool {
@@ -318,9 +373,6 @@ func (n *Knight) getValue() int {
 
 func (n *Knight) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
-    if n.disabled {
-        return *moves
-    }
 	n.addSimples(b, fromLocation, moves)
 	return *moves
 }
@@ -341,27 +393,19 @@ var bishopDirections = []Point{
 func newBishop(color int) *Bishop {
 	return &Bishop{
 		Allegiant{color},
-        Disableable{false},
 	}
 }
 
 type Bishop struct {
 	Allegiant
-    Disableable
 }
 
 func (s *Bishop) print() string {
 	return "B"
 }
 
-func (s *Bishop) copy() Piece {
-	return &Bishop{
-		Allegiant{s.color},
-        Disableable{s.disabled},
-	}
-}
-
-func (s *Bishop) setMoved() {
+func (s *Bishop) copy() (Piece, error) {
+    return PR_Instance.get(s.color, PR_BISHOP)
 }
 
 func (s *Bishop) getMoved() bool {
@@ -374,9 +418,6 @@ func (s *Bishop) getValue() int {
 
 func (s *Bishop) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
-    if s.disabled {
-        return *moves
-    }
 	s.addDirections(b, fromLocation, moves)
 	return *moves
 }
@@ -397,14 +438,12 @@ var rookDirections = []Point{
 func newRook(color int, moved bool) *Rook {
 	return &Rook{
 		Allegiant{color},
-        Disableable{false},
 		moved,
 	}
 }
 
 type Rook struct {
 	Allegiant
-    Disableable
 	moved bool
 }
 
@@ -412,16 +451,8 @@ func (r *Rook) print() string {
 	return "R"
 }
 
-func (r *Rook) copy() Piece {
-	return &Rook{
-		Allegiant{r.color},
-        Disableable{r.disabled},
-		r.moved,
-	}
-}
-
-func (r *Rook) setMoved() {
-    r.moved = true
+func (r *Rook) copy() (Piece, error) {
+    return PR_Instance.get(r.color, PR_ROOK_M)
 }
 
 func (r *Rook) getMoved() bool {
@@ -434,9 +465,6 @@ func (r *Rook) getValue() int {
 
 func (r *Rook) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
-    if r.disabled {
-        return *moves
-    }
 	r.addDirections(b, fromLocation, moves)
 	return *moves
 }
@@ -461,27 +489,19 @@ var queenDirections = []Point{
 func newQueen(color int) *Queen {
 	return &Queen{
 		Allegiant{color},
-        Disableable{false},
 	}
 }
 
 type Queen struct {
 	Allegiant
-    Disableable
 }
 
 func (q *Queen) print() string {
 	return "Q"
 }
 
-func (q *Queen) copy() Piece {
-	return &Queen{
-		Allegiant{q.color},
-        Disableable{q.disabled},
-	}
-}
-
-func (q *Queen) setMoved() {
+func (q *Queen) copy() (Piece, error) {
+    return PR_Instance.get(q.color, PR_QUEEN)
 }
 
 func (q *Queen) getMoved() bool {
@@ -494,9 +514,6 @@ func (q *Queen) getValue() int {
 
 func (q *Queen) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
-    if q.disabled {
-        return *moves
-    }
 	q.addDirections(b, fromLocation, moves)
 	return *moves
 }
@@ -537,34 +554,35 @@ func newKing(color int, moved bool, xDir int, yDir int) *King {
 
 	return &King{
 		Allegiant{color},
-        Disableable{false},
 		moved,
 		castles,
+        Point{xDir, yDir},
 	}
 }
 
 type King struct {
 	Allegiant
-    Disableable
 	moved   bool
 	castles []*CastleDirection
+    direction Point
 }
 
 func (k *King) print() string {
 	return "K"
 }
 
-func (k *King) copy() Piece {
-	return &King{
-		Allegiant{k.color},
-        Disableable{k.disabled},
-		k.moved,
-		k.castles,
-	}
-}
+func (k *King) copy() (Piece, error) {
+    if k.direction.x == 1 {
+        return PR_Instance.get(k.color, PR_KING_R)
+    } else if k.direction.x == -1 {
+        return PR_Instance.get(k.color, PR_KING_L)
+    } else if k.direction.y == 1 {
+        return PR_Instance.get(k.color, PR_KING_U)
+    } else if k.direction.y == -1 {
+        return PR_Instance.get(k.color, PR_KING_D)
+    }
 
-func (k *King) setMoved() {
-    k.moved = true
+    return nil, fmt.Errorf("invalid direction")
 }
 
 func (k *King) getMoved() bool {
@@ -577,9 +595,6 @@ func (k *King) getValue() int {
 
 func (k *King) moves(b Board, fromLocation Point) []Move {
 	moves := &[]Move{}
-    if k.disabled {
-        return *moves
-    }
 	k.addSimples(b, fromLocation, moves)
 	k.addCastles(b, fromLocation, moves)
 	return *moves
@@ -722,4 +737,3 @@ func (k *King) addCastles(b Board, fromLocation Point, moves *[]Move) {
 		}
 	}
 }
-

@@ -105,8 +105,7 @@ func Test_SimpleMove(t *testing.T) {
 	en := EnPassant{}
 
 	board.On("getPiece", Point{0, 0}).Return(piece, true)
-	piece.On("copy").Return(newPiece)
-    newPiece.On("setMoved").Return(nil)
+	piece.On("copy").Return(newPiece, nil)
 	board.On("getPiece", Point{1, 1}).Return(capturedPiece, true)
 	board.On("getEnPassant", white).Return(en, nil)
 	piece.On("getColor").Return(white)
@@ -143,8 +142,7 @@ func Test_RevealEnPassantMove(t *testing.T) {
 	en := EnPassant{}
 
 	board.On("getPiece", Point{0, 0}).Return(piece, true)
-	piece.On("copy").Return(newPiece)
-    newPiece.On("setMoved").Return(nil)
+	piece.On("copy").Return(newPiece, nil)
 	board.On("getPiece", Point{2, 2}).Return(capturedPiece, true)
 	board.On("getEnPassant", white).Return(en, nil)
 	piece.On("getColor").Return(white)
@@ -182,8 +180,7 @@ func Test_CaptureEnPassantMove(t *testing.T) {
 	encPiece := &MockPiece{}
 
 	board.On("getPiece", Point{0, 0}).Return(piece, true)
-    piece.On("copy").Return(newPiece)
-    newPiece.On("setMoved").Return(nil)
+    piece.On("copy").Return(newPiece, nil)
 	board.On("getPiece", Point{1, 1}).Return(capturedPiece, true)
 	board.On("getEnPassant", white).Return(en, nil)
 	piece.On("getColor").Return(white)
@@ -229,10 +226,8 @@ func Test_CastleMove(t *testing.T) {
 
 	board.On("getPiece", Point{0, 0}).Return(king, true)
 	board.On("getPiece", Point{1, 1}).Return(rook, true)
-	king.On("copy").Return(newKing)
-	rook.On("copy").Return(newRook)
-    newKing.On("setMoved").Return(nil)
-    newRook.On("setMoved").Return(nil)
+	king.On("copy").Return(newKing, nil)
+	rook.On("copy").Return(newRook, nil)
 	board.On("getEnPassant", white).Return(en, nil)
 	king.On("getColor").Return(white)
     board.On("getVulnerables", white).Return([]Point{{5, 5}}, nil)
@@ -275,8 +270,7 @@ func Test_PromotionMove(t *testing.T) {
     queen := &MockPiece{}
 
 	board.On("getPiece", Point{0, 0}).Return(piece, true)
-	piece.On("copy").Return(newPiece)
-    newPiece.On("setMoved").Return(nil)
+	piece.On("copy").Return(newPiece, nil)
 	board.On("getPiece", Point{1, 1}).Return(capturedPiece, true)
 	board.On("getEnPassant", white).Return(en, nil)
 	piece.On("getColor").Return(white)

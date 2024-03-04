@@ -51,6 +51,11 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
         return nil, fmt.Errorf("invalid number of players")
     }
 
+    playersDisabled := make([]bool, numberOfPlayers)
+    for p := range playersDisabled {
+        playersDisabled[p] = false
+    }
+
     pieces := make([][]Piece, boardSize.y)
     for p := range pieces {
         pieces[p] = make([]Piece, boardSize.x)
@@ -84,6 +89,7 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
 	return &SimpleBoard{
         size: boardSize,
         players: numberOfPlayers,
+        playersDisabled: playersDisabled,
 		pieces: pieces,
         disabledLocations: disabledLocations,
         kingLocations: kingLocations,
@@ -99,6 +105,7 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
 type SimpleBoard struct {
     size Point
     players int
+    playersDisabled []bool
 	pieces [][]Piece
     disabledLocations [][]bool
     kingLocations []Point
@@ -115,15 +122,7 @@ func (b *SimpleBoard) disablePieces(color int, disable bool) error {
         return fmt.Errorf("invalid color")
     }
 
-    for _, pieceLocation := range b.pieceLocations[color] {
-        piece, ok := b.getPiece(pieceLocation)
-        if !ok {
-            continue
-        }
-
-        piece.setDisabled(disable)
-    }
-
+    b.playersDisabled[color] = disable
     return nil
 }
 
@@ -381,6 +380,10 @@ func (b *SimpleBoard) CalculateMoves() error {
                 continue
             }
 
+            if b.playersDisabled[piece.getColor()] {
+                continue
+            }
+
             moves := piece.moves(b, fromLocation)
             for _, move := range moves {
                 action := move.getAction()
@@ -454,7 +457,7 @@ func (b *SimpleBoard) State() *BoardData {
     for y, row := range b.pieces {
         for x, piece := range row {
             if piece != nil {
-                disabled := piece.getDisabled()
+                disabled := b.playersDisabled[piece.getColor()]
                 pieces = append(pieces, &PieceData{
                     T: piece.print(),
                     C: piece.getColor(),
@@ -537,11 +540,15 @@ func (b *SimpleBoard) copy() (*SimpleBoard, error) {
         return nil, err
     }
 
+    for color, disabled := range b.playersDisabled {
+        simpleBoard.playersDisabled[color] = disabled
+    }
+
     for y, row := range b.pieces {
         for x := range row {
             piece := b.pieces[y][x]
             if piece != nil {
-                simpleBoard.pieces[y][x] = piece.copy()
+                simpleBoard.pieces[y][x] = piece
             }
         }
     }
@@ -600,7 +607,7 @@ func (b *SimpleBoard) UniqueString() string {
                 counter = 0
             }
 
-            if piece.getDisabled() {
+            if b.playersDisabled[piece.getColor()] {
                 builder.WriteString("d")
                 continue
             }

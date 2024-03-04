@@ -489,6 +489,7 @@ func Test_CalculateMoves_promotion(t *testing.T) {
     assert.Nil(t, err)
 
     b.setPiece(Point{7, 6}, newPawn(white, true, 0, 1))
+    b.setPiece(Point{7, 6}, newPawn(white, true, 0, 1))
     b.setPiece(Point{0, 0}, newKing(white, false, 0, 1))
     b.setPiece(Point{0, 7}, newKing(black, false, 0, -1))
 
@@ -526,7 +527,6 @@ func Test_CalculateMoves_promotion(t *testing.T) {
 }
 
 // TODO add en passant stuff to the unique string
-// TODO use shortened color names for the unique string
 func Test_MinimumString_Default(t *testing.T) {
     b, err := createSimpleBoardWithDefaultPieceLocations()
     assert.Nil(t, err)
