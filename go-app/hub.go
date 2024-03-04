@@ -34,6 +34,8 @@ type Hub struct {
 }
 
 func newTwoPlayerHub() *Hub {
+    black := 1
+
     game, err := chess.NewSimpleGame()
     if err != nil {
         panic(err)
@@ -51,7 +53,7 @@ func newTwoPlayerHub() *Hub {
     // TODO create another function for hubs with bots
     // TODO assign the player the colors that the bot does not have
     // TODO make undo/redo work with bots by undoing/redoing until the player's turn
-    botClient, err := newBotClient(hub, game, []string{"black"})
+    botClient, err := newBotClient(hub, game, []int{black})
     if err != nil {
         panic(err)
     }

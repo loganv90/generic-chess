@@ -51,7 +51,10 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation Point, toLocat
 		return nil, err
 	}
 
-    vulnerables := b.getVulnerables(piece.getColor())
+    vulnerables, err := b.getVulnerables(piece.getColor())
+    if err != nil {
+        return nil, err
+    }
 
 	return &SimpleMove{
 		Action{
@@ -86,7 +89,10 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
 		return nil, err
 	}
 
-    vulnerables := b.getVulnerables(piece.getColor())
+    vulnerables, err := b.getVulnerables(piece.getColor())
+    if err != nil {
+        return nil, err
+    }
 
 	newEn := EnPassant{
         target: target,
@@ -127,7 +133,10 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
 		return nil, err
 	}
     
-    vulnerables := b.getVulnerables(piece.getColor())
+    vulnerables, err := b.getVulnerables(piece.getColor())
+    if err != nil {
+        return nil, err
+    }
 
 	encs := []EnPassantCapture{}
     possibleEnPassant, err := b.possibleEnPassant(piece.getColor(), toLocation)
@@ -182,7 +191,10 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocat
 		return nil, err
 	}
 
-    vulnerables := b.getVulnerables(king.getColor())
+    vulnerables, err := b.getVulnerables(king.getColor())
+    if err != nil {
+        return nil, err
+    }
 
 	return &CastleMove{
 		Action{
@@ -262,7 +274,7 @@ func (s *SimpleMove) execute() error {
 	}
 
     s.b.setVulnerables(s.piece.getColor(), []Point{})
-	s.b.clearEnPassant(s.piece.getColor())
+	s.b.setEnPassant(s.piece.getColor(), EnPassant{Point{-1, -1}, Point{-1, -1}})
 
 	return nil
 }
@@ -365,7 +377,7 @@ func (c *CaptureEnPassantMove) execute() error {
 	}
 
     c.b.setVulnerables(c.piece.getColor(), []Point{})
-	c.b.clearEnPassant(c.piece.getColor())
+	c.b.setEnPassant(c.piece.getColor(), EnPassant{Point{-1, -1}, Point{-1, -1}})
 
 	return nil
 }
@@ -433,7 +445,7 @@ func (c *CastleMove) execute() error {
 	}
 
     c.b.setVulnerables(c.king.getColor(), c.newVulnerables)
-	c.b.clearEnPassant(c.king.getColor())
+	c.b.setEnPassant(c.king.getColor(), EnPassant{Point{-1, -1}, Point{-1, -1}})
 
 	return nil
 }

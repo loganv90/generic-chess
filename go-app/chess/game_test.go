@@ -30,11 +30,11 @@ func Test_UndoAndRedo(t *testing.T) {
 	expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |
+| R 1        | N 1        | B 1        | Q 1        | K 1        | B 1        | N 1        | R 1        |
 |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |
+| P 1        | P 1        | P 1        | P 1        | P 1        | P 1        | P 1        | P 1        |
 |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
@@ -54,11 +54,11 @@ func Test_UndoAndRedo(t *testing.T) {
 |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    | P white    | P white    | P white    | P white    |
+| P 0        | P 0        | P 0        | P 0        | P 0        | P 0        | P 0        | P 0        |
 |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
+| R 0        | N 0        | B 0        | Q 0        | K 0        | B 0        | N 0        | R 0        |
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
@@ -77,11 +77,11 @@ func Test_UndoAndRedo(t *testing.T) {
 	expectedPrintedBoard = strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |
+| R 1        | N 1        | B 1        | Q 1        | K 1        | B 1        | N 1        | R 1        |
 |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    | P black    |            | P black    | P black    | P black    |
+| P 1        | P 1        | P 1        | P 1        |            | P 1        | P 1        | P 1        |
 |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
@@ -89,11 +89,11 @@ func Test_UndoAndRedo(t *testing.T) {
 |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            | P black    |            |            |            |
+|            |            |            |            | P 1        |            |            |            |
 |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            | P white    |            |            |            |
+|            |            |            |            | P 0        |            |            |            |
 |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
@@ -101,11 +101,11 @@ func Test_UndoAndRedo(t *testing.T) {
 |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |
+| P 0        | P 0        | P 0        | P 0        |            | P 0        | P 0        | P 0        |
 |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
+| R 0        | N 0        | B 0        | Q 0        | K 0        | B 0        | N 0        | R 0        |
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
@@ -113,17 +113,20 @@ func Test_UndoAndRedo(t *testing.T) {
 }
 
 func Test_CastleWhenBlocked(t *testing.T) {
-    b, err := newSimpleBoard(Point{4, 4})
+    white := 0
+    black := 1
+
+    b, err := newSimpleBoard(Point{4, 4}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{1, 3}, newPawn("white", false, 0, -1))
-    b.setPiece(Point{2, 3}, newKing("white", false, 0, -1))
-    b.setPiece(Point{3, 3}, newRook("white", false))
-    b.setPiece(Point{0, 0}, newKing("black", false, 0, 1))
+    b.setPiece(Point{1, 3}, newPawn(white, false, 0, -1))
+    b.setPiece(Point{2, 3}, newKing(white, false, 0, -1))
+    b.setPiece(Point{3, 3}, newRook(white, false))
+    b.setPiece(Point{0, 0}, newKing(black, false, 0, 1))
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}})
+    p, err := newSimplePlayerCollection(2)
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -142,7 +145,7 @@ func Test_CastleWhenBlocked(t *testing.T) {
     expectedPrintedBoard := strings.Trim(`
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
-| K black    |            |            |            |
+| K 1        |            |            |            |
 |         0y |         0y |         0y |         0y |
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
@@ -154,7 +157,7 @@ func Test_CastleWhenBlocked(t *testing.T) {
 |         2y |         2y |         2y |         2y |
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
-|            | P white    | K white    | R white    |
+|            | P 0        | K 0        | R 0        |
 |         3y |         3y |         3y |         3y |
 +---------------------------------------------------+
 	`, " \t\n") + "\n"
@@ -162,15 +165,18 @@ func Test_CastleWhenBlocked(t *testing.T) {
 }
 
 func Test_CastleCanUndo(t *testing.T) {
-    b, err := newSimpleBoard(Point{4, 4})
+    white := 0
+    black := 1
+
+    b, err := newSimpleBoard(Point{4, 4}, 2)
     assert.Nil(t, err)
-    b.setPiece(Point{2, 3}, newKing("white", false, 0, -1))
-    b.setPiece(Point{3, 3}, newRook("white", false))
-    b.setPiece(Point{0, 0}, newKing("black", false, 0, 1))
+    b.setPiece(Point{2, 3}, newKing(white, false, 0, -1))
+    b.setPiece(Point{3, 3}, newRook(white, false))
+    b.setPiece(Point{0, 0}, newKing(black, false, 0, 1))
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}})
+    p, err := newSimplePlayerCollection(2)
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -192,7 +198,7 @@ func Test_CastleCanUndo(t *testing.T) {
     expectedPrintedBoard := strings.Trim(`
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
-| K black    |            |            |            |
+| K 1        |            |            |            |
 |         0y |         0y |         0y |         0y |
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
@@ -204,7 +210,7 @@ func Test_CastleCanUndo(t *testing.T) {
 |         2y |         2y |         2y |         2y |
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
-|            |            | K white    | R white    |
+|            |            | K 0        | R 0        |
 |         3y |         3y |         3y |         3y |
 +---------------------------------------------------+
 	`, " \t\n") + "\n"
@@ -212,6 +218,8 @@ func Test_CastleCanUndo(t *testing.T) {
 }
 
 func Test_CapturePieceGivingCheck(t *testing.T) {
+    white := 0
+
 	game, err := NewSimpleFourPlayerGame()
 	assert.Nil(t, err)
 
@@ -236,12 +244,14 @@ func Test_CapturePieceGivingCheck(t *testing.T) {
     err = game.Execute(6, 0, 12, 6, "") // black queen move
     assert.Nil(t, err)
 
-    moves, err := game.Moves("white")
+    moves, err := game.Moves(white)
     assert.Nil(t, err)
     assert.Equal(t, 2, len(moves))
 }
 
 func Test_TwoPlayerCheckmate(t *testing.T) {
+    white := 0
+
     game, err := NewSimpleGame()
     assert.Nil(t, err)
 
@@ -265,27 +275,29 @@ func Test_TwoPlayerCheckmate(t *testing.T) {
 
     state, err := game.State()
     assert.Nil(t, err)
-    assert.Equal(t, "white", state.CurrentPlayer)
-    assert.Equal(t, "white", state.WinningPlayer)
+    assert.Equal(t, white, state.CurrentPlayer)
+    assert.Equal(t, white, state.WinningPlayer)
 
     err = game.Undo()
     assert.Nil(t, err)
 
     state, err = game.State()
     assert.Nil(t, err)
-    assert.Equal(t, "white", state.CurrentPlayer)
-    assert.Equal(t, "", state.WinningPlayer)
+    assert.Equal(t, white, state.CurrentPlayer)
+    assert.Equal(t, -1, state.WinningPlayer)
 
     err = game.Redo()
     assert.Nil(t, err)
 
-    moves, err := game.Moves("white")
+    moves, err := game.Moves(white)
     assert.Nil(t, err)
     err = game.Execute(moves[0].XFrom, moves[0].YFrom, moves[0].XTo, moves[0].YTo, moves[0].Promotion)
     assert.NotNil(t, err)
 }
 
 func Test_FourPlayerCheckmate(t *testing.T) {
+    white := 0
+
     game, err := NewSimpleFourPlayerGame()
     assert.Nil(t, err)
 
@@ -341,39 +353,43 @@ func Test_FourPlayerCheckmate(t *testing.T) {
 
     state, err := game.State()
     assert.Nil(t, err)
-    assert.Equal(t, "white", state.CurrentPlayer)
-    assert.Equal(t, "white", state.WinningPlayer)
+    assert.Equal(t, white, state.CurrentPlayer)
+    assert.Equal(t, white, state.WinningPlayer)
 
     err = game.Undo()
     assert.Nil(t, err)
 
     state, err = game.State()
     assert.Nil(t, err)
-    assert.Equal(t, "white", state.CurrentPlayer)
-    assert.Equal(t, "", state.WinningPlayer)
+    assert.Equal(t, white, state.CurrentPlayer)
+    assert.Equal(t, -1, state.WinningPlayer)
 
     err = game.Redo()
     assert.Nil(t, err)
 
-    moves, err := game.Moves("white")
+    moves, err := game.Moves(white)
     assert.Nil(t, err)
     err = game.Execute(moves[0].XFrom, moves[0].YFrom, moves[0].XTo, moves[0].YTo, moves[0].Promotion)
     assert.NotNil(t, err)
 }
 
 func Test_DisabledPieces(t *testing.T) {
-    b, err := newSimpleBoard(Point{8, 8})
+    white := 0
+    black := 1
+    gray := 2
+
+    b, err := newSimpleBoard(Point{8, 8}, 3)
     assert.Nil(t, err)
-    b.setPiece(Point{0, 0}, newKing("white", false, 0, 1))
-    b.setPiece(Point{7, 0}, newKing("black", false, 0, 1))
-    b.setPiece(Point{4, 0}, newKing("gray", false, 0, 1))
-    b.setPiece(Point{1, 7}, newQueen("black"))
-    b.setPiece(Point{6, 6}, newQueen("white"))
-    b.setPiece(Point{6, 7}, newQueen("white"))
+    b.setPiece(Point{0, 0}, newKing(white, false, 0, 1))
+    b.setPiece(Point{7, 0}, newKing(black, false, 0, 1))
+    b.setPiece(Point{4, 0}, newKing(gray, false, 0, 1))
+    b.setPiece(Point{1, 7}, newQueen(black))
+    b.setPiece(Point{6, 6}, newQueen(white))
+    b.setPiece(Point{6, 7}, newQueen(white))
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}, {"gray", true}})
+    p, err := newSimplePlayerCollection(3)
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -394,22 +410,26 @@ func Test_DisabledPieces(t *testing.T) {
 
     state, err := game.State()
     assert.Nil(t, err)
-    assert.Equal(t, "", state.WinningPlayer)
+    assert.Equal(t, -1, state.WinningPlayer)
     assert.Equal(t, false, state.GameOver)
 }
 
 func Test_Stalemate(t *testing.T) {
-    b, err := newSimpleBoard(Point{8, 8})
+    white := 0
+    black := 1
+    gray := 2
+
+    b, err := newSimpleBoard(Point{8, 8}, 3)
     assert.Nil(t, err)
-    b.setPiece(Point{0, 0}, newKing("white", false, 0, 1))
-    b.setPiece(Point{7, 0}, newKing("black", false, 0, 1))
-    b.setPiece(Point{4, 0}, newKing("gray", false, 0, 1))
-    b.setPiece(Point{6, 6}, newQueen("white"))
-    b.setPiece(Point{6, 7}, newQueen("white"))
+    b.setPiece(Point{0, 0}, newKing(white, false, 0, 1))
+    b.setPiece(Point{7, 0}, newKing(black, false, 0, 1))
+    b.setPiece(Point{4, 0}, newKing(gray, false, 0, 1))
+    b.setPiece(Point{6, 6}, newQueen(white))
+    b.setPiece(Point{6, 7}, newQueen(white))
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}, {"gray", true}})
+    p, err := newSimplePlayerCollection(3)
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -426,7 +446,7 @@ func Test_Stalemate(t *testing.T) {
 
     state, err := game.State()
     assert.Nil(t, err)
-    assert.Equal(t, "", state.WinningPlayer)
+    assert.Equal(t, -1, state.WinningPlayer)
     assert.Equal(t, true, state.GameOver)
 }
 
@@ -434,125 +454,11 @@ func Test_NewSimpleGame(t *testing.T) {
 	game, err := NewSimpleGame()
 	assert.Nil(t, err)
 
-	actualPrintedBoard := game.Print()
-	expectedPrintedBoard := strings.Trim(`
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |
-|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |
-|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    | P white    | P white    | P white    | P white    |
-|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
-|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
-+-------------------------------------------------------------------------------------------------------+
-	`, " \t\n") + "\n"
-	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
-
 	err = game.Execute(4, 6, 4, 4, "") // white pawn advance
 	assert.Nil(t, err)
 
-	actualPrintedBoard = game.Print()
-	expectedPrintedBoard = strings.Trim(`
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |
-|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |
-|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            | P white    |            |            |            |
-|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |
-|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
-|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
-+-------------------------------------------------------------------------------------------------------+
-	`, " \t\n") + "\n"
-	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
-
 	err = game.Execute(1, 0, 2, 2, "") // black knight advance
 	assert.Nil(t, err)
-
-	actualPrintedBoard = game.Print()
-	expectedPrintedBoard = strings.Trim(`
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R black    |            | B black    | Q black    | K black    | B black    | N black    | R black    |
-|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |
-|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | N black    |            |            |            |            |            |
-|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            | P white    |            |            |            |
-|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |
-|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
-|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
-+-------------------------------------------------------------------------------------------------------+
-	`, " \t\n") + "\n"
-	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
 	err = game.Execute(4, 4, 4, 3, "") // white pawn advance
 	assert.Nil(t, err)
@@ -562,44 +468,6 @@ func Test_NewSimpleGame(t *testing.T) {
 
 	err = game.Execute(4, 3, 3, 2, "") // white pawn capture en passant
 	assert.Nil(t, err)
-
-	actualPrintedBoard = game.Print()
-	expectedPrintedBoard = strings.Trim(`
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R black    |            | B black    | Q black    | K black    | B black    | N black    | R black    |
-|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    |            | P black    | P black    | P black    | P black    |
-|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | N black    | P white    |            |            |            |            |
-|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            |            |            |
-|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |
-|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
-|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
-+-------------------------------------------------------------------------------------------------------+
-	`, " \t\n") + "\n"
-	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
 	err = game.Execute(2, 0, 6, 4, "") // black bishop advance
 	assert.Nil(t, err)
@@ -616,84 +484,8 @@ func Test_NewSimpleGame(t *testing.T) {
 	err = game.Execute(4, 0, 0, 0, "") // black castle
 	assert.Nil(t, err)
 
-	actualPrintedBoard = game.Print()
-	expectedPrintedBoard = strings.Trim(`
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | K black    | R black    |            | B black    | N black    | R black    |
-|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    | Q black    | P black    | P black    | P black    | P black    |
-|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | N black    | P white    |            |            |            |            |
-|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            | B white    |            |            |            |            |            |            |
-|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            | B black    |            |
-|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            | N white    |            |            |
-|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |
-|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    | K white    |            |            | R white    |
-|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
-+-------------------------------------------------------------------------------------------------------+
-	`, " \t\n") + "\n"
-	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
-
 	err = game.Execute(4, 7, 7, 7, "") // white castle
 	assert.Nil(t, err)
-
-	actualPrintedBoard = game.Print()
-	expectedPrintedBoard = strings.Trim(`
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | K black    | R black    |            | B black    | N black    | R black    |
-|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    | Q black    | P black    | P black    | P black    | P black    |
-|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | N black    | P white    |            |            |            |            |
-|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            | B white    |            |            |            |            |            |            |
-|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            | B black    |            |
-|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            | N white    |            |            |
-|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |
-|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
-+-------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    |            | R white    | K white    |            |
-|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
-+-------------------------------------------------------------------------------------------------------+
-	`, " \t\n") + "\n"
-	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
     err = game.Execute(0, 1, 0, 2, "") // black pawn advance
     assert.Nil(t, err)
@@ -707,39 +499,39 @@ func Test_NewSimpleGame(t *testing.T) {
     err = game.Execute(4, 1, 4, 0, "N") // white pawn capture
     assert.Nil(t, err)
 
-    actualPrintedBoard = game.Print()
-    expectedPrintedBoard = strings.Trim(`
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | K black    | R black    | N white    | B black    | N black    | R black    |
+|            |            | K 1        | R 1        | N 0        | B 1        | N 1        | R 1        |
 |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            | P black    | P black    | Q black    |            | P black    | P black    | P black    |
+|            | P 1        | P 1        | Q 1        |            | P 1        | P 1        | P 1        |
 |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | N black    |            |            |            |            |            |
+|            |            | N 1        |            |            |            |            |            |
 |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | B white    |            |            |            |            |            |            |
+| P 1        | B 0        |            |            |            |            |            |            |
 |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            |            | B black    |            |
+|            |            |            |            |            |            | B 1        |            |
 |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            | N white    |            |            |
+|            |            |            |            |            | N 0        |            |            |
 |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |
+| P 0        | P 0        | P 0        | P 0        |            | P 0        | P 0        | P 0        |
 |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    |            | R white    | K white    |            |
+| R 0        | N 0        | B 0        | Q 0        |            | R 0        | K 0        |            |
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
@@ -749,68 +541,6 @@ func Test_NewSimpleGame(t *testing.T) {
 func Test_NewSimpleFourPlayerGame(t *testing.T) {
 	game, err := NewSimpleFourPlayerGame()
 	assert.Nil(t, err)
-
-	actualPrintedBoard := game.Print()
-	expectedPrintedBoard := strings.Trim(`
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            |            |            |            |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| R red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | R blue     |
-|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| N red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | N blue     |
-|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| B red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | B blue     |
-|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| Q red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | Q blue     |
-|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| K red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | K blue     |
-|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| B red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | B blue     |
-|         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| N red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | N blue     |
-|         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| R red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | R blue     |
-|        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            |            |            |            |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P white    | P white    | P white    | P white    | P white    | P white    | P white    | P white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-	`, " \t\n") + "\n"
-	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
     err = game.Execute(7, 12, 7, 10, "") // white pawn advance
     assert.Nil(t, err)
@@ -823,68 +553,6 @@ func Test_NewSimpleFourPlayerGame(t *testing.T) {
 
     err = game.Execute(12, 7, 10, 7, "") // blue pawn advance
     assert.Nil(t, err)
-
-    actualPrintedBoard = game.Print()
-    expectedPrintedBoard = strings.Trim(`
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R black    | N black    | B black    | Q black    | K black    | B black    | N black    | R black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P black    | P black    | P black    | P black    |            | P black    | P black    | P black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            |            |            |            |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| R red      | P red      |            |            |            |            |            | P black    |            |            |            |            | P blue     | R blue     |
-|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| N red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | N blue     |
-|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| B red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | B blue     |
-|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| Q red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | Q blue     |
-|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| K red      |            |            | P red      |            |            |            |            |            |            | P blue     |            |            | K blue     |
-|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| B red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | B blue     |
-|         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| N red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | N blue     |
-|         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| R red      | P red      |            |            |            |            |            | P white    |            |            |            |            | P blue     | R blue     |
-|        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            |            |            |            |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
-|        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |
-+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-	`, " \t\n") + "\n"
-    assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 
     err = game.Execute(8, 13, 6, 11, "") // white bishop move
     assert.Nil(t, err)
@@ -922,63 +590,63 @@ func Test_NewSimpleFourPlayerGame(t *testing.T) {
     err = game.Execute(13, 7, 13, 10, "") // blue castle
     assert.Nil(t, err)
 
-    actualPrintedBoard = game.Print()
-    expectedPrintedBoard = strings.Trim(`
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R black    | N black    | B black    | Q black    |            | R black    | K black    |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R 2        | N 2        | B 2        | Q 2        |            | R 2        | K 2        |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P black    | P black    | P black    | P black    |            | P black    | P black    | P black    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P 2        | P 2        | P 2        | P 2        |            | P 2        | P 2        | P 2        |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            | B black    |            | N black    |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            | B 2        |            | N 2        |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| R red      | P red      |            |            |            |            |            | P black    |            |            |            |            | P blue     | R blue     |
+| R 1        | P 1        |            |            |            |            |            | P 2        |            |            |            |            | P 3        | R 3        |
 |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| N red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | N blue     |
+| N 1        | P 1        |            |            |            |            |            |            |            |            |            |            | P 3        | N 3        |
 |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| B red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | B blue     |
+| B 1        | P 1        |            |            |            |            |            |            |            |            |            |            | P 3        | B 3        |
 |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| Q red      | P red      | B red      |            |            |            |            |            |            |            |            | B blue     | P blue     | Q blue     |
+| Q 1        | P 1        | B 1        |            |            |            |            |            |            |            |            | B 3        | P 3        | Q 3        |
 |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            |            |            | P red      |            |            |            |            |            |            | P blue     |            |            |            |
+|            |            |            | P 1        |            |            |            |            |            |            | P 3        |            |            |            |
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| R red      | P red      | N red      |            |            |            |            |            |            |            |            | N blue     | P blue     | R blue     |
+| R 1        | P 1        | N 1        |            |            |            |            |            |            |            |            | N 3        | P 3        | R 3        |
 |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |         8y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-| K red      | P red      |            |            |            |            |            |            |            |            |            |            | P blue     | K blue     |
+| K 1        | P 1        |            |            |            |            |            |            |            |            |            |            | P 3        | K 3        |
 |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |         9y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|            | P red      |            |            |            |            |            | P white    |            |            |            |            | P blue     |            |
+|            | P 1        |            |            |            |            |            | P 0        |            |            |            |            | P 3        |            |
 |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |        10y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            | B white    |            | N white    |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|            |            |            | B 0        |            | N 0        |            |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |        11y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P white    | P white    | P white    | P white    |            | P white    | P white    | P white    |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| P 0        | P 0        | P 0        | P 0        |            | P 0        | P 0        | P 0        |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |        12y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |         8x |         9x |        10x |        11x |        12x |        13x |
-|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R white    | N white    | B white    | Q white    |            | R white    | K white    |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
+|XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX| R 0        | N 0        | B 0        | Q 0        |            | R 0        | K 0        |            |XXXXXXXXXXXX|XXXXXXXXXXXX|XXXXXXXXXXXX|
 |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |        13y |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"

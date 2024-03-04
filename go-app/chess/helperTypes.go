@@ -5,8 +5,8 @@ type BoardData struct {
     YSize int
     Pieces []*PieceData
     Disabled []*DisabledData
-    CurrentPlayer string
-    WinningPlayer string
+    CurrentPlayer int
+    WinningPlayer int
     GameOver bool
     Check bool
     Checkmate bool
@@ -21,12 +21,12 @@ type Command struct {
 
 type MoveKeyAndScore struct {
     moveKey MoveKey
-    score map[string]int
+    score map[int]int
 }
 
 type PieceData struct {
     T string // Type
-    C string // Color
+    C int // Color
     X int // X position
     Y int // Y position
     D bool // Disabled
@@ -59,7 +59,7 @@ type MoveKey struct {
 }
 
 type Player struct {
-    color string
+    color int
     alive bool
 }
 

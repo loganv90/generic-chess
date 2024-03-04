@@ -1,5 +1,9 @@
 package chess
 
+import (
+    "fmt"
+)
+
 var playerTransitionFactoryInstance = PlayerTransitionFactory(&ConcretePlayerTransitionFactory{})
 
 type PlayerTransitionFactory interface {
@@ -14,55 +18,49 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransitionAsPlayerTransi
 }
 
 func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (*IncrementalTransition, error) {
-    oldCurrent, err := p.getCurrent()
-    if err != nil {
-        return nil, err
-    }
+    oldCurrent, _ := p.getCurrent()
 
-    oldWinner, err := p.getWinner()
-    if err != nil {
-        return nil, err
-    }
+    oldWinner, _ := p.getWinner()
 
     oldGameOver, err := p.getGameOver()
     if err != nil {
         return nil, err
     }
 
-    nextPlayers, err := p.getNext()
+    next, remaining, err := p.getNextAndRemaining()
     if err != nil {
         return nil, err
     }
 
-    var newCurrent string
-    var newWinner string
+    var newCurrent int
+    var newWinner int
     var newGameOver bool
 
     if inStalemate {
         newCurrent = oldCurrent
-        newWinner = ""
+        newWinner = -1
         newGameOver = true
-    } else if len(nextPlayers) < 1 {
+    } else if remaining < 1 {
         newCurrent = oldCurrent
         newWinner = oldWinner
         newGameOver = true
-    } else if len(nextPlayers) == 1 {
-        newCurrent = nextPlayers[0].color
-        newWinner = nextPlayers[0].color
+    } else if remaining == 1 {
+        newCurrent = next
+        newWinner = next
         newGameOver = true
-    } else if len(nextPlayers) == 2 {
+    } else if remaining == 2 {
         if inCheckmate {
-            newCurrent = nextPlayers[0].color
-            newWinner = nextPlayers[0].color
+            newCurrent = next
+            newWinner = next
             newGameOver = true
         } else {
-            newCurrent = nextPlayers[0].color
-            newWinner = ""
+            newCurrent = next
+            newWinner = -1
             newGameOver = false
         }
     } else {
-        newCurrent = nextPlayers[0].color
-        newWinner = ""
+        newCurrent = next
+        newWinner = -1
         newGameOver = false
     }
 
@@ -87,27 +85,27 @@ type PlayerTransition interface {
 type IncrementalTransition struct {
     p PlayerCollection
     b Board
-    oldCurrent string
-    newCurrent string
-    oldWinner string
-    newWinner string
+    oldCurrent int
+    newCurrent int
+    oldWinner int
+    newWinner int
     oldGameOver bool
     newGameOver bool
     eliminated bool
 }
 
 func (s *IncrementalTransition) execute() error {
-    err := s.p.setCurrent(s.newCurrent)
-    if err != nil {
-        return err
+    ok := s.p.setCurrent(s.newCurrent)
+    if !ok {
+        return fmt.Errorf("invalid color")
     }
 
-    err = s.p.setWinner(s.newWinner)
-    if err != nil {
-        return err
+    ok = s.p.setWinner(s.newWinner)
+    if !ok {
+        return fmt.Errorf("invalid color")
     }
 
-    err = s.p.setGameOver(s.newGameOver)
+    err := s.p.setGameOver(s.newGameOver)
     if err != nil {
         return err
     }
@@ -130,17 +128,17 @@ func (s *IncrementalTransition) execute() error {
 }
 
 func (s *IncrementalTransition) undo() error {
-    err := s.p.setCurrent(s.oldCurrent)
-    if err != nil {
-        return err
+    ok := s.p.setCurrent(s.oldCurrent)
+    if !ok {
+        return fmt.Errorf("invalid color")
     }
 
-    err = s.p.setWinner(s.oldWinner)
-    if err != nil {
-        return err
+    ok = s.p.setWinner(s.oldWinner)
+    if !ok {
+        return fmt.Errorf("invalid color")
     }
 
-    err = s.p.setGameOver(s.oldGameOver)
+    err := s.p.setGameOver(s.oldGameOver)
     if err != nil {
         return err
     }

@@ -22,7 +22,7 @@ Responsible for:
 - evaluating a board and returning a score
 */
 type Evaluator interface {
-    eval() (map[string]int, error)
+    eval() ([]int, error)
 }
 
 func newSimpleEvaluator(b Board, p PlayerCollection) (*SimpleEvaluator, error) {
@@ -37,24 +37,19 @@ type SimpleEvaluator struct {
     p PlayerCollection
 }
 
-func (e *SimpleEvaluator) eval() (map[string]int, error) {
+func (e *SimpleEvaluator) eval() ([]int, error) {
     gameOver, err := e.p.getGameOver()
     if err != nil {
         return nil, err
     }
 
-    winner, err := e.p.getWinner()
-    if err != nil {
-        return nil, err
-    }
-
-    scores := map[string]int{}
-    for _, player := range e.p.getPlayerColors() {
-        scores[player] = 0
-    }
+    players := e.p.getPlayers()
+    scores := make([]int, players)
 
     if gameOver {
-        if winner == "" {
+        winner, _ := e.p.getWinner()
+
+        if winner < 0 || winner >= players {
             return scores, nil
         } else {
             for player := range scores {
@@ -67,8 +62,7 @@ func (e *SimpleEvaluator) eval() (map[string]int, error) {
     }
 
     pieceLocations := e.b.getPieceLocations()
-
-    materialScore, err := e.evalMaterial(pieceLocations)
+    materialScores, err := e.evalMaterial(pieceLocations)
     if err != nil {
         return nil, err
     }
@@ -79,15 +73,19 @@ func (e *SimpleEvaluator) eval() (map[string]int, error) {
     // Mobility comparison
     // we need: the moves each piece can make including attacking ally pieces
 
-    return materialScore, nil
+    for player := range scores {
+        scores[player] += materialScores[player]
+    }
+
+    return scores, nil
 }
 
-func (e *SimpleEvaluator) evalMaterial(pieceLocations map[string][]Point) (map[string]int, error) {
+func (e *SimpleEvaluator) evalMaterial(pieceLocations [][]Point) ([]int, error) {
     // idea is to compare our material to the leading player's material
 
     leadingMaterial := 0
-    material := map[string]int{}
-    scores := map[string]int{}
+    material := make([]int, len(pieceLocations))
+    scores := make([]int, len(pieceLocations))
 
     for color, locations := range pieceLocations {
         materialCount := 0

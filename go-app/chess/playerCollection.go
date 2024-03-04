@@ -9,141 +9,100 @@ Responsible for:
 - keeping track of the players in the game
 */
 type PlayerCollection interface {
-    getNext() ([]Player, error)
-    getPlayerColors() []string
-    eliminate(color string) error
-    restore(color string) error
-    getCurrent() (string, error)
-    setCurrent(color string) error
-    getWinner() (string, error)
-    setWinner(color string) error
+    eliminate(color int) error
+    restore(color int) error
+    getCurrent() (int, bool)
+    setCurrent(color int) bool
+    getWinner() (int, bool)
+    setWinner(color int) bool
     getGameOver() (bool, error)
     setGameOver(gameOver bool) error
+
+    getNextAndRemaining() (int, int, error)
+    getPlayers() int
 
     GetTransition(b Board, inCheckmate bool, inStalemate bool) (PlayerTransition, error)
     Copy() (PlayerCollection, error)
 }
 
-func newSimplePlayerCollection(players []Player) (*SimplePlayerCollection, error) {
-    if len(players) <= 1 {
+func newSimplePlayerCollection(numberOfPlayers int) (*SimplePlayerCollection, error) {
+    if numberOfPlayers <= 0 {
         return nil, fmt.Errorf("not enough players")
     }
 
-    playerMap := map[string]int{}
-    for i, p := range players {
-        if _, ok := playerMap[p.color]; ok {
-            return nil, fmt.Errorf("duplicate player color")
-        }
-
-        playerMap[p.color] = i
+    playersAlive := make([]bool, numberOfPlayers)
+    for i := range playersAlive {
+        playersAlive[i] = true
     }
 
 	return &SimplePlayerCollection{
-        players: players,
-        playerMap: playerMap,
+        players: numberOfPlayers,
+        playersAlive: playersAlive,
         currentPlayer: 0,
         winningPlayer: -1,
+        gameOver: false,
 	}, nil
 }
 
 type SimplePlayerCollection struct {
-    players []Player
-    playerMap map[string]int
+    players int
+    playersAlive []bool
     currentPlayer int
     winningPlayer int
     gameOver bool
 }
 
-func (s *SimplePlayerCollection) getNext() ([]Player, error) {
-    next := []Player{}
-    currentPlayer := s.currentPlayer
-
-    for {
-        currentPlayer = s.incrementOnce(currentPlayer)
-
-        if s.players[currentPlayer].alive {
-            next = append(next, s.players[currentPlayer])
-        }
-
-        if s.currentPlayer == currentPlayer {
-            break
-        }
+func (s *SimplePlayerCollection) eliminate(color int) error {
+    if s.colorOutOfBounds(color) {
+        return fmt.Errorf("invalid color")
     }
 
-    return next, nil
+    s.playersAlive[color] = false
+    return nil
 }
 
-func (s *SimplePlayerCollection) getPlayerColors() []string {
-    colors := []string{}
-    for _, p := range s.players {
-        colors = append(colors, p.color)
-    }
-    return colors
-}
-
-func (s *SimplePlayerCollection) incrementOnce(start int) int {
-    end := (start + 1) % len(s.players)
-    if end < 0 {
-        end = len(s.players) - 1
-    }
-    return end
-}
-
-func (s *SimplePlayerCollection) eliminate(color string) error {
-    if i, ok := s.playerMap[color]; ok {
-        s.players[i].alive = false
-        return nil
-    } 
-
-    return fmt.Errorf("player not found")
-}
-
-func (s *SimplePlayerCollection) restore(color string) error {
-    if i, ok := s.playerMap[color]; ok {
-        s.players[i].alive = true
-        return nil
-    } 
-
-    return fmt.Errorf("player not found")
-}
-
-func (s *SimplePlayerCollection) getCurrent() (string, error) {
-    if s.currentPlayer < 0 || s.currentPlayer >= len(s.players) {
-        return "", fmt.Errorf("no current player")
+func (s *SimplePlayerCollection) restore(color int) error {
+    if s.colorOutOfBounds(color) {
+        return fmt.Errorf("invalid color")
     }
 
-    return s.players[s.currentPlayer].color, nil
+    s.playersAlive[color] = true
+    return nil
 }
 
-func (s *SimplePlayerCollection) setCurrent(color string) error {
-    if i, ok := s.playerMap[color]; ok {
-        s.currentPlayer = i
-        return nil
+func (s *SimplePlayerCollection) getCurrent() (int, bool) {
+    if s.colorOutOfBounds(s.currentPlayer) {
+        return -1, false
     }
 
-    return fmt.Errorf("player not found")
+    return s.currentPlayer, true
 }
 
-func (s *SimplePlayerCollection) getWinner() (string, error) {
-    if s.winningPlayer < 0 || s.winningPlayer >= len(s.players) {
-        return "", nil
+func (s *SimplePlayerCollection) setCurrent(color int) bool {
+    if s.colorOutOfBounds(color) {
+        return false
     }
 
-    return s.players[s.winningPlayer].color, nil
+    s.currentPlayer = color
+    return true
 }
 
-func (s *SimplePlayerCollection) setWinner(color string) error {
-    if color == "" {
+func (s *SimplePlayerCollection) getWinner() (int, bool) {
+    if s.colorOutOfBounds(s.winningPlayer) {
+        return -1, true
+    }
+
+    return s.winningPlayer, true
+}
+
+func (s *SimplePlayerCollection) setWinner(color int) bool {
+    if s.colorOutOfBounds(color) {
         s.winningPlayer = -1
-        return nil
+        return true
     }
 
-    if i, ok := s.playerMap[color]; ok {
-        s.winningPlayer = i
-        return nil
-    }
-
-    return fmt.Errorf("player not found")
+    s.winningPlayer = color
+    return true
 }
 
 func (s *SimplePlayerCollection) getGameOver() (bool, error) {
@@ -155,22 +114,62 @@ func (s *SimplePlayerCollection) setGameOver(gameOver bool) error {
     return nil
 }
 
+func (s *SimplePlayerCollection) getNextAndRemaining() (int, int, error) {
+    currentPlayer := s.currentPlayer
+    for {
+        currentPlayer = s.incrementOnce(currentPlayer)
+
+        if s.playersAlive[currentPlayer] {
+            break
+        }
+
+        if s.currentPlayer == currentPlayer {
+            break
+        }
+    }
+
+    remaining := 0
+    for _, alive := range s.playersAlive {
+        if alive {
+            remaining++
+        }
+    }
+
+    return currentPlayer, remaining, nil
+}
+
+func (s *SimplePlayerCollection) incrementOnce(start int) int {
+    end := (start + 1) % s.players
+    if end < 0 {
+        end = s.players - 1
+    }
+    return end
+}
+
+func (s *SimplePlayerCollection) getPlayers() int {
+    return s.players
+}
+
 func (s *SimplePlayerCollection) GetTransition(b Board, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
     return playerTransitionFactoryInstance.newIncrementalTransition(b, s, inCheckmate, inStalemate)
 }
 
 func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {
-    playerMap := map[string]int{}
-    for k, v := range s.playerMap {
-        playerMap[k] = v
+    playersAlive := make([]bool, s.players)
+    for color, alive := range s.playersAlive {
+        playersAlive[color] = alive
     }
 
     return &SimplePlayerCollection{
         players: s.players,
-        playerMap: playerMap,
+        playersAlive: playersAlive,
         currentPlayer: s.currentPlayer,
         winningPlayer: s.winningPlayer,
         gameOver: s.gameOver,
     }, nil
+}
+
+func (s *SimplePlayerCollection) colorOutOfBounds(color int) bool {
+    return color < 0 || color >= s.players
 }
 

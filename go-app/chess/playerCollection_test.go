@@ -11,49 +11,34 @@ type MockPlayerCollection struct {
 	mock.Mock
 }
 
-func (m *MockPlayerCollection) getNext() ([]Player, error) {
-    args := m.Called()
-
-    if args.Get(0) == nil {
-        return nil, args.Error(1)
-    } else {
-        return args.Get(0).([]Player), args.Error(1)
-    }
-}
-
-func (m *MockPlayerCollection) getPlayerColors() []string {
-    args := m.Called()
-    return args.Get(0).([]string)
-}
-
-func (m *MockPlayerCollection) eliminate(color string) error {
+func (m *MockPlayerCollection) eliminate(color int) error {
     args := m.Called(color)
     return args.Error(0)
 }
 
-func (m *MockPlayerCollection) restore(color string) error {
+func (m *MockPlayerCollection) restore(color int) error {
     args := m.Called(color)
     return args.Error(0)
 }
 
-func (m *MockPlayerCollection) getCurrent() (string, error) {
+func (m *MockPlayerCollection) getCurrent() (int, bool) {
     args := m.Called()
-    return args.String(0), args.Error(1)
+    return args.Int(0), args.Bool(1)
 }
 
-func (m *MockPlayerCollection) setCurrent(color string) error {
+func (m *MockPlayerCollection) setCurrent(color int) bool {
     args := m.Called(color)
-    return args.Error(0)
+    return args.Bool(0)
 }
 
-func (m *MockPlayerCollection) getWinner() (string, error) {
+func (m *MockPlayerCollection) getWinner() (int, bool) {
     args := m.Called()
-    return args.String(0), args.Error(1)
+    return args.Int(0), args.Bool(1)
 }
 
-func (m *MockPlayerCollection) setWinner(color string) error {
+func (m *MockPlayerCollection) setWinner(color int) bool {
     args := m.Called(color)
-    return args.Error(0)
+    return args.Bool(0)
 }
 
 func (m *MockPlayerCollection) getGameOver() (bool, error) {
@@ -66,6 +51,16 @@ func (m *MockPlayerCollection) setGameOver(gameOver bool) error {
     return args.Error(0)
 }
 
+func (m *MockPlayerCollection) getNextAndRemaining() (int, int, error) {
+    args := m.Called()
+    return args.Int(0), args.Int(1), args.Error(2)
+}
+
+func (m *MockPlayerCollection) getPlayers() int {
+    args := m.Called()
+    return args.Int(0)
+}
+
 func (m *MockPlayerCollection) Copy() (PlayerCollection, error) {
     args := m.Called()
     return args.Get(0).(PlayerCollection), args.Error(1)
@@ -76,72 +71,71 @@ func (m *MockPlayerCollection) GetTransition(b Board, inCheckmate bool, inStalem
     return args.Get(0).(PlayerTransition), args.Error(1)
 }
 
-func Test_getNext(t *testing.T) {
-    s, err := newSimplePlayerCollection(
-        []Player{
-            {"white", true},
-            {"black", true},
-            {"blue", true},
-            {"red", true},
-        },
-    )
-    assert.Nil(t, err)
-    playerColor, err := s.getCurrent()
-    assert.Equal(t, "white", playerColor)
-    players, err := s.getNext()
-    assert.Nil(t, err)
-    assert.Equal(t, 4, len(players))
-    assert.Equal(t, "black", players[0].color)
-    assert.Equal(t, "blue", players[1].color)
-    assert.Equal(t, "red", players[2].color)
-    assert.Equal(t, "white", players[3].color)
+func Test_getNextAndRemaining(t *testing.T) {
+    white := 0
+    black := 1
+    blue := 2
+    red := 3
 
-    s, err = newSimplePlayerCollection(
-        []Player{
-            {"white", true},
-            {"black", false},
-            {"blue", true},
-            {"red", false},
-        },
-    )
-    assert.Nil(t, err)
-    playerColor, err = s.getCurrent()
-    assert.Equal(t, "white", playerColor)
-    players, err = s.getNext()
-    assert.Nil(t, err)
-    assert.Equal(t, 2, len(players))
-    assert.Equal(t, "blue", players[0].color)
-    assert.Equal(t, "white", players[1].color)
-
-    s, err = newSimplePlayerCollection(
-        []Player{
-            {"white", false},
-            {"black", false},
-            {"blue", false},
-            {"red", false},
-        },
-    )
-    assert.Nil(t, err)
-    playerColor, err = s.getCurrent()
-    assert.Equal(t, "white", playerColor)
-    players, err = s.getNext()
-    assert.Equal(t, 0, len(players))
+    // all alive
+    s, err := newSimplePlayerCollection(4)
     assert.Nil(t, err)
 
-    s, err = newSimplePlayerCollection(
-        []Player{
-            {"white", false},
-            {"black", false},
-            {"blue", false},
-            {"red", true},
-        },
-    )
+    playerColor, ok := s.getCurrent()
+    assert.Equal(t, true, ok)
+    assert.Equal(t, white, playerColor)
+
+    next, remaining, err := s.getNextAndRemaining()
     assert.Nil(t, err)
-    playerColor, err = s.getCurrent()
-    assert.Equal(t, "white", playerColor)
-    players, err = s.getNext()
+    assert.Equal(t, black, next)
+    assert.Equal(t, 4, remaining)
+
+    // 0 and 2 alive
+    s, err = newSimplePlayerCollection(4)
     assert.Nil(t, err)
-    assert.Equal(t, 1, len(players))
-    assert.Equal(t, "red", players[0].color)
+    s.eliminate(black)
+    s.eliminate(red)
+
+    playerColor, ok = s.getCurrent()
+    assert.Equal(t, true, ok)
+    assert.Equal(t, white, playerColor)
+
+    next, remaining, err = s.getNextAndRemaining()
+    assert.Nil(t, err)
+    assert.Equal(t, blue, next)
+    assert.Equal(t, 2, remaining)
+
+    // none alive
+    s, err = newSimplePlayerCollection(4)
+    assert.Nil(t, err)
+    s.eliminate(white)
+    s.eliminate(black)
+    s.eliminate(blue)
+    s.eliminate(red)
+
+    playerColor, ok = s.getCurrent()
+    assert.Equal(t, true, ok)
+    assert.Equal(t, white, playerColor)
+
+    next, remaining, err = s.getNextAndRemaining()
+    assert.Nil(t, err)
+    assert.Equal(t, 0, next)
+    assert.Equal(t, 0, remaining)
+
+    // 3 alive
+    s, err = newSimplePlayerCollection(4)
+    assert.Nil(t, err)
+    s.eliminate(white)
+    s.eliminate(black)
+    s.eliminate(blue)
+        
+    playerColor, ok = s.getCurrent()
+    assert.Equal(t, true, ok)
+    assert.Equal(t, white, playerColor)
+
+    next, remaining, err = s.getNextAndRemaining()
+    assert.Nil(t, err)
+    assert.Equal(t, red, next)
+    assert.Equal(t, 1, remaining)
 }
 

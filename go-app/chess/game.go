@@ -11,7 +11,7 @@ type Game interface {
 	Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error // called when a player tries to make a move
     State() (*BoardData, error) // called to get the game state
     View(xFrom int, yFrom int) (*PieceState, error) // show valid moves of piece
-    Moves(color string) ([]MoveKey, error) // get all valid moves
+    Moves(color int) ([]MoveKey, error) // get all valid moves
 	Undo() error
 	Redo() error
 	Print() string
@@ -76,20 +76,13 @@ type SimpleGame struct {
 func (s *SimpleGame) State() (*BoardData, error) {
     boardData := s.b.State()
 
-    currentPlayer, err := s.p.getCurrent()
-    if err != nil {
-        return nil, err
-    }
+    currentPlayer, _ := s.p.getCurrent()
 
     boardData.CurrentPlayer = currentPlayer
 
-    winningPlayer, err := s.p.getWinner()
-    if err != nil {
-        return nil, err
-    }
+    winningPlayer, _ := s.p.getWinner()
 
     boardData.WinningPlayer = winningPlayer
-
 
     gameOver, err := s.p.getGameOver()
     if err != nil {
@@ -168,10 +161,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
     }
 
     for {
-        currentPlayer, err := s.p.getCurrent()
-        if err != nil {
-            return err
-        }
+        currentPlayer, _ := s.p.getCurrent()
 
         checkmate, stalemate, err := s.b.CheckmateAndStalemate(currentPlayer)
         if err != nil {
@@ -231,8 +221,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         }, nil
     }
 
-    currentPlayer, err := s.p.getCurrent()
-    if err == nil && currentPlayer == piece.getColor() {
+    currentPlayer, _ := s.p.getCurrent()
+    if currentPlayer == piece.getColor() {
         moves, err := s.b.LegalMovesOfLocation(location)
         if err != nil {
             return &PieceState{
@@ -275,7 +265,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     }
 }
 
-func (s *SimpleGame) Moves(color string) ([]MoveKey, error) {
+func (s *SimpleGame) Moves(color int) ([]MoveKey, error) {
     moveKeys := make([]MoveKey, 0)
     
     moves, err := s.b.LegalMovesOfColor(color)

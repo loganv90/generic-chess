@@ -7,10 +7,10 @@ type CastleDirection struct {
 }
 
 type Allegiant struct {
-	color string
+	color int
 }
 
-func (a *Allegiant) getColor() string {
+func (a *Allegiant) getColor() int {
 	return a.color
 }
 
@@ -27,7 +27,7 @@ func (d *Disableable) getDisabled() bool {
 }
 
 type Piece interface {
-	getColor() string
+	getColor() int
     getValue() int
 	copy() Piece
     setMoved()
@@ -43,7 +43,7 @@ func addDirection(
 	b Board,
 	moves *[]Move,
     direction Point,
-	color string,
+	color int,
 ) {
     currentLocation := fromLocation.add(direction)
 
@@ -81,7 +81,7 @@ func addSimple(
 	b Board,
 	moves *[]Move,
     direction Point,
-	color string,
+	color int,
 ) {
     toLocation := fromLocation.add(direction)
 
@@ -108,7 +108,7 @@ func addSimple(
     }
 }
 
-func newPawn(color string, moved bool, xDir int, yDir int) *Pawn {
+func newPawn(color int, moved bool, xDir int, yDir int) *Pawn {
     var forward1 Point
     var forward2 Point
     var captures []Point
@@ -282,7 +282,7 @@ var knightSimples = []Point{
 	{-2, -1},
 }
 
-func newKnight(color string) *Knight {
+func newKnight(color int) *Knight {
 	return &Knight{
 		Allegiant{color},
         Disableable{false},
@@ -338,7 +338,7 @@ var bishopDirections = []Point{
 	{-1, -1},
 }
 
-func newBishop(color string) *Bishop {
+func newBishop(color int) *Bishop {
 	return &Bishop{
 		Allegiant{color},
         Disableable{false},
@@ -394,7 +394,7 @@ var rookDirections = []Point{
 	{0, -1},
 }
 
-func newRook(color string, moved bool) *Rook {
+func newRook(color int, moved bool) *Rook {
 	return &Rook{
 		Allegiant{color},
         Disableable{false},
@@ -458,7 +458,7 @@ var queenDirections = []Point{
 	{-1, -1},
 }
 
-func newQueen(color string) *Queen {
+func newQueen(color int) *Queen {
 	return &Queen{
 		Allegiant{color},
         Disableable{false},
@@ -518,7 +518,7 @@ var kingSimples = []Point{
 	{-1, -1},
 }
 
-func newKing(color string, moved bool, xDir int, yDir int) *King {
+func newKing(color int, moved bool, xDir int, yDir int) *King {
 	var castles []*CastleDirection
 
 	if xDir == 1 || xDir == -1 {

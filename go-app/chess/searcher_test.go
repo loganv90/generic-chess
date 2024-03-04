@@ -10,16 +10,19 @@ import (
 )
 
 func Test_Minimax(t *testing.T) {
-    b, err := newSimpleBoard(Point{4, 4})
+    white := 0
+    black := 1
+
+    b, err := newSimpleBoard(Point{4, 4}, 2)
     assert.Nil(t, err)
-    b.setPiece(Point{2, 3}, newKing("white", false, 0, -1))
-    b.setPiece(Point{3, 3}, newRook("white", false))
-    b.setPiece(Point{0, 0}, newKing("black", false, 0, 1))
+    b.setPiece(Point{2, 3}, newKing(white, false, 0, -1))
+    b.setPiece(Point{3, 3}, newRook(white, false))
+    b.setPiece(Point{0, 0}, newKing(black, false, 0, 1))
     b.disableLocation(Point{0, 3})
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
-    p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}})
+    p, err := newSimplePlayerCollection(2)
     assert.Nil(t, err)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -37,8 +40,8 @@ func Test_Minimax(t *testing.T) {
     score, move, err := searcher.minimax(4)
     assert.Nil(t, err)
 
-    assert.Equal(t, 100000, score["white"])
-    assert.Equal(t, -100000, score["black"])
+    assert.Equal(t, 100000, score[white])
+    assert.Equal(t, -100000, score[black])
     assert.Equal(t, 1, move.getAction().toLocation.x)
     assert.Equal(t, 2, move.getAction().toLocation.y)
 
@@ -46,7 +49,7 @@ func Test_Minimax(t *testing.T) {
     expectedPrintedBoard := strings.Trim(`
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
-| K black    |            |            |            |
+| K 1        |            |            |            |
 |         0y |         0y |         0y |         0y |
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
@@ -58,7 +61,7 @@ func Test_Minimax(t *testing.T) {
 |         2y |         2y |         2y |         2y |
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
-|XXXXXXXXXXXX|            | K white    | R white    |
+|XXXXXXXXXXXX|            | K 0        | R 0        |
 |         3y |         3y |         3y |         3y |
 +---------------------------------------------------+
 	`, " \t\n") + "\n"
@@ -66,18 +69,21 @@ func Test_Minimax(t *testing.T) {
 }
 
 func Test_Minimax_AvoidMateInOne(t *testing.T) {
+    white := 0
+    black := 1
+
     b, err := createSimpleBoardWithDefaultPieceLocations()
     assert.Nil(t, err)
-    b.setPiece(Point{5, 4}, newQueen("white"))
-    b.setPiece(Point{5, 3}, newQueen("white"))
-    b.setPiece(Point{3, 2}, newPawn("black", true, 0, 1))
+    b.setPiece(Point{5, 4}, newQueen(white))
+    b.setPiece(Point{5, 3}, newQueen(white))
+    b.setPiece(Point{3, 2}, newPawn(black, true, 0, 1))
     b.setPiece(Point{6, 0}, nil)
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
     p, err := createSimplePlayerCollectionWithDefaultPlayers()
     assert.Nil(t, err)
-    p.setCurrent("black")
+    p.setCurrent(black)
 
     i, err := invokerFactoryInstance.newSimpleInvoker()
     assert.Nil(t, err)
@@ -101,23 +107,23 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
     expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R black    | N black    | B black    | Q black    | K black    | B black    |            | R black    |
+| R 1        | N 1        | B 1        | Q 1        | K 1        | B 1        |            | R 1        |
 |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P black    | P black    | P black    | P black    | P black    | P black    | P black    | P black    |
+| P 1        | P 1        | P 1        | P 1        | P 1        | P 1        | P 1        | P 1        |
 |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            | P black    |            |            |            |            |
+|            |            |            | P 1        |            |            |            |            |
 |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            | Q white    |            |            |
+|            |            |            |            |            | Q 0        |            |            |
 |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            |            |            | Q white    |            |            |
+|            |            |            |            |            | Q 0        |            |            |
 |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
@@ -125,11 +131,11 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
 |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| P white    | P white    | P white    | P white    | P white    | P white    | P white    | P white    |
+| P 0        | P 0        | P 0        | P 0        | P 0        | P 0        | P 0        | P 0        |
 |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| R white    | N white    | B white    | Q white    | K white    | B white    | N white    | R white    |
+| R 0        | N 0        | B 0        | Q 0        | K 0        | B 0        | N 0        | R 0        |
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"
@@ -142,46 +148,49 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
 // web
 // go tool pprof -http=:8000 cpu.prof
 func Benchmark_Minimax(t *testing.B) {
+    white := 0
+    black := 1
+
     for i := 0; i < t.N; i++ {
-        b, err := newSimpleBoard(Point{8, 8})
+        b, err := newSimpleBoard(Point{8, 8}, 2)
         assert.Nil(t, err)
 
-        b.setPiece(Point{0, 0}, newQueen("black"))
-        b.setPiece(Point{3, 0}, newKing("black", true, 0, 1))
-        b.setPiece(Point{6, 0}, newQueen("black"))
+        b.setPiece(Point{0, 0}, newQueen(black))
+        b.setPiece(Point{3, 0}, newKing(black, true, 0, 1))
+        b.setPiece(Point{6, 0}, newQueen(black))
 
-        b.setPiece(Point{2, 1}, newKnight("black"))
-        b.setPiece(Point{3, 1}, newQueen("black"))
-        b.setPiece(Point{4, 1}, newKnight("black"))
-        b.setPiece(Point{7, 1}, newBishop("black"))
+        b.setPiece(Point{2, 1}, newKnight(black))
+        b.setPiece(Point{3, 1}, newQueen(black))
+        b.setPiece(Point{4, 1}, newKnight(black))
+        b.setPiece(Point{7, 1}, newBishop(black))
 
-        b.setPiece(Point{1, 2}, newKnight("black"))
-        b.setPiece(Point{3, 2}, newPawn("white", true, 0, -1))
-        b.setPiece(Point{5, 2}, newKnight("black"))
-        b.setPiece(Point{7, 2}, newBishop("black"))
+        b.setPiece(Point{1, 2}, newKnight(black))
+        b.setPiece(Point{3, 2}, newPawn(white, true, 0, -1))
+        b.setPiece(Point{5, 2}, newKnight(black))
+        b.setPiece(Point{7, 2}, newBishop(black))
 
-        b.setPiece(Point{2, 3}, newRook("black", true))
-        b.setPiece(Point{3, 3}, newKnight("black"))
-        b.setPiece(Point{4, 3}, newRook("black", true))
-        b.setPiece(Point{7, 3}, newQueen("white"))
+        b.setPiece(Point{2, 3}, newRook(black, true))
+        b.setPiece(Point{3, 3}, newKnight(black))
+        b.setPiece(Point{4, 3}, newRook(black, true))
+        b.setPiece(Point{7, 3}, newQueen(white))
 
-        b.setPiece(Point{1, 4}, newKnight("white"))
-        b.setPiece(Point{2, 4}, newQueen("white"))
-        b.setPiece(Point{4, 4}, newQueen("white"))
-        b.setPiece(Point{5, 4}, newKnight("white"))
-        b.setPiece(Point{7, 4}, newQueen("white"))
+        b.setPiece(Point{1, 4}, newKnight(white))
+        b.setPiece(Point{2, 4}, newQueen(white))
+        b.setPiece(Point{4, 4}, newQueen(white))
+        b.setPiece(Point{5, 4}, newKnight(white))
+        b.setPiece(Point{7, 4}, newQueen(white))
 
-        b.setPiece(Point{3, 5}, newQueen("white"))
-        b.setPiece(Point{7, 5}, newBishop("white"))
+        b.setPiece(Point{3, 5}, newQueen(white))
+        b.setPiece(Point{7, 5}, newBishop(white))
 
-        b.setPiece(Point{2, 6}, newRook("white", true))
-        b.setPiece(Point{3, 6}, newQueen("white"))
-        b.setPiece(Point{4, 6}, newRook("white", true))
-        b.setPiece(Point{7, 6}, newBishop("white"))
+        b.setPiece(Point{2, 6}, newRook(white, true))
+        b.setPiece(Point{3, 6}, newQueen(white))
+        b.setPiece(Point{4, 6}, newRook(white, true))
+        b.setPiece(Point{7, 6}, newBishop(white))
 
-        b.setPiece(Point{0, 7}, newQueen("white"))
-        b.setPiece(Point{3, 7}, newKing("white", true, 0, -1))
-        b.setPiece(Point{6, 7}, newQueen("white"))
+        b.setPiece(Point{0, 7}, newQueen(white))
+        b.setPiece(Point{3, 7}, newKing(white, true, 0, -1))
+        b.setPiece(Point{6, 7}, newQueen(white))
 
         err = b.CalculateMoves()
         assert.Nil(t, err)
@@ -190,7 +199,7 @@ func Benchmark_Minimax(t *testing.B) {
         // without calculateToLocations, the time stays the same
         // b.test = true
 
-        p, err := newSimplePlayerCollection([]Player{{"white", true}, {"black", true}})
+        p, err := newSimplePlayerCollection(2)
         assert.Nil(t, err)
 
         i, err := invokerFactoryInstance.newSimpleInvoker()
@@ -212,35 +221,35 @@ func Benchmark_Minimax(t *testing.B) {
         expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| Q black    |            |            | K black    |            |            | Q black    |            |
+| Q 1        |            |            | K 1        |            |            | Q 1        |            |
 |         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | N black    | Q black    | N black    |            |            | B black    |
+|            |            | N 1        | Q 1        | N 1        |            |            | B 1        |
 |         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            | N black    |            | P white    |            | N black    |            | B black    |
+|            | N 1        |            | P 0        |            | N 1        |            | B 1        |
 |         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | R black    | N black    | R black    |            |            | Q white    |
+|            |            | R 1        | N 1        | R 1        |            |            | Q 0        |
 |         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            | N white    | Q white    |            | Q white    | N white    |            | Q white    |
+|            | N 0        | Q 0        |            | Q 0        | N 0        |            | Q 0        |
 |         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            |            | Q white    |            |            |            | B white    |
+|            |            |            | Q 0        |            |            |            | B 0        |
 |         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-|            |            | R white    | Q white    | R white    |            |            | B white    |
+|            |            | R 0        | Q 0        | R 0        |            |            | B 0        |
 |         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
-| Q white    |            |            | K white    |            |            | Q white    |            |
+| Q 0        |            |            | K 0        |            |            | Q 0        |            |
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
         `, " \t\n") + "\n"
@@ -254,46 +263,49 @@ func Benchmark_Minimax(t *testing.B) {
 // without calculateToLocations, the time stays the same
 // first we should try to calculate move for affected squared only then we can try more extreme solutions
 func Benchmark_CalculateMoves(t *testing.B) {
+    white := 0
+    black := 1
+
     for i := 0; i < t.N; i++ {
-        b, err := newSimpleBoard(Point{8, 8})
+        b, err := newSimpleBoard(Point{8, 8}, 2)
         assert.Nil(t, err)
 
-        b.setPiece(Point{0, 0}, newQueen("black"))
-        b.setPiece(Point{3, 0}, newKing("black", true, 0, 1))
-        b.setPiece(Point{6, 0}, newQueen("black"))
+        b.setPiece(Point{0, 0}, newQueen(black))
+        b.setPiece(Point{3, 0}, newKing(black, true, 0, 1))
+        b.setPiece(Point{6, 0}, newQueen(black))
 
-        b.setPiece(Point{2, 1}, newKnight("black"))
-        b.setPiece(Point{3, 1}, newQueen("black"))
-        b.setPiece(Point{4, 1}, newKnight("black"))
-        b.setPiece(Point{7, 1}, newBishop("black"))
+        b.setPiece(Point{2, 1}, newKnight(black))
+        b.setPiece(Point{3, 1}, newQueen(black))
+        b.setPiece(Point{4, 1}, newKnight(black))
+        b.setPiece(Point{7, 1}, newBishop(black))
 
-        b.setPiece(Point{1, 2}, newKnight("black"))
-        b.setPiece(Point{3, 2}, newPawn("white", true, 0, -1))
-        b.setPiece(Point{5, 2}, newKnight("black"))
-        b.setPiece(Point{7, 2}, newBishop("black"))
+        b.setPiece(Point{1, 2}, newKnight(black))
+        b.setPiece(Point{3, 2}, newPawn(white, true, 0, -1))
+        b.setPiece(Point{5, 2}, newKnight(black))
+        b.setPiece(Point{7, 2}, newBishop(black))
 
-        b.setPiece(Point{2, 3}, newRook("black", true))
-        b.setPiece(Point{3, 3}, newKnight("black"))
-        b.setPiece(Point{4, 3}, newRook("black", true))
-        b.setPiece(Point{7, 3}, newQueen("white"))
+        b.setPiece(Point{2, 3}, newRook(black, true))
+        b.setPiece(Point{3, 3}, newKnight(black))
+        b.setPiece(Point{4, 3}, newRook(black, true))
+        b.setPiece(Point{7, 3}, newQueen(white))
 
-        b.setPiece(Point{1, 4}, newKnight("white"))
-        b.setPiece(Point{2, 4}, newQueen("white"))
-        b.setPiece(Point{4, 4}, newQueen("white"))
-        b.setPiece(Point{5, 4}, newKnight("white"))
-        b.setPiece(Point{7, 4}, newQueen("white"))
+        b.setPiece(Point{1, 4}, newKnight(white))
+        b.setPiece(Point{2, 4}, newQueen(white))
+        b.setPiece(Point{4, 4}, newQueen(white))
+        b.setPiece(Point{5, 4}, newKnight(white))
+        b.setPiece(Point{7, 4}, newQueen(white))
 
-        b.setPiece(Point{3, 5}, newQueen("white"))
-        b.setPiece(Point{7, 5}, newBishop("white"))
+        b.setPiece(Point{3, 5}, newQueen(white))
+        b.setPiece(Point{7, 5}, newBishop(white))
 
-        b.setPiece(Point{2, 6}, newRook("white", true))
-        b.setPiece(Point{3, 6}, newQueen("white"))
-        b.setPiece(Point{4, 6}, newRook("white", true))
-        b.setPiece(Point{7, 6}, newBishop("white"))
+        b.setPiece(Point{2, 6}, newRook(white, true))
+        b.setPiece(Point{3, 6}, newQueen(white))
+        b.setPiece(Point{4, 6}, newRook(white, true))
+        b.setPiece(Point{7, 6}, newBishop(white))
 
-        b.setPiece(Point{0, 7}, newQueen("white"))
-        b.setPiece(Point{3, 7}, newKing("white", true, 0, -1))
-        b.setPiece(Point{6, 7}, newQueen("white"))
+        b.setPiece(Point{0, 7}, newQueen(white))
+        b.setPiece(Point{3, 7}, newKing(white, true, 0, -1))
+        b.setPiece(Point{6, 7}, newQueen(white))
 
         // the time is around 1ms right now
         // when we skip the calculation it's around 40ns

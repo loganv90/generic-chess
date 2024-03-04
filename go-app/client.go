@@ -119,7 +119,7 @@ func (c *PlayerClient) writeLoop() {
     }
 }
 
-func newBotClient(hub *Hub, game chess.Game, colors []string) (*BotClient, error) {
+func newBotClient(hub *Hub, game chess.Game, colors []int) (*BotClient, error) {
     bot, err := chess.NewSimpleBot(game)
     if err != nil {
         return nil, err
@@ -139,7 +139,7 @@ type BotClient struct {
     hub *Hub
     bot chess.Bot
     send chan []byte
-    colors []string
+    colors []int
 }
 
 func (c *BotClient) sendMessage(message []byte) error {

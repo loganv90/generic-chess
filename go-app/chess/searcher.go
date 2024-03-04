@@ -76,7 +76,7 @@ func (s *SimpleSearcher) search() (MoveKey, error) {
     }, nil
 }
 
-func (s *SimpleSearcher) minimax(depth int) (map[string]int, Move, error) {
+func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
     s.minimaxCalls++
 
     gameOver, err := s.p.getGameOver()
@@ -93,9 +93,10 @@ func (s *SimpleSearcher) minimax(depth int) (map[string]int, Move, error) {
         return score, nil, nil
     }
 
-    currentPlayer, err := s.p.getCurrent()
-    if err != nil {
-        panic(err)
+    players := s.p.getPlayers()
+    currentPlayer, _ := s.p.getCurrent()
+    if currentPlayer < 0 || currentPlayer >= players {
+        panic(fmt.Errorf("invalid player"))
     }
 
     moves, err := s.b.MovesOfColor(currentPlayer)
@@ -106,7 +107,8 @@ func (s *SimpleSearcher) minimax(depth int) (map[string]int, Move, error) {
     inCheck := s.b.Check(currentPlayer)
 
     var bestMove Move
-    bestScore := map[string]int{currentPlayer: -1000000}
+    bestScore := make([]int, players)
+    bestScore[currentPlayer] = -1000000
 
     for _, move := range moves {
         if _, ok := move.(*AllyDefenseMove); ok {
@@ -170,7 +172,7 @@ func (s *SimpleSearcher) minimax(depth int) (map[string]int, Move, error) {
     if bestMove == nil {
         // stalemate
         if !inCheck {
-            return map[string]int{currentPlayer: 0}, nil, nil
+            return make([]int, players), nil, nil
         }
 
         // checkmate

@@ -11,9 +11,9 @@ type MockPiece struct {
 	mock.Mock
 }
 
-func (m *MockPiece) getColor() string {
+func (m *MockPiece) getColor() int {
 	args := m.Called()
-	return args.String(0)
+	return args.Int(0)
 }
 
 func (m *MockPiece) setDisabled(disabled bool) {
@@ -55,6 +55,8 @@ func (m *MockPiece) print() string {
 }
 
 func Test_Pawn_Moves_Unmoved(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -66,7 +68,7 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
 	moveFactory.On("newRevealEnPassantMove", board, Point{3, 3}, Point{3, 5}, Point{3, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
-	pawn := newPawn("white", false, 0, 1)
+	pawn := newPawn(white, false, 0, 1)
 
 	moves := pawn.moves(board, Point{3, 3})
 	assert.Len(t, moves, 2)
@@ -76,6 +78,8 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
 }
 
 func Test_Pawn_Moves_Moved(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -86,7 +90,7 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
 	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
-	pawn := newPawn("white", true, 0, 1)
+	pawn := newPawn(white, true, 0, 1)
 
 	moves := pawn.moves(board, Point{3, 3})
 	assert.Len(t, moves, 1)
@@ -96,6 +100,9 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
 }
 
 func Test_Pawn_Moves_Capturing(t *testing.T) {
+    white := 0
+    black := 1
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -112,9 +119,9 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
 	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
-	pawn := newPawn("white", false, 0, 1)
+	pawn := newPawn(white, false, 0, 1)
 
-	blackPawn := newPawn("black", false, 0, 1)
+	blackPawn := newPawn(black, false, 0, 1)
 	board.On("getPiece", Point{4, 4}).Return(blackPawn, true)
 
 	moves := pawn.moves(board, Point{3, 3})
@@ -125,6 +132,8 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
 }
 
 func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -134,8 +143,8 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 	board.On("getPiece", Point{4, 4}).Return(nil, true)
     board.On("getPiece", Point{3, 6}).Return(nil, true)
     board.On("getPiece", Point{4, 5}).Return(nil, true)
-	board.On("possibleEnPassant", "white", Point{4, 4}).Return([]EnPassant{{Point{4, 4}, Point{3, 4}}}, nil)
-	board.On("possibleEnPassant", "white", Point{2, 4}).Return([]EnPassant{}, nil)
+	board.On("possibleEnPassant", white, Point{4, 4}).Return([]EnPassant{{Point{4, 4}, Point{3, 4}}}, nil)
+	board.On("possibleEnPassant", white, Point{2, 4}).Return([]EnPassant{}, nil)
 
 	moveFactory := &MockMoveFactory{}
 	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
@@ -143,7 +152,7 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 	moveFactory.On("newCaptureEnPassantMove", board, Point{3, 3}, Point{4, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
-	pawn := newPawn("white", false, 0, 1)
+	pawn := newPawn(white, false, 0, 1)
 
 	moves := pawn.moves(board, Point{3, 3})
 	assert.Len(t, moves, 3)
@@ -153,6 +162,8 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 }
 
 func Test_Pawn_Moves_Promotion(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -167,7 +178,7 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
     moveFactory.On("newPromotionMove", mock.Anything, mock.Anything).Return(&PromotionMove{Action{}, nil, nil}, nil)
 	moveFactoryInstance = moveFactory
 
-	pawn := newPawn("white", false, 0, 1)
+	pawn := newPawn(white, false, 0, 1)
 
 	moves := pawn.moves(board, Point{3, 3})
 	assert.Len(t, moves, 1)
@@ -177,6 +188,8 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
 }
 
 func Test_Knight_Moves(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -207,7 +220,7 @@ func Test_Knight_Moves(t *testing.T) {
 
 	moveFactoryInstance = moveFactory
 
-	knight := newKnight("white")
+	knight := newKnight(white)
 
 	moves := knight.moves(board, Point{1, 1})
 	assert.Len(t, moves, 4)
@@ -217,6 +230,8 @@ func Test_Knight_Moves(t *testing.T) {
 }
 
 func Test_Bishop_Moves(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -252,7 +267,7 @@ func Test_Bishop_Moves(t *testing.T) {
 
 	moveFactoryInstance = moveFactory
 
-	bishop := newBishop("white")
+	bishop := newBishop(white)
 
 	moves := bishop.moves(board, Point{1, 1})
 	assert.Len(t, moves, 9)
@@ -262,6 +277,8 @@ func Test_Bishop_Moves(t *testing.T) {
 }
 
 func Test_Rook_Moves(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -302,7 +319,7 @@ func Test_Rook_Moves(t *testing.T) {
 
 	moveFactoryInstance = moveFactory
 
-	rook := newRook("white", false)
+	rook := newRook(white, false)
 
 	moves := rook.moves(board, Point{1, 1})
 	assert.Len(t, moves, 14)
@@ -312,6 +329,8 @@ func Test_Rook_Moves(t *testing.T) {
 }
 
 func Test_Queen_Moves(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -365,7 +384,7 @@ func Test_Queen_Moves(t *testing.T) {
 
 	moveFactoryInstance = moveFactory
 
-	queen := newQueen("white")
+	queen := newQueen(white)
 
 	moves := queen.moves(board, Point{1, 1})
 	assert.Len(t, moves, 23)
@@ -375,6 +394,8 @@ func Test_Queen_Moves(t *testing.T) {
 }
 
 func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
+    white := 0
+
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -420,8 +441,8 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 	moveFactory.On("newCastleMove", board, Point{3, 3}, Point{7, 3}, Point{6, 3}, Point{5, 3}, []Point{{4, 3}, {5, 3}}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
-	king := newKing("white", false, 0, 1)
-	rook := newRook("white", false)
+	king := newKing(white, false, 0, 1)
+	rook := newRook(white, false)
 	board.On("getPiece", Point{0, 3}).Return(rook, true)
 	board.On("getPiece", Point{7, 3}).Return(rook, true)
 
@@ -433,6 +454,7 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 }
 
 func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
+    white := 0
     t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
 
 	board := &MockBoard{}
@@ -463,7 +485,7 @@ func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
 	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 4}).Return(nil, nil)
 	moveFactoryInstance = moveFactory
 
-	king := newKing("white", true, 0, 1)
+	king := newKing(white, true, 0, 1)
 
 	moves := king.moves(board, Point{3, 3})
 	assert.Len(t, moves, 8)
