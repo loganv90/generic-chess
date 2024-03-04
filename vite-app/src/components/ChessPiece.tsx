@@ -16,7 +16,7 @@ const imgStyle: React.CSSProperties = {
 }
 
 const getImgSrc = (type: string, color: string): string => {
-    if (color === 'white') {
+    if (color == '0') {
         switch (type) {
             case 'P':
                 return '/src/assets/wp.png'
@@ -33,7 +33,7 @@ const getImgSrc = (type: string, color: string): string => {
             default:
                 return ''
         }
-    } else if (color === 'black') {
+    } else if (color == '1') {
         switch (type) {
             case 'P':
                 return '/src/assets/bp.png'
@@ -50,7 +50,7 @@ const getImgSrc = (type: string, color: string): string => {
             default:
                 return ''
         }
-    } else if (color === 'red') {
+    } else if (color == '2') {
         switch (type) {
             case 'P':
                 return '/src/assets/rp.png'
@@ -67,7 +67,7 @@ const getImgSrc = (type: string, color: string): string => {
             default:
                 return ''
         }
-    } else if (color === 'blue') {
+    } else if (color == '3') {
         switch (type) {
             case 'P':
                 return '/src/assets/lp.png'

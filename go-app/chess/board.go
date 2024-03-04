@@ -163,7 +163,7 @@ func (b *SimpleBoard) setPiece(location Point, p Piece) bool {
             pieceLocations[removeIndex] = pieceLocations[len(pieceLocations)-1]
             pieceLocations[len(pieceLocations)-1] = Point{}
             pieceLocations = pieceLocations[:len(pieceLocations)-1]
-            b.pieceLocations[oldPiece.getColor()] = pieceLocations // TODO might not need
+            b.pieceLocations[oldPiece.getColor()] = pieceLocations
         }
     }
 
@@ -175,7 +175,7 @@ func (b *SimpleBoard) setPiece(location Point, p Piece) bool {
         pieceLocations := b.pieceLocations[p.getColor()]
 
         pieceLocations = append(pieceLocations, location)
-        b.pieceLocations[p.getColor()] = pieceLocations // TODO might not need
+        b.pieceLocations[p.getColor()] = pieceLocations
 
         if _, ok := p.(*King); ok {
             b.kingLocations[p.getColor()] = location
