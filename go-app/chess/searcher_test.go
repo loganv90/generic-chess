@@ -214,7 +214,7 @@ func Benchmark_Minimax(t *testing.B) {
         searcher, err := newSimpleSearcher(game)
         assert.Nil(t, err)
 
-        _, _, err = searcher.minimax(2)
+        _, _, err = searcher.minimax(3)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()

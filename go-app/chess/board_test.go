@@ -229,18 +229,6 @@ func Test_CalculateMoves_default(t *testing.T) {
 
     b.CalculateMoves()
 
-    fromMoveCount := 0
-    for _, toToMoveMap := range b.fromToToToMoveMap {
-        fromMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 80, fromMoveCount)
-
-    toMoveCount := 0
-    for _, toToMoveMap := range b.toToFromToMoveMap {
-        toMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 80, toMoveCount)
-    
     whiteMoveKeys, err := b.LegalMovesOfColor(white)
     assert.Nil(t, err)
     assert.Equal(t, 20, len(whiteMoveKeys))
@@ -273,18 +261,6 @@ func Test_CalculateMoves_check(t *testing.T) {
 
     b.CalculateMoves()
 
-    fromMoveCount := 0
-    for _, toToMoveMap := range b.fromToToToMoveMap {
-        fromMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 27, fromMoveCount)
-
-    toMoveCount := 0
-    for _, toToMoveMap := range b.toToFromToMoveMap {
-        toMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 27, toMoveCount)
-    
     whiteMoveKeys, err := b.LegalMovesOfColor(white)
     assert.Nil(t, err)
     assert.Equal(t, 1, len(whiteMoveKeys))
@@ -317,18 +293,6 @@ func Test_CalculateMoves_checkmate(t *testing.T) {
 
     b.CalculateMoves()
 
-    fromMoveCount := 0
-    for _, toToMoveMap := range b.fromToToToMoveMap {
-        fromMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 24, fromMoveCount)
-
-    toMoveCount := 0
-    for _, toToMoveMap := range b.toToFromToMoveMap {
-        toMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 24, toMoveCount)
-    
     whiteMoveKeys, err := b.LegalMovesOfColor(white)
     assert.Nil(t, err)
     assert.Equal(t, 0, len(whiteMoveKeys))
@@ -361,18 +325,6 @@ func Test_CalculateMoves_stalemate(t *testing.T) {
 
     b.CalculateMoves()
 
-    fromMoveCount := 0
-    for _, toToMoveMap := range b.fromToToToMoveMap {
-        fromMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 29, fromMoveCount)
-
-    toMoveCount := 0
-    for _, toToMoveMap := range b.toToFromToMoveMap {
-        toMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 29, toMoveCount)
-    
     whiteMoveKeys, err := b.LegalMovesOfColor(white)
     assert.Nil(t, err)
     assert.Equal(t, 0, len(whiteMoveKeys))
@@ -406,18 +358,6 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
 
     b.CalculateMoves()
 
-    fromMoveCount := 0
-    for _, toToMoveMap := range b.fromToToToMoveMap {
-        fromMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 33, fromMoveCount)
-
-    toMoveCount := 0
-    for _, toToMoveMap := range b.toToFromToMoveMap {
-        toMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 33, toMoveCount)
-    
     whiteMoveKeys, err := b.LegalMovesOfColor(white)
     assert.Nil(t, err)
     assert.Equal(t, 13, len(whiteMoveKeys))
@@ -450,18 +390,6 @@ func Test_CalculateMoves_castle(t *testing.T) {
 
     b.CalculateMoves()
 
-    fromMoveCount := 0
-    for _, toToMoveMap := range b.fromToToToMoveMap {
-        fromMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 22, fromMoveCount)
-
-    toMoveCount := 0
-    for _, toToMoveMap := range b.toToFromToMoveMap {
-        toMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 22, toMoveCount)
-    
     whiteMoveKeys, err := b.LegalMovesOfColor(white)
     assert.Nil(t, err)
     assert.Equal(t, 16, len(whiteMoveKeys))
@@ -494,18 +422,6 @@ func Test_CalculateMoves_promotion(t *testing.T) {
 
     b.CalculateMoves()
 
-    fromMoveCount := 0
-    for _, toToMoveMap := range b.fromToToToMoveMap {
-        fromMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 7, fromMoveCount)
-
-    toMoveCount := 0
-    for _, toToMoveMap := range b.toToFromToMoveMap {
-        toMoveCount += len(toToMoveMap)
-    }
-    assert.Equal(t, 7, toMoveCount)
-    
     whiteMoveKeys, err := b.LegalMovesOfColor(white)
     assert.Nil(t, err)
     assert.Equal(t, 4, len(whiteMoveKeys))

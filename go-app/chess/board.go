@@ -86,6 +86,22 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
         vulnerableLocations[v] = []Point{}
     }
 
+    fromMoves := make([][][]Move, boardSize.y)
+    for row := range fromMoves {
+        fromMoves[row] = make([][]Move, boardSize.x)
+        for col := range fromMoves[row] {
+            fromMoves[row][col] = []Move{}
+        }
+    }
+
+    toMoves := make([][][]Move, boardSize.y)
+    for row := range toMoves {
+        toMoves[row] = make([][]Move, boardSize.x)
+        for col := range toMoves[row] {
+            toMoves[row][col] = []Move{}
+        }
+    }
+
 	return &SimpleBoard{
         size: boardSize,
         players: numberOfPlayers,
@@ -96,8 +112,8 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
         pieceLocations: pieceLocations,
 		enPassants: enPassants,
         vulnerableLocations: vulnerableLocations,
-        fromToToToMoveMap: map[Point]map[Point]Move{},
-        toToFromToMoveMap: map[Point]map[Point]Move{},
+        fromMoves: fromMoves,
+        toMoves: toMoves,
         test: false,
 	}, nil
 }
@@ -112,8 +128,8 @@ type SimpleBoard struct {
     pieceLocations [][]Point
 	enPassants []EnPassant
     vulnerableLocations [][]Point
-    fromToToToMoveMap map[Point]map[Point]Move
-    toToFromToMoveMap map[Point]map[Point]Move
+    fromMoves [][][]Move
+    toMoves [][][]Move
     test bool
 }
 
@@ -254,6 +270,9 @@ func (b *SimpleBoard) possibleEnPassant(color int, target Point) ([]EnPassant, e
     return enPassants, nil
 }
 
+// TODO generator expression here maybe
+// TODO don't store the moves in the board maybe
+// TODO reduce calls to append maybe
 func (b *SimpleBoard) MovesOfColor(color int) ([]Move, error) {
     if b.colorOutOfBounds(color) {
         return []Move{}, fmt.Errorf("invalid color")
@@ -261,19 +280,17 @@ func (b *SimpleBoard) MovesOfColor(color int) ([]Move, error) {
 
     moves := []Move{}
     for _, pieceLocation := range b.pieceLocations[color] {
-        for _, move := range b.fromToToToMoveMap[pieceLocation] { 
-            moves = append(moves, move)
-        }
+        moves = append(moves, b.fromMoves[pieceLocation.y][pieceLocation.x]...)
     }
     return moves, nil
 }
 
 func (b *SimpleBoard) MovesOfLocation(fromLocation Point) ([]Move, error) {
-    moves := []Move{}
-    for _, move := range b.fromToToToMoveMap[fromLocation] { 
-        moves = append(moves, move)
+    if b.pointOutOfBounds(fromLocation) {
+        return []Move{}, fmt.Errorf("invalid location")
     }
-    return moves, nil
+
+    return b.fromMoves[fromLocation.y][fromLocation.x], nil
 }
 
 func (b *SimpleBoard) LegalMovesOfColor(color int) ([]Move, error) {
@@ -370,8 +387,17 @@ func (b *SimpleBoard) CalculateMoves() error {
         return nil
     }
 
-    b.fromToToToMoveMap = map[Point]map[Point]Move{}
-    b.toToFromToMoveMap = map[Point]map[Point]Move{}
+    for row := range b.toMoves {
+        for col := range b.toMoves[row] {
+            b.toMoves[row][col] = []Move{}
+        }
+    }
+
+    for row := range b.fromMoves {
+        for col := range b.fromMoves[row] {
+            b.fromMoves[row][col] = []Move{}
+        }
+    }
 
     for _, pieceLocations := range b.pieceLocations {
         for _, fromLocation := range pieceLocations {
@@ -387,16 +413,8 @@ func (b *SimpleBoard) CalculateMoves() error {
             moves := piece.moves(b, fromLocation)
             for _, move := range moves {
                 action := move.getAction()
-
-                if _, ok := b.fromToToToMoveMap[action.fromLocation]; !ok {
-                    b.fromToToToMoveMap[action.fromLocation] = map[Point]Move{}
-                }
-                if _, ok := b.toToFromToMoveMap[action.toLocation]; !ok {
-                    b.toToFromToMoveMap[action.toLocation] = map[Point]Move{}
-                }
-
-                b.fromToToToMoveMap[action.fromLocation][action.toLocation] = move
-                b.toToFromToMoveMap[action.toLocation][action.fromLocation] = move
+                b.fromMoves[action.fromLocation.y][action.fromLocation.x] = append(b.fromMoves[action.fromLocation.y][action.fromLocation.x], move)
+                b.toMoves[action.toLocation.y][action.toLocation.x] = append(b.toMoves[action.toLocation.y][action.toLocation.x], move)
             }
         }
     }
@@ -513,16 +531,16 @@ func (b *SimpleBoard) Check(color int) bool {
     }
 
     for _, vulnerableLocation := range vulnerableLocations {
-        if fromToMoveMap, ok := b.toToFromToMoveMap[vulnerableLocation]; ok {
-            for fromLocation := range fromToMoveMap {
-                piece, ok := b.getPiece(fromLocation)
-                if piece == nil || !ok {
-                    continue
-                }
+        moves := b.toMoves[vulnerableLocation.y][vulnerableLocation.x]
+        for _, move := range moves {
+            action := move.getAction()
+            piece, ok := b.getPiece(action.fromLocation)
+            if piece == nil || !ok {
+                continue
+            }
 
-                if piece.getColor() != color {
-                    return true
-                }
+            if piece.getColor() != color {
+                return true
             }
         }
     }
