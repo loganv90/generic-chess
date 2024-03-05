@@ -116,8 +116,8 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
         }
 
         if promotionMove, ok := move.(*PromotionMove); ok {
-            // TODO do not make a new queen every time
-            promotionMove.setPromotionPiece(newQueen(currentPlayer))
+            // TODO do not get a new queen every time
+            promotionMove.setPromotionPiece(pieceFactoryInstance.get(currentPlayer, QUEEN))
         }
 
         err := move.execute()

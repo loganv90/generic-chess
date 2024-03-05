@@ -5,39 +5,39 @@ import (
 )
 
 const (
-    PR_EMPTY = 0
-    PR_PAWN_R = 1
-    PR_PAWN_L = 2
-    PR_PAWN_U = 3
-    PR_PAWN_D = 4
-    PR_PAWN_R_M = 5
-    PR_PAWN_L_M = 6
-    PR_PAWN_U_M = 7
-    PR_PAWN_D_M = 8
-    PR_KNIGHT = 9
-    PR_BISHOP = 10
-    PR_ROOK = 11
-    PR_ROOK_M = 12
-    PR_QUEEN = 13
-    PR_KING_R = 14
-    PR_KING_L = 15
-    PR_KING_U = 16
-    PR_KING_D = 17
-    PR_KING_R_M = 18
-    PR_KING_L_M = 19
-    PR_KING_U_M = 20
-    PR_KING_D_M = 21
+    EMPTY = 0
+    PAWN_R = 1
+    PAWN_L = 2
+    PAWN_D = 3
+    PAWN_U = 4
+    PAWN_R_M = 5
+    PAWN_L_M = 6
+    PAWN_D_M = 7
+    PAWN_U_M = 8
+    KNIGHT = 9
+    BISHOP = 10
+    ROOK = 11
+    ROOK_M = 12
+    QUEEN = 13
+    KING_R = 14
+    KING_L = 15
+    KING_D = 16
+    KING_U = 17
+    KING_R_M = 18
+    KING_L_M = 19
+    KING_D_M = 20
+    KING_U_M = 21
 )
 
-var PR_Instance = newPieceReference()
+var pieceFactoryInstance = newPieceFactory()
 
-func newPieceReference() *PieceReference {
+func newPieceFactory() *PieceFactory {
     var pieceInstances = make([][]Piece, 4)
     for color := range pieceInstances {
         pieceInstances[color] = generateRowForPieceReference(color)
     }
 
-    return &PieceReference{
+    return &PieceFactory{
         pieceInstances: pieceInstances,
     }
 }
@@ -69,20 +69,12 @@ func generateRowForPieceReference(color int) []Piece {
     }
 }
 
-type PieceReference struct {
+type PieceFactory struct {
     pieceInstances [][]Piece
 }
 
-func (r *PieceReference) get(color int, pieceType int) (Piece, error) {
-    if color < 0 || color >= len(r.pieceInstances) {
-        return nil, fmt.Errorf("invalid color")
-    }
-
-    if pieceType < 0 || pieceType >= len(r.pieceInstances[color]) {
-        return nil, fmt.Errorf("invalid piece type")
-    }
-
-    return r.pieceInstances[color][pieceType], nil
+func (r *PieceFactory) get(color int, pieceType int) Piece {
+    return r.pieceInstances[color][pieceType]
 }
 
 type CastleDirection struct {
@@ -226,13 +218,13 @@ func (a *Pawn) print() string {
 
 func (a *Pawn) copy() (Piece, error) {
     if a.direction.x == 1 {
-        return PR_Instance.get(a.color, PR_PAWN_R)
+        return pieceFactoryInstance.get(a.color, PAWN_R), nil
     } else if a.direction.x == -1 {
-        return PR_Instance.get(a.color, PR_PAWN_L)
+        return pieceFactoryInstance.get(a.color, PAWN_L), nil
     } else if a.direction.y == 1 {
-        return PR_Instance.get(a.color, PR_PAWN_U)
+        return pieceFactoryInstance.get(a.color, PAWN_D), nil
     } else if a.direction.y == -1 {
-        return PR_Instance.get(a.color, PR_PAWN_D)
+        return pieceFactoryInstance.get(a.color, PAWN_U), nil
     } 
 
     return nil, fmt.Errorf("invalid direction")
@@ -360,7 +352,7 @@ func (n *Knight) print() string {
 }
 
 func (n *Knight) copy() (Piece, error) {
-    return PR_Instance.get(n.color, PR_KNIGHT)
+    return pieceFactoryInstance.get(n.color, KNIGHT), nil
 }
 
 func (n *Knight) getMoved() bool {
@@ -405,7 +397,7 @@ func (s *Bishop) print() string {
 }
 
 func (s *Bishop) copy() (Piece, error) {
-    return PR_Instance.get(s.color, PR_BISHOP)
+    return pieceFactoryInstance.get(s.color, BISHOP), nil
 }
 
 func (s *Bishop) getMoved() bool {
@@ -452,7 +444,7 @@ func (r *Rook) print() string {
 }
 
 func (r *Rook) copy() (Piece, error) {
-    return PR_Instance.get(r.color, PR_ROOK_M)
+    return pieceFactoryInstance.get(r.color, ROOK_M), nil
 }
 
 func (r *Rook) getMoved() bool {
@@ -501,7 +493,7 @@ func (q *Queen) print() string {
 }
 
 func (q *Queen) copy() (Piece, error) {
-    return PR_Instance.get(q.color, PR_QUEEN)
+    return pieceFactoryInstance.get(q.color, QUEEN), nil
 }
 
 func (q *Queen) getMoved() bool {
@@ -573,13 +565,13 @@ func (k *King) print() string {
 
 func (k *King) copy() (Piece, error) {
     if k.direction.x == 1 {
-        return PR_Instance.get(k.color, PR_KING_R)
+        return pieceFactoryInstance.get(k.color, KING_R), nil
     } else if k.direction.x == -1 {
-        return PR_Instance.get(k.color, PR_KING_L)
+        return pieceFactoryInstance.get(k.color, KING_L), nil
     } else if k.direction.y == 1 {
-        return PR_Instance.get(k.color, PR_KING_U)
+        return pieceFactoryInstance.get(k.color, KING_D), nil
     } else if k.direction.y == -1 {
-        return PR_Instance.get(k.color, PR_KING_D)
+        return pieceFactoryInstance.get(k.color, KING_U), nil
     }
 
     return nil, fmt.Errorf("invalid direction")

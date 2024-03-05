@@ -192,7 +192,7 @@ func Test_getAndSetPiece(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    p := newPawn(white, false, 0, 1)
+    p := pieceFactoryInstance.get(white, PAWN_D)
     location := Point{0, 0}
 
     // adding piece to board
@@ -267,9 +267,9 @@ func Test_CalculateMoves_check(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{0, 0}, newKing(0, false, 0, 1))
-    b.setPiece(Point{0, 1}, newQueen(1))
-    b.setPiece(Point{0, 7}, newKing(1, false, 0, -1))
+    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(white, KING_D))
+    b.setPiece(Point{0, 1}, pieceFactoryInstance.get(black, QUEEN))
+    b.setPiece(Point{0, 7}, pieceFactoryInstance.get(black, KING_U))
 
     b.CalculateMoves()
 
@@ -311,9 +311,9 @@ func Test_CalculateMoves_checkmate(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{0, 0}, newKing(white, false, 0, 1))
-    b.setPiece(Point{0, 1}, newQueen(black))
-    b.setPiece(Point{0, 2}, newKing(black, false, 0, -1))
+    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(white, KING_D))
+    b.setPiece(Point{0, 1}, pieceFactoryInstance.get(black, QUEEN))
+    b.setPiece(Point{0, 2}, pieceFactoryInstance.get(black, KING_U))
 
     b.CalculateMoves()
 
@@ -355,9 +355,9 @@ func Test_CalculateMoves_stalemate(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{0, 0}, newKing(white, false, 0, 1))
-    b.setPiece(Point{1, 2}, newQueen(black))
-    b.setPiece(Point{0, 7}, newKing(black, false, 0, -1))
+    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(white, KING_D))
+    b.setPiece(Point{1, 2}, pieceFactoryInstance.get(black, QUEEN))
+    b.setPiece(Point{0, 7}, pieceFactoryInstance.get(black, KING_U))
 
     b.CalculateMoves()
 
@@ -399,10 +399,10 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{4, 0}, newKing(white, false, 0, 1))
-    b.setPiece(Point{0, 0}, newRook(white, false))
-    b.setPiece(Point{3, 7}, newRook(black, false))
-    b.setPiece(Point{4, 7}, newKing(black, false, 0, -1))
+    b.setPiece(Point{4, 0}, pieceFactoryInstance.get(white, KING_D))
+    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(white, ROOK))
+    b.setPiece(Point{3, 7}, pieceFactoryInstance.get(black, ROOK))
+    b.setPiece(Point{4, 7}, pieceFactoryInstance.get(black, KING_U))
 
     b.CalculateMoves()
 
@@ -444,9 +444,9 @@ func Test_CalculateMoves_castle(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{4, 0}, newKing(white, false, 0, 1))
-    b.setPiece(Point{0, 0}, newRook(white, false))
-    b.setPiece(Point{4, 7}, newKing(black, false, 0, -1))
+    b.setPiece(Point{4, 0}, pieceFactoryInstance.get(white, KING_D))
+    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(white, ROOK))
+    b.setPiece(Point{4, 7}, pieceFactoryInstance.get(black, KING_U))
 
     b.CalculateMoves()
 
@@ -488,10 +488,9 @@ func Test_CalculateMoves_promotion(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{7, 6}, newPawn(white, true, 0, 1))
-    b.setPiece(Point{7, 6}, newPawn(white, true, 0, 1))
-    b.setPiece(Point{0, 0}, newKing(white, false, 0, 1))
-    b.setPiece(Point{0, 7}, newKing(black, false, 0, -1))
+    b.setPiece(Point{7, 6}, pieceFactoryInstance.get(white, PAWN_D_M))
+    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(white, KING_D))
+    b.setPiece(Point{0, 7}, pieceFactoryInstance.get(black, KING_U))
 
     b.CalculateMoves()
 

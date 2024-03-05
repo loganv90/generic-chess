@@ -131,13 +131,13 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
 
         var promotionPiece Piece
         if promotion == "Q" {
-            promotionPiece = newQueen(color)
+            promotionPiece = pieceFactoryInstance.get(color, QUEEN)
         } else if promotion == "R" {
-            promotionPiece = newRook(color, true)
+            promotionPiece = pieceFactoryInstance.get(color, ROOK_M)
         } else if promotion == "B" {
-            promotionPiece = newBishop(color)
+            promotionPiece = pieceFactoryInstance.get(color, BISHOP)
         } else if promotion == "N" {
-            promotionPiece = newKnight(color)
+            promotionPiece = pieceFactoryInstance.get(color, KNIGHT)
         } else {
             return fmt.Errorf("invalid promotion piece")
         }
