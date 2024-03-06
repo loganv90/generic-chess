@@ -215,13 +215,7 @@ func (b *SimpleBoard) getVulnerables(color int) ([]Point, error) {
         return []Point{}, fmt.Errorf("invalid color")
     }
 
-    vulnerables := b.vulnerableLocations[color]
-    kingLocation := b.kingLocations[color]
-
-    if !b.pointOutOfBounds(kingLocation) {
-        return append(vulnerables, kingLocation), nil
-    }
-    return vulnerables, nil
+    return b.vulnerableLocations[color], nil
 }
 
 func (b *SimpleBoard) setVulnerables(color int, locations []Point) error {
@@ -270,9 +264,6 @@ func (b *SimpleBoard) possibleEnPassant(color int, target Point) ([]EnPassant, e
     return enPassants, nil
 }
 
-// TODO generator expression here maybe
-// TODO don't store the moves in the board maybe
-// TODO reduce calls to append maybe
 func (b *SimpleBoard) MovesOfColor(color int) ([]Move, error) {
     if b.colorOutOfBounds(color) {
         return []Move{}, fmt.Errorf("invalid color")
@@ -426,6 +417,8 @@ func (b *SimpleBoard) CalculateMoves() error {
 // TODO how about we don't create massive move objects with pieces and stuff
 // stop excessive use of maps
 // stop excessive use of pointers
+// don't store the moves in the board maybe
+// reduce calls to append maybe
 func (b *SimpleBoard) CalculateMovesPartial(move Move) error {
     return fmt.Errorf("not implemented")
 }
@@ -525,12 +518,25 @@ func (b *SimpleBoard) CheckmateAndStalemate(color int) (bool, bool, error) {
 }
 
 func (b *SimpleBoard) Check(color int) bool {
-    vulnerableLocations, err := b.getVulnerables(color)
-    if err != nil {
+    if b.colorOutOfBounds(color) {
         return false
     }
 
-    for _, vulnerableLocation := range vulnerableLocations {
+    kingLocation := b.kingLocations[color]
+    moves := b.toMoves[kingLocation.y][kingLocation.x]
+    for _, move := range moves {
+        action := move.getAction()
+        piece, ok := b.getPiece(action.fromLocation)
+        if piece == nil || !ok {
+            continue
+        }
+
+        if piece.getColor() != color {
+            return true
+        }
+    }
+
+    for _, vulnerableLocation := range b.vulnerableLocations[color] {
         moves := b.toMoves[vulnerableLocation.y][vulnerableLocation.x]
         for _, move := range moves {
             action := move.getAction()
