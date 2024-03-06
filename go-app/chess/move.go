@@ -2,7 +2,44 @@ package chess
 
 import (
     "fmt"
+    "sync"
 )
+
+var simpleMovePool = sync.Pool {
+    New: func() interface{} {
+        return &SimpleMove{}
+    },
+}
+
+var revealEnPassantMovePool = sync.Pool {
+    New: func() interface{} {
+        return &RevealEnPassantMove{}
+    },
+}
+
+var captureEnPassantMovePool = sync.Pool {
+    New: func() interface{} {
+        return &CaptureEnPassantMove{}
+    },
+}
+
+var castleMovePool = sync.Pool {
+    New: func() interface{} {
+        return &CastleMove{}
+    },
+}
+
+var promotionMovePool = sync.Pool {
+    New: func() interface{} {
+        return &PromotionMove{}
+    },
+}
+
+var allyDefenseMovePool = sync.Pool {
+    New: func() interface{} {
+        return &AllyDefenseMove{}
+    },
+}
 
 type Action struct {
 	b Board
@@ -58,18 +95,17 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation Point, toLocat
         return nil, err
     }
 
-	return &SimpleMove{
-		Action{
-			b: b,
-            fromLocation: fromLocation,
-            toLocation: toLocation,
-		},
-		piece,
-		newPiece,
-		capturedPiece,
-		en,
-        vulnerables,
-	}, nil
+    simpleMove := simpleMovePool.Get().(*SimpleMove)
+    simpleMove.b = b
+    simpleMove.fromLocation = fromLocation
+    simpleMove.toLocation = toLocation
+    simpleMove.piece = piece
+    simpleMove.newPiece = newPiece
+    simpleMove.capturedPiece = capturedPiece
+    simpleMove.en = en
+    simpleMove.vulnerables = vulnerables
+
+    return simpleMove, nil
 }
 
 func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point, toLocation Point, target Point) (*RevealEnPassantMove, error) {
@@ -103,19 +139,18 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
         pieceLocation: toLocation,
 	}
 
-	return &RevealEnPassantMove{
-		Action{
-			b:     b,
-            fromLocation: fromLocation,
-            toLocation: toLocation,
-		},
-		piece,
-		newPiece,
-		capturedPiece,
-		en,
-		newEn,
-        vulnerables,
-	}, nil
+    revealEnPassantMove := revealEnPassantMovePool.Get().(*RevealEnPassantMove)
+    revealEnPassantMove.b = b
+    revealEnPassantMove.fromLocation = fromLocation
+    revealEnPassantMove.toLocation = toLocation
+    revealEnPassantMove.piece = piece
+    revealEnPassantMove.newPiece = newPiece
+    revealEnPassantMove.capturedPiece = capturedPiece
+    revealEnPassantMove.en = en
+    revealEnPassantMove.newEn = newEn
+    revealEnPassantMove.vulnerables = vulnerables
+
+    return revealEnPassantMove, nil
 }
 
 func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Point, toLocation Point) (*CaptureEnPassantMove, error) {
@@ -160,19 +195,18 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
         }
     }
 
-	return &CaptureEnPassantMove{
-		Action{
-			b:     b,
-            fromLocation: fromLocation,
-            toLocation: toLocation,
-		},
-		piece,
-		newPiece,
-		capturedPiece,
-		en,
-		encs,
-        vulnerables,
-	}, nil
+    captureEnPassantMove := captureEnPassantMovePool.Get().(*CaptureEnPassantMove)
+    captureEnPassantMove.b = b
+    captureEnPassantMove.fromLocation = fromLocation
+    captureEnPassantMove.toLocation = toLocation
+    captureEnPassantMove.piece = piece
+    captureEnPassantMove.newPiece = newPiece
+    captureEnPassantMove.capturedPiece = capturedPiece
+    captureEnPassantMove.en = en
+    captureEnPassantMove.encs = encs
+    captureEnPassantMove.vulnerables = vulnerables
+
+    return captureEnPassantMove, nil
 }
 
 func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerables []Point) (*CastleMove, error) {
@@ -206,32 +240,32 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocat
         return nil, err
     }
 
-	return &CastleMove{
-		Action{
-			b: b,
-            fromLocation: fromLocation,
-            toLocation: toLocation,
-		},
-		king,
-		newKing,
-        toKingLocation,
-		rook,
-		newRook,
-        toRookLocation,
-		en,
-        vulnerables,
-        newVulnerables,
-	}, nil
+    castleMove := castleMovePool.Get().(*CastleMove)
+    castleMove.b = b
+    castleMove.fromLocation = fromLocation
+    castleMove.toLocation = toLocation
+    castleMove.king = king
+    castleMove.newKing = newKing
+    castleMove.toKingLocation = toKingLocation
+    castleMove.rook = rook
+    castleMove.newRook = newRook
+    castleMove.toRookLocation = toRookLocation
+    castleMove.en = en
+    castleMove.vulnerables = vulnerables
+    castleMove.newVulnerables = newVulnerables
+
+    return castleMove, nil
 }
 
 func (f *ConcreteMoveFactory) newPromotionMove(move Move) (*PromotionMove, error) {
     action := move.getAction()
 
-    promotionMove := &PromotionMove{
-        Action: action,
-        baseMove: move,
-        promotionPiece: nil,
-    }
+    promotionMove := promotionMovePool.Get().(*PromotionMove)
+    promotionMove.b = action.b
+    promotionMove.fromLocation = action.fromLocation
+    promotionMove.toLocation = action.toLocation
+    promotionMove.baseMove = move
+    promotionMove.promotionPiece = nil
 
     return promotionMove, nil
 }
@@ -242,14 +276,13 @@ func (m *ConcreteMoveFactory) newAllyDefenseMove(b Board, fromLocation Point, to
 		return nil, fmt.Errorf("no piece at fromLocation")
 	}
 
-    return &AllyDefenseMove{
-        Action{
-            b: b,
-            fromLocation: fromLocation,
-            toLocation: toLocation,
-        },
-        p,
-    }, nil
+    allyDefenseMove := allyDefenseMovePool.Get().(*AllyDefenseMove)
+    allyDefenseMove.b = b
+    allyDefenseMove.fromLocation = fromLocation
+    allyDefenseMove.toLocation = toLocation
+    allyDefenseMove.piece = p
+
+    return allyDefenseMove, nil
 }
 
 type Move interface {
@@ -257,6 +290,8 @@ type Move interface {
 	undo() error
 	getAction() Action
     getNewPiece() Piece
+    copy() Move
+    putInPool()
 }
 
 type SimpleMove struct {
@@ -270,6 +305,24 @@ type SimpleMove struct {
 
 func (s *SimpleMove) getNewPiece() Piece {
     return s.newPiece
+}
+
+func (s *SimpleMove) putInPool() {
+    simpleMovePool.Put(s)
+}
+
+func (s *SimpleMove) copy() Move {
+    simpleMove := simpleMovePool.Get().(*SimpleMove)
+    simpleMove.b = s.b
+    simpleMove.fromLocation = s.fromLocation
+    simpleMove.toLocation = s.toLocation
+    simpleMove.piece = s.piece
+    simpleMove.newPiece = s.newPiece
+    simpleMove.capturedPiece = s.capturedPiece
+    simpleMove.en = s.en
+    simpleMove.vulnerables = s.vulnerables
+
+    return simpleMove
 }
 
 func (s *SimpleMove) execute() error {
@@ -320,6 +373,25 @@ func (r *RevealEnPassantMove) getNewPiece() Piece {
     return r.newPiece
 }
 
+func (r *RevealEnPassantMove) putInPool() {
+    revealEnPassantMovePool.Put(r)
+}
+
+func (r *RevealEnPassantMove) copy() Move {
+    revealEnPassantMove := revealEnPassantMovePool.Get().(*RevealEnPassantMove)
+    revealEnPassantMove.b = r.b
+    revealEnPassantMove.fromLocation = r.fromLocation
+    revealEnPassantMove.toLocation = r.toLocation
+    revealEnPassantMove.piece = r.piece
+    revealEnPassantMove.newPiece = r.newPiece
+    revealEnPassantMove.capturedPiece = r.capturedPiece
+    revealEnPassantMove.en = r.en
+    revealEnPassantMove.newEn = r.newEn
+    revealEnPassantMove.vulnerables = r.vulnerables
+
+    return revealEnPassantMove
+}
+
 func (r *RevealEnPassantMove) execute() error {
 	ok := r.b.setPiece(r.fromLocation, nil)
 	if !ok {
@@ -366,6 +438,25 @@ type CaptureEnPassantMove struct {
 
 func (c *CaptureEnPassantMove) getNewPiece() Piece {
     return c.newPiece
+}
+
+func (c *CaptureEnPassantMove) putInPool() {
+    captureEnPassantMovePool.Put(c)
+}
+
+func (c *CaptureEnPassantMove) copy() Move {
+    captureEnPassantMove := captureEnPassantMovePool.Get().(*CaptureEnPassantMove)
+    captureEnPassantMove.b = c.b
+    captureEnPassantMove.fromLocation = c.fromLocation
+    captureEnPassantMove.toLocation = c.toLocation
+    captureEnPassantMove.piece = c.piece
+    captureEnPassantMove.newPiece = c.newPiece
+    captureEnPassantMove.capturedPiece = c.capturedPiece
+    captureEnPassantMove.en = c.en
+    captureEnPassantMove.encs = c.encs
+    captureEnPassantMove.vulnerables = c.vulnerables
+
+    return captureEnPassantMove
 }
 
 func (c *CaptureEnPassantMove) execute() error {
@@ -433,6 +524,28 @@ func (c *CastleMove) getNewPiece() Piece {
     return c.newKing
 }
 
+func (c *CastleMove) putInPool() {
+    castleMovePool.Put(c)
+}
+
+func (c *CastleMove) copy() Move {
+    castleMove := castleMovePool.Get().(*CastleMove)
+    castleMove.b = c.b
+    castleMove.fromLocation = c.fromLocation
+    castleMove.toLocation = c.toLocation
+    castleMove.king = c.king
+    castleMove.newKing = c.newKing
+    castleMove.toKingLocation = c.toKingLocation
+    castleMove.rook = c.rook
+    castleMove.newRook = c.newRook
+    castleMove.toRookLocation = c.toRookLocation
+    castleMove.en = c.en
+    castleMove.vulnerables = c.vulnerables
+    castleMove.newVulnerables = c.newVulnerables
+
+    return castleMove
+}
+
 func (c *CastleMove) execute() error {
 	ok := c.b.setPiece(c.fromLocation, nil)
 	if !ok {
@@ -497,6 +610,23 @@ func (p *PromotionMove) getNewPiece() Piece {
     return p.baseMove.getNewPiece()
 }
 
+func (p *PromotionMove) putInPool() {
+    p.baseMove.putInPool()
+    promotionMovePool.Put(p)
+}
+
+func (p *PromotionMove) copy() Move {
+    promotionMove := promotionMovePool.Get().(*PromotionMove)
+    promotionMove.b = p.b
+    promotionMove.fromLocation = p.fromLocation
+    promotionMove.toLocation = p.toLocation
+    promotionMove.baseMove = p.baseMove.copy()
+    promotionMove.promotionPiece = p.promotionPiece
+
+    return promotionMove
+}
+
+
 func (p *PromotionMove) setPromotionPiece(piece Piece) error {
     p.promotionPiece = piece
 
@@ -524,6 +654,20 @@ type AllyDefenseMove struct {
 
 func (m *AllyDefenseMove) getNewPiece() Piece {
     return m.piece
+}
+
+func (m *AllyDefenseMove) putInPool() {
+    allyDefenseMovePool.Put(m)
+}
+
+func (m *AllyDefenseMove) copy() Move {
+    allyDefenseMove := allyDefenseMovePool.Get().(*AllyDefenseMove)
+    allyDefenseMove.b = m.b
+    allyDefenseMove.fromLocation = m.fromLocation
+    allyDefenseMove.toLocation = m.toLocation
+    allyDefenseMove.piece = m.piece
+
+    return allyDefenseMove
 }
 
 func (m *AllyDefenseMove) execute() error {

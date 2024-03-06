@@ -169,6 +169,10 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
         }
     }
 
+    for _, move := range moves {
+        move.putInPool()
+    }
+
     if bestMove == nil {
         // stalemate
         if !inCheck {
