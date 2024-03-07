@@ -95,15 +95,6 @@ func (m *MockMove) getNewPiece() Piece {
     return args.Get(0).(Piece)
 }
 
-func (m *MockMove) putInPool() {
-    m.Called()
-}
-
-func (m *MockMove) copy() Move {
-    args := m.Called()
-    return args.Get(0).(Move)
-}
-
 func Test_SimpleMove(t *testing.T) {
     white := 0
 

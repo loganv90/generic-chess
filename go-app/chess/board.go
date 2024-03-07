@@ -273,8 +273,7 @@ func (b *SimpleBoard) MovesOfColor(color int) ([]Move, error) {
     for _, pieceLocation := range b.pieceLocations[color] {
         for i := 0; i < b.fromMoves[pieceLocation.y][pieceLocation.x].count; i++ {
             move := b.fromMoves[pieceLocation.y][pieceLocation.x].array[i]
-            moveCopy := move.copy()
-            moves = append(moves, moveCopy)
+            moves = append(moves, move)
         }
     }
     return moves, nil
@@ -288,8 +287,7 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation Point) ([]Move, error) {
     moves := []Move{}
     for i := 0; i < b.fromMoves[fromLocation.y][fromLocation.x].count; i++ {
         move := b.fromMoves[fromLocation.y][fromLocation.x].array[i]
-        moveCopy := move.copy()
-        moves = append(moves, moveCopy)
+        moves = append(moves, move)
     }
     return moves, nil
 }
@@ -390,11 +388,6 @@ func (b *SimpleBoard) CalculateMoves() error {
 
     for row := range b.toMoves {
         for col := range b.toMoves[row] {
-            for i := 0; i < b.fromMoves[row][col].count; i++ {
-                move := b.fromMoves[row][col].array[i]
-                move.putInPool()
-            }
-
             b.toMoves[row][col].clear()
             b.fromMoves[row][col].clear()
         }
@@ -423,7 +416,6 @@ func (b *SimpleBoard) CalculateMoves() error {
     return nil
 }
 
-// OKOK we might want to use sync.Pool for the moves
 // TODO implement dynamic move calculations based on previous move
 // TODO how about we don't create massive move objects with pieces and stuff
 // stop excessive use of maps
