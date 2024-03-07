@@ -86,19 +86,19 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
         vulnerableLocations[v] = []Point{}
     }
 
-    fromMoves := make([][][]Move, boardSize.y)
+    fromMoves := make([][]ArrayWithCount[Move], boardSize.y)
     for row := range fromMoves {
-        fromMoves[row] = make([][]Move, boardSize.x)
+        fromMoves[row] = make([]ArrayWithCount[Move], boardSize.x)
         for col := range fromMoves[row] {
-            fromMoves[row][col] = []Move{}
+            fromMoves[row][col] = ArrayWithCount[Move]{}
         }
     }
 
-    toMoves := make([][][]Move, boardSize.y)
+    toMoves := make([][]ArrayWithCount[Move], boardSize.y)
     for row := range toMoves {
-        toMoves[row] = make([][]Move, boardSize.x)
+        toMoves[row] = make([]ArrayWithCount[Move], boardSize.x)
         for col := range toMoves[row] {
-            toMoves[row][col] = []Move{}
+            toMoves[row][col] = ArrayWithCount[Move]{}
         }
     }
 
@@ -128,8 +128,8 @@ type SimpleBoard struct {
     pieceLocations [][]Point
 	enPassants []EnPassant
     vulnerableLocations [][]Point
-    fromMoves [][][]Move
-    toMoves [][][]Move
+    fromMoves [][]ArrayWithCount[Move]
+    toMoves [][]ArrayWithCount[Move]
     test bool
 }
 
@@ -271,7 +271,10 @@ func (b *SimpleBoard) MovesOfColor(color int) ([]Move, error) {
 
     moves := []Move{}
     for _, pieceLocation := range b.pieceLocations[color] {
-        moves = append(moves, b.fromMoves[pieceLocation.y][pieceLocation.x]...)
+        for i := 0; i < b.fromMoves[pieceLocation.y][pieceLocation.x].count; i++ {
+            move := b.fromMoves[pieceLocation.y][pieceLocation.x].array[i]
+            moves = append(moves, move)
+        }
     }
     return moves, nil
 }
@@ -281,7 +284,12 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation Point) ([]Move, error) {
         return []Move{}, fmt.Errorf("invalid location")
     }
 
-    return b.fromMoves[fromLocation.y][fromLocation.x], nil
+    moves := []Move{}
+    for i := 0; i < b.fromMoves[fromLocation.y][fromLocation.x].count; i++ {
+        move := b.fromMoves[fromLocation.y][fromLocation.x].array[i]
+        moves = append(moves, move)
+    }
+    return moves, nil
 }
 
 func (b *SimpleBoard) LegalMovesOfColor(color int) ([]Move, error) {
@@ -380,13 +388,8 @@ func (b *SimpleBoard) CalculateMoves() error {
 
     for row := range b.toMoves {
         for col := range b.toMoves[row] {
-            b.toMoves[row][col] = []Move{}
-        }
-    }
-
-    for row := range b.fromMoves {
-        for col := range b.fromMoves[row] {
-            b.fromMoves[row][col] = []Move{}
+            b.toMoves[row][col].clear()
+            b.fromMoves[row][col].clear()
         }
     }
 
@@ -404,8 +407,8 @@ func (b *SimpleBoard) CalculateMoves() error {
             moves := piece.moves(b, fromLocation)
             for _, move := range moves {
                 action := move.getAction()
-                b.fromMoves[action.fromLocation.y][action.fromLocation.x] = append(b.fromMoves[action.fromLocation.y][action.fromLocation.x], move)
-                b.toMoves[action.toLocation.y][action.toLocation.x] = append(b.toMoves[action.toLocation.y][action.toLocation.x], move)
+                b.fromMoves[action.fromLocation.y][action.fromLocation.x].append(move)
+                b.toMoves[action.toLocation.y][action.toLocation.x].append(move)
             }
         }
     }
@@ -523,8 +526,8 @@ func (b *SimpleBoard) Check(color int) bool {
     }
 
     kingLocation := b.kingLocations[color]
-    moves := b.toMoves[kingLocation.y][kingLocation.x]
-    for _, move := range moves {
+    for i := 0; i < b.toMoves[kingLocation.y][kingLocation.x].count; i++ {
+        move := b.toMoves[kingLocation.y][kingLocation.x].array[i]
         action := move.getAction()
         piece, ok := b.getPiece(action.fromLocation)
         if piece == nil || !ok {
@@ -537,8 +540,8 @@ func (b *SimpleBoard) Check(color int) bool {
     }
 
     for _, vulnerableLocation := range b.vulnerableLocations[color] {
-        moves := b.toMoves[vulnerableLocation.y][vulnerableLocation.x]
-        for _, move := range moves {
+        for i := 0; i < b.toMoves[vulnerableLocation.y][vulnerableLocation.x].count; i++ {
+            move := b.toMoves[vulnerableLocation.y][vulnerableLocation.x].array[i]
             action := move.getAction()
             piece, ok := b.getPiece(action.fromLocation)
             if piece == nil || !ok {

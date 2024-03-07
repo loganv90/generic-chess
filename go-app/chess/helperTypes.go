@@ -86,3 +86,17 @@ type PieceLocations struct {
     enemyPieceLocations []Point
 }
 
+type ArrayWithCount[T any] struct {
+    array [100]T
+    count int
+}
+
+func (a *ArrayWithCount[T]) append(item T) {
+    a.array[a.count] = item
+    a.count += 1
+}
+
+func (a *ArrayWithCount[T]) clear() {
+    a.count = 0
+}
+
