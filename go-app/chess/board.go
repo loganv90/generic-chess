@@ -86,19 +86,19 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
         vulnerableLocations[v] = []Point{}
     }
 
-    fromMoves := make([][]ArrayWithCount[Move], boardSize.y)
+    fromMoves := make([][]Array100[Move], boardSize.y)
     for row := range fromMoves {
-        fromMoves[row] = make([]ArrayWithCount[Move], boardSize.x)
+        fromMoves[row] = make([]Array100[Move], boardSize.x)
         for col := range fromMoves[row] {
-            fromMoves[row][col] = ArrayWithCount[Move]{}
+            fromMoves[row][col] = Array100[Move]{}
         }
     }
 
-    toMoves := make([][]ArrayWithCount[Move], boardSize.y)
+    toMoves := make([][]Array100[Move], boardSize.y)
     for row := range toMoves {
-        toMoves[row] = make([]ArrayWithCount[Move], boardSize.x)
+        toMoves[row] = make([]Array100[Move], boardSize.x)
         for col := range toMoves[row] {
-            toMoves[row][col] = ArrayWithCount[Move]{}
+            toMoves[row][col] = Array100[Move]{}
         }
     }
 
@@ -128,8 +128,8 @@ type SimpleBoard struct {
     pieceLocations [][]Point
 	enPassants []EnPassant
     vulnerableLocations [][]Point
-    fromMoves [][]ArrayWithCount[Move]
-    toMoves [][]ArrayWithCount[Move]
+    fromMoves [][]Array100[Move]
+    toMoves [][]Array100[Move]
     test bool
 }
 
