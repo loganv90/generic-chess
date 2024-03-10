@@ -15,15 +15,11 @@ type Board interface {
 	getPiece(location Point) (Piece, bool)
 	setPiece(location Point, piece Piece) bool
     disableLocation(location Point) error
-    getVulnerables(color int) ([]Point, error) // if these locations are attacked, the player is in check
-    setVulnerables(color int, locations []Point) error
+    getVulnerable(color int) (Vulnerable, error) // if these locations are attacked, the player is in check
+    setVulnerable(color int, vulnerable Vulnerable) error
 	getEnPassant(color int) (EnPassant, error) // if these locations are attacked, a piece is captured en passant
 	setEnPassant(color int, enPassant EnPassant) error
     possibleEnPassant(color int, location Point) ([]EnPassant, error)
-
-    // TODO fix
-    getVulnerables2(color int) (Vulnerable, error)
-    setVulnerables2(color int, vulnerable Vulnerable) error
 
     // these are for the playerTransition
     disablePieces(color int, disable bool) error
@@ -85,9 +81,9 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
         enPassants[e] = EnPassant{Point{-1, -1}, Point{-1, -1}}
     }
 
-    vulnerableLocations := make([][]Point, numberOfPlayers)
-    for v := range vulnerableLocations {
-        vulnerableLocations[v] = []Point{}
+    vulnerables := make([]Vulnerable, numberOfPlayers)
+    for v := range vulnerables {
+        vulnerables[v] = Vulnerable{Point{-1, -1}, Point{-1, -1}}
     }
 
     fromMoves := make([][]Array100[Move], boardSize.y)
@@ -115,7 +111,7 @@ func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) 
         kingLocations: kingLocations,
         pieceLocations: pieceLocations,
 		enPassants: enPassants,
-        vulnerableLocations: vulnerableLocations,
+        vulnerables: vulnerables,
         fromMoves: fromMoves,
         toMoves: toMoves,
         test: false,
@@ -131,7 +127,7 @@ type SimpleBoard struct {
     kingLocations []Point
     pieceLocations [][]Point
 	enPassants []EnPassant
-    vulnerableLocations [][]Point
+    vulnerables []Vulnerable
     fromMoves [][]Array100[Move]
     toMoves [][]Array100[Move]
     test bool
@@ -214,70 +210,22 @@ func (b *SimpleBoard) disableLocation(location Point) error {
     return nil
 }
 
-func (b *SimpleBoard) getVulnerables(color int) ([]Point, error) {
-    if b.colorOutOfBounds(color) {
-        return []Point{}, fmt.Errorf("invalid color")
-    }
-
-    return b.vulnerableLocations[color], nil
-}
-
-func (b *SimpleBoard) getVulnerables2(color int) (Vulnerable, error) {
+func (b *SimpleBoard) getVulnerable(color int) (Vulnerable, error) {
     if b.colorOutOfBounds(color) {
         return Vulnerable{}, fmt.Errorf("invalid color")
     }
 
-    vs := b.vulnerableLocations[color]
-
-    if len(vs) < 1 {
-        return Vulnerable{}, fmt.Errorf("no vulnerable locations")
-    }
-
-    vminx := vs[0].x
-    vminy := vs[0].y
-    vmaxx := vs[0].x
-    vmaxy := vs[0].y
-    for _, v := range vs {
-        vminx = min(vminx, v.x)
-        vminy = min(vminy, v.y)
-        vmaxx = max(vmaxx, v.x)
-        vmaxy = max(vmaxy, v.y)
-    }
-
-    return Vulnerable{Point{vminx, vminy}, Point{vmaxx, vmaxy}}, nil
+    return b.vulnerables[color], nil
 }
 
-func (b *SimpleBoard) setVulnerables(color int, locations []Point) error {
+func (b *SimpleBoard) setVulnerable(color int, vulnerable Vulnerable) error {
     if b.colorOutOfBounds(color) {
         return fmt.Errorf("invalid color")
     }
 
-    b.vulnerableLocations[color] = locations
+    b.vulnerables[color] = vulnerable
     return nil
 }
-
-func (b *SimpleBoard) setVulnerables2(color int, vulnerable Vulnerable) error {
-    if b.colorOutOfBounds(color) {
-        return fmt.Errorf("invalid color")
-    }
-
-    vs := []Point{}
-
-    vminx := min(vulnerable.start.x, vulnerable.end.x)
-    vminy := min(vulnerable.start.y, vulnerable.end.y)
-    vmaxx := max(vulnerable.start.x, vulnerable.end.x)
-    vmaxy := max(vulnerable.start.y, vulnerable.end.y)
-    for y := vminy; y <= vmaxy; y++ {
-        for x := vminx; x <= vmaxx; x++ {
-            vs = append(vs, Point{x, y})
-        }
-    }
-
-    b.vulnerableLocations[color] = vs
-
-    return nil
-}
-
 
 func (b *SimpleBoard) getEnPassant(color int) (EnPassant, error) {
     if b.colorOutOfBounds(color) {
@@ -591,17 +539,20 @@ func (b *SimpleBoard) Check(color int) bool {
         }
     }
 
-    for _, vulnerableLocation := range b.vulnerableLocations[color] {
-        for i := 0; i < b.toMoves[vulnerableLocation.y][vulnerableLocation.x].count; i++ {
-            move := b.toMoves[vulnerableLocation.y][vulnerableLocation.x].array[i]
-            action := move.getAction()
-            piece, ok := b.getPiece(action.fromLocation)
-            if piece == nil || !ok {
-                continue
-            }
+    vulnerable := b.vulnerables[color]
+    for x := max(0, vulnerable.start.x); x <= vulnerable.end.x; x++ {
+        for y := max(0, vulnerable.start.y); y <= vulnerable.end.y; y++ {
+            for i := 0; i < b.toMoves[y][x].count; i++ {
+                move := b.toMoves[y][x].array[i]
+                action := move.getAction()
+                piece, ok := b.getPiece(action.fromLocation)
+                if piece == nil || !ok {
+                    continue
+                }
 
-            if piece.getColor() != color {
-                return true
+                if piece.getColor() != color {
+                    return true
+                }
             }
         }
     }
@@ -654,10 +605,8 @@ func (b *SimpleBoard) copy() (*SimpleBoard, error) {
         simpleBoard.enPassants[color] = enPassant
     }
 
-    for color, vulnerableLocations := range b.vulnerableLocations {
-        dst := make([]Point, len(vulnerableLocations))
-        copy(dst, vulnerableLocations)
-        simpleBoard.vulnerableLocations[color] = dst
+    for color, vulnerable := range b.vulnerables {
+        simpleBoard.vulnerables[color] = vulnerable
     }
 
     return simpleBoard, nil

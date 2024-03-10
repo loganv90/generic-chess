@@ -693,28 +693,32 @@ func (k *King) addCastles(b Board, fromLocation Point, moves *[]Move) {
             continue
         }
 
-        vulnerableLocations := []Point{}
+        var minx int
+        var maxx int
+        var miny int
+        var maxy int
         if toLocation.x > fromLocation.x {
-            for x := fromLocation.x + 1; x < toLocation.x; x++ {
-                location := Point{x, fromLocation.y}
-                vulnerableLocations = append(vulnerableLocations, location)
-            }
+            minx = fromLocation.x + 1
+            maxx = toLocation.x - 1
+            miny = fromLocation.y
+            maxy = fromLocation.y
         } else if toLocation.x < fromLocation.x {
-            for x := fromLocation.x - 1; x > toLocation.x; x-- {
-                location := Point{x, fromLocation.y}
-                vulnerableLocations = append(vulnerableLocations, location)
-            }
+            minx = toLocation.x + 1
+            maxx = fromLocation.x - 1
+            miny = fromLocation.y
+            maxy = fromLocation.y
         } else if toLocation.y > fromLocation.y {
-            for y := fromLocation.y + 1; y < toLocation.y; y++ {
-                location := Point{fromLocation.x, y}
-                vulnerableLocations = append(vulnerableLocations, location)
-            }
+            minx = fromLocation.x
+            maxx = fromLocation.x
+            miny = fromLocation.y + 1
+            maxy = toLocation.y - 1
         } else if toLocation.y < fromLocation.y {
-            for y := fromLocation.y - 1; y > toLocation.y; y-- {
-                location := Point{fromLocation.x, y}
-                vulnerableLocations = append(vulnerableLocations, location)
-            }
+            minx = fromLocation.x
+            maxx = fromLocation.x
+            miny = toLocation.y + 1
+            maxy = fromLocation.y - 1
         }
+        vulnerable := Vulnerable{Point{minx, miny}, Point{maxx, maxy}}
 
 		castleMove, err := moveFactoryInstance.newCastleMove(
             b,
@@ -722,7 +726,7 @@ func (k *King) addCastles(b Board, fromLocation Point, moves *[]Move) {
             fromRookLocation,
             toLocation,
             toRookLocation,
-            vulnerableLocations,
+            vulnerable,
         )
 		if err == nil {
 			*moves = append(*moves, castleMove)

@@ -32,22 +32,12 @@ func (m *MockBoard) disableLocation(location Point) error {
     return args.Error(0)
 }
 
-func (m *MockBoard) getVulnerables(color int) ([]Point, error) {
-    args := m.Called(color)
-    return args.Get(0).([]Point), args.Error(1)
-}
-
-func (m *MockBoard) getVulnerables2(color int) (Vulnerable, error) {
+func (m *MockBoard) getVulnerable(color int) (Vulnerable, error) {
     args := m.Called(color)
     return args.Get(0).(Vulnerable), args.Error(1)
 }
 
-func (m *MockBoard) setVulnerables(color int, vulnerables []Point) error {
-    args := m.Called(color, vulnerables)
-    return args.Error(0)
-}
-
-func (m *MockBoard) setVulnerables2(color int, vulnerable Vulnerable) error {
+func (m *MockBoard) setVulnerable(color int, vulnerable Vulnerable) error {
     args := m.Called(color, vulnerable)
     return args.Error(0)
 }

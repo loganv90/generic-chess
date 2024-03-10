@@ -41,8 +41,8 @@ func (m *MockMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Point, t
 	}
 }
 
-func (m *MockMoveFactory) newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerables []Point) (*CastleMove, error) {
-    args := m.Called(b, fromLocation, toLocation, toKingLocation, toRookLocation, newVulnerables)
+func (m *MockMoveFactory) newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerable Vulnerable) (*CastleMove, error) {
+    args := m.Called(b, fromLocation, toLocation, toKingLocation, toRookLocation, newVulnerable)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -109,21 +109,21 @@ func Test_SimpleMove(t *testing.T) {
 	board.On("getPiece", Point{1, 1}).Return(capturedPiece, true)
 	board.On("getEnPassant", white).Return(en, nil)
 	piece.On("getColor").Return(white)
-    board.On("getVulnerables", white).Return([]Point{{2, 2}}, nil)
+    board.On("getVulnerable", white).Return(Vulnerable{Point{2, 2}, Point{2, 2}}, nil)
 	simpleMove, err := moveFactoryInstance.newSimpleMove(board, Point{0, 0}, Point{1, 1})
 	assert.Nil(t, err)
 
 	board.On("setPiece", Point{0, 0}, nil).Return(true)
 	board.On("setPiece", Point{1, 1}, newPiece).Return(true)
 	board.On("setEnPassant", white, EnPassant{Point{-1, -1}, Point{-1, -1}}).Return(nil)
-    board.On("setVulnerables", white, []Point{}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{-1, -1}, Point{-1, -1}}).Return(nil)
 	err = simpleMove.execute()
 	assert.Nil(t, err)
 
 	board.On("setPiece", Point{0, 0}, piece).Return(true)
 	board.On("setPiece", Point{1, 1}, capturedPiece).Return(true)
 	board.On("setEnPassant", white, en).Return(nil)
-    board.On("setVulnerables", white, []Point{{2, 2}}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{2, 2}, Point{2, 2}}).Return(nil)
 	err = simpleMove.undo()
 	assert.Nil(t, err)
 
@@ -146,21 +146,21 @@ func Test_RevealEnPassantMove(t *testing.T) {
 	board.On("getPiece", Point{2, 2}).Return(capturedPiece, true)
 	board.On("getEnPassant", white).Return(en, nil)
 	piece.On("getColor").Return(white)
-    board.On("getVulnerables", white).Return([]Point{{2, 2}}, nil)
+    board.On("getVulnerable", white).Return(Vulnerable{Point{2, 2}, Point{2, 2}}, nil)
 	revealEnPassantMove, err := moveFactoryInstance.newRevealEnPassantMove(board, Point{0, 0}, Point{2, 2}, Point{1, 1})
 	assert.Nil(t, err)
 
 	board.On("setPiece", Point{0, 0}, nil).Return(true)
 	board.On("setPiece", Point{2, 2}, newPiece).Return(true)
 	board.On("setEnPassant", white, EnPassant{Point{1, 1}, Point{2, 2}}).Return(nil)
-    board.On("setVulnerables", white, []Point{}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{-1, -1}, Point{-1, -1}}).Return(nil)
 	err = revealEnPassantMove.execute()
 	assert.Nil(t, err)
 
 	board.On("setPiece", Point{0, 0}, piece).Return(true)
 	board.On("setPiece", Point{2, 2}, capturedPiece).Return(true)
 	board.On("setEnPassant", white, en).Return(nil)
-    board.On("setVulnerables", white, []Point{{2, 2}}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{2, 2}, Point{2, 2}}).Return(nil)
 	err = revealEnPassantMove.undo()
 	assert.Nil(t, err)
 
@@ -186,7 +186,7 @@ func Test_CaptureEnPassantMove(t *testing.T) {
 	piece.On("getColor").Return(white)
 	board.On("possibleEnPassant", white, Point{1, 1}).Return([]EnPassant{{Point{1, 1}, Point{2, 2}}}, nil)
 	board.On("getPiece", Point{2, 2}).Return(encPiece, true)
-    board.On("getVulnerables", white).Return([]Point{{2, 2}}, nil)
+    board.On("getVulnerable", white).Return(Vulnerable{Point{2, 2}, Point{2, 2}}, nil)
 	captureEnPassantMove, err := moveFactoryInstance.newCaptureEnPassantMove(board, Point{0, 0}, Point{1, 1})
 	assert.Nil(t, err)
 
@@ -196,7 +196,7 @@ func Test_CaptureEnPassantMove(t *testing.T) {
 	board.On("setPiece", Point{1, 1}, newPiece).Return(true)
 	board.On("setPiece", Point{2, 2}, nil).Return(true)
 	board.On("setEnPassant", white, EnPassant{Point{-1, -1}, Point{-1, -1}}).Return(nil)
-    board.On("setVulnerables", white, []Point{}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{-1, -1}, Point{-1, -1}}).Return(nil)
 	err = captureEnPassantMove.execute()
 	assert.Nil(t, err)
 
@@ -204,7 +204,7 @@ func Test_CaptureEnPassantMove(t *testing.T) {
 	board.On("setPiece", Point{1, 1}, capturedPiece).Return(true)
 	board.On("setPiece", Point{2, 2}, encPiece).Return(true)
 	board.On("setEnPassant", white, en).Return(nil)
-    board.On("setVulnerables", white, []Point{{2, 2}}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{2, 2}, Point{2, 2}}).Return(nil)
 	err = captureEnPassantMove.undo()
 	assert.Nil(t, err)
 
@@ -222,7 +222,7 @@ func Test_CastleMove(t *testing.T) {
 	rook := &MockPiece{}
 	newRook := &MockPiece{}
 	en := EnPassant{}
-    newVulnerables := []Point{{4, 4}}
+    newVulnerable := Vulnerable{Point{4, 4}, Point{4, 4}}
 
 	board.On("getPiece", Point{0, 0}).Return(king, true)
 	board.On("getPiece", Point{1, 1}).Return(rook, true)
@@ -230,8 +230,8 @@ func Test_CastleMove(t *testing.T) {
 	rook.On("copy").Return(newRook, nil)
 	board.On("getEnPassant", white).Return(en, nil)
 	king.On("getColor").Return(white)
-    board.On("getVulnerables", white).Return([]Point{{5, 5}}, nil)
-	castleMove, err := moveFactoryInstance.newCastleMove(board, Point{0, 0}, Point{1, 1}, Point{2, 2}, Point{3, 3}, newVulnerables)
+    board.On("getVulnerable", white).Return(Vulnerable{Point{5, 5}, Point{5, 5}}, nil)
+	castleMove, err := moveFactoryInstance.newCastleMove(board, Point{0, 0}, Point{1, 1}, Point{2, 2}, Point{3, 3}, newVulnerable)
 	assert.Nil(t, err)
 
 	board.On("setPiece", Point{0, 0}, nil).Return(true)
@@ -239,7 +239,7 @@ func Test_CastleMove(t *testing.T) {
 	board.On("setPiece", Point{2, 2}, newKing).Return(true)
 	board.On("setPiece", Point{3, 3}, newRook).Return(true)
 	board.On("setEnPassant", white, EnPassant{Point{-1, -1}, Point{-1, -1}}).Return(nil)
-    board.On("setVulnerables", white, []Point{{4, 4}}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{4, 4}, Point{4, 4}}).Return(nil)
 	err = castleMove.execute()
 	assert.Nil(t, err)
 
@@ -248,7 +248,7 @@ func Test_CastleMove(t *testing.T) {
 	board.On("setPiece", Point{2, 2}, nil).Return(true)
 	board.On("setPiece", Point{3, 3}, nil).Return(true)
 	board.On("setEnPassant", white, en).Return(nil)
-    board.On("setVulnerables", white, []Point{{5, 5}}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{5, 5}, Point{5, 5}}).Return(nil)
 	err = castleMove.undo()
 	assert.Nil(t, err)
 
@@ -274,7 +274,7 @@ func Test_PromotionMove(t *testing.T) {
 	board.On("getPiece", Point{1, 1}).Return(capturedPiece, true)
 	board.On("getEnPassant", white).Return(en, nil)
 	piece.On("getColor").Return(white)
-    board.On("getVulnerables", white).Return([]Point{{2, 2}}, nil)
+    board.On("getVulnerable", white).Return(Vulnerable{Point{2, 2}, Point{2, 2}}, nil)
 	simpleMove, err := moveFactoryInstance.newSimpleMove(board, Point{0, 0}, Point{1, 1})
 	assert.Nil(t, err)
     promotionMove, err := moveFactoryInstance.newPromotionMove(simpleMove)
@@ -286,7 +286,7 @@ func Test_PromotionMove(t *testing.T) {
 	board.On("setPiece", Point{1, 1}, newPiece).Return(true)
     board.On("setPiece", Point{1, 1}, queen).Return(true)
 	board.On("setEnPassant", white, EnPassant{Point{-1, -1}, Point{-1, -1}}).Return(nil)
-    board.On("setVulnerables", white, []Point{}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{-1, -1}, Point{-1, -1}}).Return(nil)
 	err = promotionMove.execute()
 	assert.Nil(t, err)
 
@@ -294,7 +294,7 @@ func Test_PromotionMove(t *testing.T) {
     board.On("setPiece", Point{1, 1}, newPiece).Return(true)
 	board.On("setPiece", Point{1, 1}, capturedPiece).Return(true)
 	board.On("setEnPassant", white, en).Return(nil)
-    board.On("setVulnerables", white, []Point{{2, 2}}).Return(nil)
+    board.On("setVulnerable", white, Vulnerable{Point{2, 2}, Point{2, 2}}).Return(nil)
 	err = promotionMove.undo()
 	assert.Nil(t, err)
 

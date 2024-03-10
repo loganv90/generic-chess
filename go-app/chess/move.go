@@ -25,7 +25,7 @@ type MoveFactory interface {
 	newSimpleMove(b Board, fromLocation Point, toLocation Point) (*SimpleMove, error)
 	newRevealEnPassantMove(b Board, fromLocation Point, toLocation Point, target Point) (*RevealEnPassantMove, error)
 	newCaptureEnPassantMove(b Board, fromLocation Point, toLocation Point) (*CaptureEnPassantMove, error)
-	newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerables []Point) (*CastleMove, error)
+	newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerable Vulnerable) (*CastleMove, error)
     newPromotionMove(move Move) (*PromotionMove, error)
     newAllyDefenseMove(b Board, fromLocation Point, toLocation Point) (*AllyDefenseMove, error)
 }
@@ -53,7 +53,7 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation Point, toLocat
 		return nil, err
 	}
 
-    vulnerables, err := b.getVulnerables(piece.getColor())
+    vulnerable, err := b.getVulnerable(piece.getColor())
     if err != nil {
         return nil, err
     }
@@ -68,7 +68,7 @@ func (f *ConcreteMoveFactory) newSimpleMove(b Board, fromLocation Point, toLocat
 		newPiece,
 		capturedPiece,
 		en,
-        vulnerables,
+        vulnerable,
 	}, nil
 }
 
@@ -93,7 +93,7 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
 		return nil, err
 	}
 
-    vulnerables, err := b.getVulnerables(piece.getColor())
+    vulnerable, err := b.getVulnerable(piece.getColor())
     if err != nil {
         return nil, err
     }
@@ -114,7 +114,7 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
 		capturedPiece,
 		en,
 		newEn,
-        vulnerables,
+        vulnerable,
 	}, nil
 }
 
@@ -139,7 +139,7 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
 		return nil, err
 	}
     
-    vulnerables, err := b.getVulnerables(piece.getColor())
+    vulnerable, err := b.getVulnerable(piece.getColor())
     if err != nil {
         return nil, err
     }
@@ -171,11 +171,11 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
 		capturedPiece,
 		en,
 		encs,
-        vulnerables,
+        vulnerable,
 	}, nil
 }
 
-func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerables []Point) (*CastleMove, error) {
+func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocation Point, toKingLocation Point, toRookLocation Point, newVulnerable Vulnerable) (*CastleMove, error) {
 	king, ok := b.getPiece(fromLocation)
 	if !ok {
 		return nil, fmt.Errorf("no piece at fromLocation")
@@ -201,7 +201,7 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocat
 		return nil, err
 	}
 
-    vulnerables, err := b.getVulnerables(king.getColor())
+    vulnerable, err := b.getVulnerable(king.getColor())
     if err != nil {
         return nil, err
     }
@@ -219,8 +219,8 @@ func (f *ConcreteMoveFactory) newCastleMove(b Board, fromLocation Point, toLocat
 		newRook,
         toRookLocation,
 		en,
-        vulnerables,
-        newVulnerables,
+        vulnerable,
+        newVulnerable,
 	}, nil
 }
 
@@ -265,7 +265,7 @@ type SimpleMove struct {
 	newPiece      Piece
 	capturedPiece Piece
 	en            EnPassant
-    vulnerables   []Point
+    vulnerable    Vulnerable
 }
 
 func (s *SimpleMove) getNewPiece() Piece {
@@ -283,7 +283,7 @@ func (s *SimpleMove) execute() error {
 		return fmt.Errorf("no piece at toLocation")
 	}
 
-    s.b.setVulnerables(s.piece.getColor(), []Point{})
+    s.b.setVulnerable(s.piece.getColor(), Vulnerable{Point{-1, -1}, Point{-1, -1}})
 	s.b.setEnPassant(s.piece.getColor(), EnPassant{Point{-1, -1}, Point{-1, -1}})
 
 	return nil
@@ -300,7 +300,7 @@ func (s *SimpleMove) undo() error {
 		return fmt.Errorf("no piece at toLocation")
 	}
 
-    s.b.setVulnerables(s.piece.getColor(), s.vulnerables)
+    s.b.setVulnerable(s.piece.getColor(), s.vulnerable)
 	s.b.setEnPassant(s.piece.getColor(), s.en)
 
 	return nil
@@ -313,7 +313,7 @@ type RevealEnPassantMove struct {
 	capturedPiece Piece
 	en            EnPassant
 	newEn         EnPassant
-    vulnerables   []Point
+    vulnerable    Vulnerable
 }
 
 func (r *RevealEnPassantMove) getNewPiece() Piece {
@@ -331,7 +331,7 @@ func (r *RevealEnPassantMove) execute() error {
 		return fmt.Errorf("no piece at toLocation")
 	}
 
-    r.b.setVulnerables(r.piece.getColor(), []Point{})
+    r.b.setVulnerable(r.piece.getColor(), Vulnerable{Point{-1, -1}, Point{-1, -1}})
 	r.b.setEnPassant(r.piece.getColor(), r.newEn)
 
 	return nil
@@ -348,7 +348,7 @@ func (r *RevealEnPassantMove) undo() error {
 		return fmt.Errorf("no piece at toLocation")
 	}
 
-    r.b.setVulnerables(r.piece.getColor(), r.vulnerables)
+    r.b.setVulnerable(r.piece.getColor(), r.vulnerable)
 	r.b.setEnPassant(r.piece.getColor(), r.en)
 
 	return nil
@@ -361,7 +361,7 @@ type CaptureEnPassantMove struct {
 	capturedPiece Piece
 	en            EnPassant
 	encs          []EnPassantCapture
-    vulnerables   []Point
+    vulnerable    Vulnerable
 }
 
 func (c *CaptureEnPassantMove) getNewPiece() Piece {
@@ -386,7 +386,7 @@ func (c *CaptureEnPassantMove) execute() error {
 		return fmt.Errorf("no piece at toLocation")
 	}
 
-    c.b.setVulnerables(c.piece.getColor(), []Point{})
+    c.b.setVulnerable(c.piece.getColor(), Vulnerable{Point{-1, -1}, Point{-1, -1}})
 	c.b.setEnPassant(c.piece.getColor(), EnPassant{Point{-1, -1}, Point{-1, -1}})
 
 	return nil
@@ -410,7 +410,7 @@ func (c *CaptureEnPassantMove) undo() error {
 		}
 	}
 
-    c.b.setVulnerables(c.piece.getColor(), c.vulnerables)
+    c.b.setVulnerable(c.piece.getColor(), c.vulnerable)
 	c.b.setEnPassant(c.piece.getColor(), c.en)
 
 	return nil
@@ -425,8 +425,8 @@ type CastleMove struct {
 	newRook Piece
     toRookLocation Point
 	en      EnPassant
-    vulnerables   []Point
-    newVulnerables []Point
+    vulnerable Vulnerable
+    newVulnerable Vulnerable
 }
 
 func (c *CastleMove) getNewPiece() Piece {
@@ -454,7 +454,7 @@ func (c *CastleMove) execute() error {
 		return fmt.Errorf("no piece at toKingLocation")
 	}
 
-    c.b.setVulnerables(c.king.getColor(), c.newVulnerables)
+    c.b.setVulnerable(c.king.getColor(), c.newVulnerable)
 	c.b.setEnPassant(c.king.getColor(), EnPassant{Point{-1, -1}, Point{-1, -1}})
 
 	return nil
@@ -481,7 +481,7 @@ func (c *CastleMove) undo() error {
 		return fmt.Errorf("no piece at toLocation")
 	}
 
-    c.b.setVulnerables(c.king.getColor(), c.vulnerables)
+    c.b.setVulnerable(c.king.getColor(), c.vulnerable)
 	c.b.setEnPassant(c.king.getColor(), c.en)
 
 	return nil

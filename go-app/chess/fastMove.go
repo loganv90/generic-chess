@@ -26,7 +26,7 @@ func createMoveSimple(
 		return FastMove{}, err
 	}
 
-    vulnerable, err := b.getVulnerables2(color)
+    vulnerable, err := b.getVulnerable(color)
     if err != nil {
         return FastMove{}, err
     }
@@ -164,7 +164,7 @@ func createMoveCastle(
 		return FastMove{}, err
 	}
 
-    vulnerable, err := b.getVulnerables2(color)
+    vulnerable, err := b.getVulnerable(color)
     if err != nil {
         return FastMove{}, err
     }
@@ -240,7 +240,7 @@ func (m *FastMove) execute() error {
         return err
     }
 
-    err = m.b.setVulnerables2(m.color, m.newVulnerable)
+    err = m.b.setVulnerable(m.color, m.newVulnerable)
     if err != nil {
         return err
     }
@@ -262,7 +262,7 @@ func (m *FastMove) undo() error {
         return err
     }
 
-    err = m.b.setVulnerables2(m.color, m.oldVulnerable)
+    err = m.b.setVulnerable(m.color, m.oldVulnerable)
     if err != nil {
         return err
     }

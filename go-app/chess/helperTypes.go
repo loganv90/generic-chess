@@ -91,6 +91,14 @@ type Vulnerable struct {
     end Point
 }
 
+func (v Vulnerable) contains(point Point) bool {
+    minx := v.start.x
+    maxx := v.end.x
+    miny := v.start.y
+    maxy := v.end.y
+    return point.x >= minx && point.x <= maxx && point.y >= miny && point.y <= maxy
+}
+
 type Array4[T any] struct {
     array [4]T
     count int
