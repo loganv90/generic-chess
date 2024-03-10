@@ -37,8 +37,18 @@ func (m *MockBoard) getVulnerables(color int) ([]Point, error) {
     return args.Get(0).([]Point), args.Error(1)
 }
 
+func (m *MockBoard) getVulnerables2(color int) (Point, Point, error) {
+    args := m.Called(color)
+    return args.Get(0).(Point), args.Get(1).(Point), args.Error(2)
+}
+
 func (m *MockBoard) setVulnerables(color int, vulnerables []Point) error {
     args := m.Called(color, vulnerables)
+    return args.Error(0)
+}
+
+func (m *MockBoard) setVulnerables2(color int, start Point, end Point) error {
+    args := m.Called(color, start, end)
     return args.Error(0)
 }
 
@@ -47,8 +57,18 @@ func (m *MockBoard) getEnPassant(color int) (EnPassant, error) {
 	return args.Get(0).(EnPassant), args.Error(1)
 }
 
+func (m *MockBoard) getEnPassant2(color int) (Point, Point, error) {
+	args := m.Called(color)
+    return args.Get(0).(Point), args.Get(1).(Point), args.Error(2)
+}
+
 func (m *MockBoard) setEnPassant(color int, enPassant EnPassant) error {
     args := m.Called(color, enPassant)
+    return args.Error(0)
+}
+
+func (m *MockBoard) setEnPassant2(color int, target Point, risk Point) error {
+    args := m.Called(color, target, risk)
     return args.Error(0)
 }
 

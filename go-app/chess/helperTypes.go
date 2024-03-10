@@ -93,12 +93,12 @@ type pieceAndLocation struct {
     location Point
 }
 
-type Array3[T any] struct {
-    array [3]T
+type Array4[T any] struct {
+    array [4]T
     count int
 }
 
-func (a *Array3[T]) append(item T) {
+func (a *Array4[T]) append(item T) {
     if a.count >= len(a.array) {
         a.clear()
     }
@@ -107,7 +107,7 @@ func (a *Array3[T]) append(item T) {
     a.count += 1
 }
 
-func (a *Array3[T]) clear() {
+func (a *Array4[T]) clear() {
     a.count = 0
 }
 

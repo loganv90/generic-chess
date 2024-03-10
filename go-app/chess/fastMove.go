@@ -9,68 +9,42 @@ func createSimpleMove(
     color int,
     fromLocation Point,
     toLocation Point,
+    newPiece Piece,
 ) (FastMove, error) {
 	piece, ok := b.getPiece(fromLocation)
 	if !ok {
 		return FastMove{}, fmt.Errorf("no piece at fromLocation")
 	}
 
-	newPiece, err := piece.copy()
-    if err != nil {
-        return FastMove{}, err
-    }
-
 	capturedPiece, ok := b.getPiece(toLocation)
 	if !ok {
 		return FastMove{}, fmt.Errorf("no piece at toLocation")
 	}
 
-	enPassant, err := b.getEnPassant(color)
+	enPassantTarget, enPassantRisk, err := b.getEnPassant2(color)
 	if err != nil {
 		return FastMove{}, err
 	}
 
-    vulnerables, err := b.getVulnerables(color)
+    vulnerableStart, vulnerableEnd, err := b.getVulnerables2(color)
     if err != nil {
         return FastMove{}, err
     }
 
-    // TODO fix
-    vstart := Point{-1, -1}
-    vend := Point{-1, -1}
-    if len(vulnerables) > 0 {
-        vminx := vulnerables[0].x
-        vminy := vulnerables[0].y
-        vmaxx := vulnerables[0].x
-        vmaxy := vulnerables[0].y
-        for _, v := range vulnerables {
-            vminx = min(vminx, v.x)
-            vminy = min(vminy, v.y)
-            vmaxx = max(vmaxx, v.x)
-            vmaxy = max(vmaxy, v.y)
+    if newPiece == nil {
+        newPiece, err = piece.copy()
+        if err != nil {
+            return FastMove{}, err
         }
-        vstart = Point{vminx, vminy}
-        vend = Point{vmaxx, vmaxy}
     }
 
-    newPieceAndLocations := Array3[pieceAndLocation]{}
+    newPieceAndLocations := Array4[pieceAndLocation]{}
+    newPieceAndLocations.append(pieceAndLocation{piece: nil, location: fromLocation})
     newPieceAndLocations.append(pieceAndLocation{piece: newPiece, location: toLocation})
 
-    oldPieceAndLocations := Array3[pieceAndLocation]{}
+    oldPieceAndLocations := Array4[pieceAndLocation]{}
     oldPieceAndLocations.append(pieceAndLocation{piece: piece, location: fromLocation})
     oldPieceAndLocations.append(pieceAndLocation{piece: capturedPiece, location: toLocation})
-
-    newEnPassantTarget := Point{-1, -1}
-    newEnPassantRisk := Point{-1, -1}
-
-    oldEnPassantTarget := enPassant.target
-    oldEnPassantRisk := enPassant.pieceLocation
-
-    newVulnerableStart := Point{-1, -1}
-    newVulnerableEnd := Point{-1, -1}
-
-    oldVulnerableStart := vstart
-    oldVulnerableEnd := vend
 
     return FastMove{
         b: b,
@@ -78,16 +52,21 @@ func createSimpleMove(
         toLocation: toLocation,
         color: color,
         allyDefense: false,
+
         newPieceAndLocation: newPieceAndLocations,
         oldPieceAndLocation: oldPieceAndLocations,
-        newEnPassantTarget: newEnPassantTarget,
-        oldEnPassantTarget: oldEnPassantTarget,
-        newEnPassantRisk: newEnPassantRisk,
-        oldEnPassantRisk: oldEnPassantRisk,
-        newVulnerableStart: newVulnerableStart,
-        oldVulnerableStart: oldVulnerableStart,
-        newVulnerableEnd: newVulnerableEnd,
-        oldVulnerableEnd: oldVulnerableEnd,
+
+        newEnPassantTarget: Point{-1, -1},
+        oldEnPassantTarget: enPassantTarget,
+
+        newEnPassantRisk: Point{-1, -1},
+        oldEnPassantRisk: enPassantRisk,
+
+        newVulnerableStart: Point{-1, -1},
+        oldVulnerableStart: vulnerableStart,
+
+        newVulnerableEnd: Point{-1, -1},
+        oldVulnerableEnd: vulnerableEnd,
     }, nil
 }
 
@@ -97,8 +76,9 @@ func createRevealEnPassantMove(
     fromLocation Point,
     toLocation Point,
     target Point,
+    newPiece Piece,
 ) (FastMove, error) {
-    m, err := createSimpleMove(b, color, fromLocation, toLocation)
+    m, err := createSimpleMove(b, color, fromLocation, toLocation, newPiece)
     if err != nil {
         return m, err
     }
@@ -114,8 +94,9 @@ func createCaptureEnPassantMove(
     color int,
     fromLocation Point,
     toLocation Point,
+    newPiece Piece,
 ) (FastMove, error) {
-    m, err := createSimpleMove(b, color, fromLocation, toLocation)
+    m, err := createSimpleMove(b, color, fromLocation, toLocation, newPiece)
     if err != nil {
         return m, err
     }
@@ -137,6 +118,88 @@ func createCaptureEnPassantMove(
     return m, nil
 }
 
+func createAllyDefenseMove(
+    b Board,
+    color int,
+    fromLocation Point,
+    toLocation Point,
+) (FastMove, error) {
+    return FastMove{
+        b: b,
+        fromLocation: fromLocation,
+        toLocation: toLocation,
+        color: color,
+        allyDefense: true,
+    }, nil
+}
+
+func createCastleMove(
+    b Board,
+    color int,
+    fromLocation Point,
+    toLocation Point,
+    toKingLocation Point,
+    toRookLocation Point,
+    newVulnerableStart Point,
+    newVulnerableEnd Point,
+) (FastMove, error) {
+	king, ok := b.getPiece(fromLocation)
+	if !ok {
+		return FastMove{}, fmt.Errorf("no piece at fromLocation")
+	}
+
+	rook, ok := b.getPiece(toLocation)
+	if !ok {
+		return FastMove{}, fmt.Errorf("no piece at toLocation")
+	}
+
+	enPassantTarget, enPassantRisk, err := b.getEnPassant2(color)
+	if err != nil {
+		return FastMove{}, err
+	}
+
+    vulnerableStart, vulnerableEnd, err := b.getVulnerables2(color)
+    if err != nil {
+        return FastMove{}, err
+    }
+
+	newKing, err := king.copy()
+    if err != nil {
+        return FastMove{}, err
+    }
+
+	newRook, err := rook.copy()
+    if err != nil {
+        return FastMove{}, err
+    }
+
+    newPieceAndLocations := Array4[pieceAndLocation]{}
+    newPieceAndLocations.append(pieceAndLocation{piece: newKing, location: toKingLocation})
+    newPieceAndLocations.append(pieceAndLocation{piece: newRook, location: toRookLocation})
+
+    oldPieceAndLocations := Array4[pieceAndLocation]{}
+    oldPieceAndLocations.append(pieceAndLocation{piece: king, location: fromLocation})
+    oldPieceAndLocations.append(pieceAndLocation{piece: rook, location: toLocation})
+
+    return FastMove{
+        b: b,
+        fromLocation: fromLocation,
+        toLocation: toLocation,
+        color: color,
+        allyDefense: false,
+        newPieceAndLocation: newPieceAndLocations,
+        oldPieceAndLocation: oldPieceAndLocations,
+        newEnPassantTarget: Point{-1, -1},
+        oldEnPassantTarget: enPassantTarget,
+        newEnPassantRisk: Point{-1, -1},
+        oldEnPassantRisk: enPassantRisk,
+        newVulnerableStart: newVulnerableStart,
+        oldVulnerableStart: vulnerableStart,
+        newVulnerableEnd: newVulnerableEnd,
+        oldVulnerableEnd: vulnerableEnd,
+    }, nil
+}
+
 type FastMove struct {
     b Board
     fromLocation Point
@@ -144,8 +207,8 @@ type FastMove struct {
     color int
     allyDefense bool
 
-    newPieceAndLocation Array3[pieceAndLocation]
-    oldPieceAndLocation Array3[pieceAndLocation]
+    newPieceAndLocation Array4[pieceAndLocation]
+    oldPieceAndLocation Array4[pieceAndLocation]
 
     newEnPassantTarget Point
     oldEnPassantTarget Point
@@ -158,5 +221,49 @@ type FastMove struct {
 
     newVulnerableEnd Point
     oldVulnerableEnd Point
+}
+
+func (m *FastMove) execute() error {
+    for i := 0; i < m.newPieceAndLocation.count; i++ {
+        pieceAndLocation := m.newPieceAndLocation.array[i]
+        ok := m.b.setPiece(pieceAndLocation.location, pieceAndLocation.piece)
+        if !ok {
+            return fmt.Errorf("could not set piece")
+        }
+    }
+
+    err := m.b.setEnPassant2(m.color, m.newEnPassantTarget, m.newEnPassantRisk)
+    if err != nil {
+        return err
+    }
+
+    err = m.b.setVulnerables2(m.color, m.newVulnerableStart, m.newVulnerableEnd)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func (m *FastMove) undo() error {
+    for i := 0; i < m.oldPieceAndLocation.count; i++ {
+        pieceAndLocation := m.oldPieceAndLocation.array[i]
+        ok := m.b.setPiece(pieceAndLocation.location, pieceAndLocation.piece)
+        if !ok {
+            return fmt.Errorf("could not set piece")
+        }
+    }
+
+    err := m.b.setEnPassant2(m.color, m.oldEnPassantTarget, m.oldEnPassantRisk)
+    if err != nil {
+        return err
+    }
+
+    err = m.b.setVulnerables2(m.color, m.oldVulnerableStart, m.oldVulnerableEnd)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }
 
