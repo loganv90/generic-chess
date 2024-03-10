@@ -22,10 +22,8 @@ type Board interface {
     possibleEnPassant(color int, location Point) ([]EnPassant, error)
 
     // TODO fix
-    getVulnerables2(color int) (Point, Point, error)
-    setVulnerables2(color int, start Point, end Point) error
-	getEnPassant2(color int) (Point, Point, error)
-	setEnPassant2(color int, target Point, risk Point) error
+    getVulnerables2(color int) (Vulnerable, error)
+    setVulnerables2(color int, vulnerable Vulnerable) error
 
     // these are for the playerTransition
     disablePieces(color int, disable bool) error
@@ -224,15 +222,15 @@ func (b *SimpleBoard) getVulnerables(color int) ([]Point, error) {
     return b.vulnerableLocations[color], nil
 }
 
-func (b *SimpleBoard) getVulnerables2(color int) (Point, Point, error) {
+func (b *SimpleBoard) getVulnerables2(color int) (Vulnerable, error) {
     if b.colorOutOfBounds(color) {
-        return Point{}, Point{}, fmt.Errorf("invalid color")
+        return Vulnerable{}, fmt.Errorf("invalid color")
     }
 
     vs := b.vulnerableLocations[color]
 
     if len(vs) < 1 {
-        return Point{}, Point{}, fmt.Errorf("no vulnerable locations")
+        return Vulnerable{}, fmt.Errorf("no vulnerable locations")
     }
 
     vminx := vs[0].x
@@ -246,7 +244,7 @@ func (b *SimpleBoard) getVulnerables2(color int) (Point, Point, error) {
         vmaxy = max(vmaxy, v.y)
     }
 
-    return Point{vminx, vminy}, Point{vmaxx, vmaxy}, nil
+    return Vulnerable{Point{vminx, vminy}, Point{vmaxx, vmaxy}}, nil
 }
 
 func (b *SimpleBoard) setVulnerables(color int, locations []Point) error {
@@ -258,17 +256,17 @@ func (b *SimpleBoard) setVulnerables(color int, locations []Point) error {
     return nil
 }
 
-func (b *SimpleBoard) setVulnerables2(color int, start Point, end Point) error {
+func (b *SimpleBoard) setVulnerables2(color int, vulnerable Vulnerable) error {
     if b.colorOutOfBounds(color) {
         return fmt.Errorf("invalid color")
     }
 
     vs := []Point{}
 
-    vminx := min(start.x, end.x)
-    vminy := min(start.y, end.y)
-    vmaxx := max(start.x, end.x)
-    vmaxy := max(start.y, end.y)
+    vminx := min(vulnerable.start.x, vulnerable.end.x)
+    vminy := min(vulnerable.start.y, vulnerable.end.y)
+    vmaxx := max(vulnerable.start.x, vulnerable.end.x)
+    vmaxy := max(vulnerable.start.y, vulnerable.end.y)
     for y := vminy; y <= vmaxy; y++ {
         for x := vminx; x <= vmaxx; x++ {
             vs = append(vs, Point{x, y})
@@ -289,30 +287,12 @@ func (b *SimpleBoard) getEnPassant(color int) (EnPassant, error) {
 	return b.enPassants[color], nil
 }
 
-func (b *SimpleBoard) getEnPassant2(color int) (Point, Point, error) {
-    if b.colorOutOfBounds(color) {
-        return Point{}, Point{}, fmt.Errorf("invalid color")
-    }
-
-    e := b.enPassants[color]
-    return e.target, e.pieceLocation, nil
-}
-
 func (b *SimpleBoard) setEnPassant(color int, enPassant EnPassant) error {
     if b.colorOutOfBounds(color) {
         return fmt.Errorf("invalid color")
     }
 
 	b.enPassants[color] = enPassant
-    return nil
-}
-
-func (b *SimpleBoard) setEnPassant2(color int, target Point, risk Point) error {
-    if b.colorOutOfBounds(color) {
-        return fmt.Errorf("invalid color")
-    }
-
-	b.enPassants[color] = EnPassant{target, risk}
     return nil
 }
 

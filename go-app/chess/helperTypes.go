@@ -76,21 +76,19 @@ func (p Point) add(other Point) Point {
     return Point{p.x + other.x, p.y + other.y}
 }
 
-type EnPassant struct {
-    target Point
-    pieceLocation Point
-}
-
-type PieceLocations struct {
-    ownPieceLocations []Point
-    enemyPieceLocations []Point
-}
-
-
-
-type pieceAndLocation struct {
+type PieceLocation struct {
     piece Piece
     location Point
+}
+
+type EnPassant struct {
+    target Point
+    risk Point
+}
+
+type Vulnerable struct {
+    start Point
+    end Point
 }
 
 type Array4[T any] struct {

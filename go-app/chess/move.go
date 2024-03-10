@@ -100,7 +100,7 @@ func (f *ConcreteMoveFactory) newRevealEnPassantMove(b Board, fromLocation Point
 
 	newEn := EnPassant{
         target: target,
-        pieceLocation: toLocation,
+        risk: toLocation,
 	}
 
 	return &RevealEnPassantMove{
@@ -148,7 +148,7 @@ func (f *ConcreteMoveFactory) newCaptureEnPassantMove(b Board, fromLocation Poin
     possibleEnPassant, err := b.possibleEnPassant(piece.getColor(), toLocation)
     if err == nil {
         for _, enPassant := range possibleEnPassant {
-            capturedPiece, ok := b.getPiece(enPassant.pieceLocation)
+            capturedPiece, ok := b.getPiece(enPassant.risk)
             if !ok {
                 return nil, fmt.Errorf("no piece at enPassant.pieceLocation")
             }
@@ -375,7 +375,7 @@ func (c *CaptureEnPassantMove) execute() error {
 	}
 
 	for _, enc := range c.encs {
-        ok = c.b.setPiece(enc.enPassant.pieceLocation, nil)
+        ok = c.b.setPiece(enc.enPassant.risk, nil)
 		if !ok {
 			return fmt.Errorf("no piece at enPassant.pieceLocation")
 		}
@@ -404,7 +404,7 @@ func (c *CaptureEnPassantMove) undo() error {
 	}
 
 	for _, enc := range c.encs {
-        ok = c.b.setPiece(enc.enPassant.pieceLocation, enc.capturedPiece)
+        ok = c.b.setPiece(enc.enPassant.risk, enc.capturedPiece)
 		if !ok {
 			return fmt.Errorf("no piece at enPassant.pieceLocation")
 		}
