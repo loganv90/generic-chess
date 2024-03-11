@@ -151,7 +151,7 @@ func (s *SimplePlayerCollection) getPlayers() int {
 }
 
 func (s *SimplePlayerCollection) GetTransition(b Board, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
-    return playerTransitionFactoryInstance.newIncrementalTransition(b, s, inCheckmate, inStalemate)
+    return createPlayerTransition(b, s, inCheckmate, inStalemate)
 }
 
 func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {

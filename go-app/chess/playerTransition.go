@@ -4,32 +4,19 @@ import (
     "fmt"
 )
 
-var playerTransitionFactoryInstance = PlayerTransitionFactory(&ConcretePlayerTransitionFactory{})
-
-type PlayerTransitionFactory interface {
-	newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (PlayerTransition, error)
-    newIncrementalTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (*IncrementalTransition, error)
-}
-
-type ConcretePlayerTransitionFactory struct{}
-
-func (f *ConcretePlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
-    return f.newIncrementalTransition(b, p, inCheckmate, inStalemate)
-}
-
-func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (*IncrementalTransition, error) {
+func createPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
     oldCurrent, _ := p.getCurrent()
 
     oldWinner, _ := p.getWinner()
 
     oldGameOver, err := p.getGameOver()
     if err != nil {
-        return nil, err
+        return PlayerTransition{}, err
     }
 
     next, remaining, err := p.getNextAndRemaining()
     if err != nil {
-        return nil, err
+        return PlayerTransition{}, err
     }
 
     var newCurrent int
@@ -64,7 +51,7 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
         newGameOver = false
     }
 
-    return &IncrementalTransition{
+    return PlayerTransition{
         p: p,
         b: b,
         oldCurrent: oldCurrent,
@@ -77,12 +64,7 @@ func (f *ConcretePlayerTransitionFactory) newIncrementalTransition(b Board, p Pl
     }, nil
 }
 
-type PlayerTransition interface {
-	execute() error
-	undo() error
-}
-
-type IncrementalTransition struct {
+type PlayerTransition struct {
     p PlayerCollection
     b Board
     oldCurrent int
@@ -94,7 +76,7 @@ type IncrementalTransition struct {
     eliminated bool
 }
 
-func (s *IncrementalTransition) execute() error {
+func (s *PlayerTransition) execute() error {
     ok := s.p.setCurrent(s.newCurrent)
     if !ok {
         return fmt.Errorf("invalid color")
@@ -127,7 +109,7 @@ func (s *IncrementalTransition) execute() error {
     return nil
 }
 
-func (s *IncrementalTransition) undo() error {
+func (s *PlayerTransition) undo() error {
     ok := s.p.setCurrent(s.oldCurrent)
     if !ok {
         return fmt.Errorf("invalid color")

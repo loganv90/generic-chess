@@ -3,47 +3,8 @@ package chess
 import (
     "testing"
 
-	"github.com/stretchr/testify/mock"
     "github.com/stretchr/testify/assert"
 )
-
-type MockPlayerTransitionFactory struct {
-	mock.Mock
-}
-
-func (m *MockPlayerTransitionFactory) newIncrementalTransitionAsPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
-    args := m.Called(b, p, inCheckmate, inStalemate)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	} else {
-		return args.Get(0).(PlayerTransition), args.Error(1)
-	}
-}
-
-func (m *MockPlayerTransitionFactory) newIncrementalTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (*IncrementalTransition, error) {
-    args := m.Called(b, p, inCheckmate, inStalemate)
-
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	} else {
-		return args.Get(0).(*IncrementalTransition), args.Error(1)
-	}
-}
-
-type MockPlayerTransition struct {
-	mock.Mock
-}
-
-func (m *MockPlayerTransition) execute() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
-func (m *MockPlayerTransition) undo() error {
-	args := m.Called()
-	return args.Error(0)
-}
 
 func Test_IncrementalTransition_inCheckmate(t *testing.T) {
     white := 0
@@ -56,7 +17,7 @@ func Test_IncrementalTransition_inCheckmate(t *testing.T) {
     playerCollection.On("getWinner").Return(-1, true).Once()
     playerCollection.On("getGameOver").Return(false, nil).Once()
     playerCollection.On("getNextAndRemaining").Return(black, 2, nil).Once()
-    incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection, true, false)
+    incrementalTransition, err := createPlayerTransition(board, playerCollection, true, false)
     assert.Nil(t, err)
 
     playerCollection.On("setCurrent", black).Return(true)
@@ -90,7 +51,7 @@ func Test_IncrementalTransition_noCheckmate(t *testing.T) {
     playerCollection.On("getWinner").Return(-1, true)
     playerCollection.On("getGameOver").Return(false, nil)
     playerCollection.On("getNextAndRemaining").Return(black, 2, nil)
-    incrementalTransition, err := playerTransitionFactoryInstance.newIncrementalTransition(board, playerCollection, false, false)
+    incrementalTransition, err := createPlayerTransition(board, playerCollection, false, false)
     assert.Nil(t, err)
 
     playerCollection.On("setCurrent", black).Return(true)

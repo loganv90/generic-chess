@@ -390,13 +390,14 @@ func (b *SimpleBoard) CalculateMoves() error {
 
     moves := Array100[FastMove]{}
 
-    for row := range b.toMoves {
-        for col := range b.toMoves[row] {
-            b.toMoves[row][col].clear()
-            b.fromMoves[row][col].clear()
+    for y := 0; y < b.size.y; y++ {
+        for x := 0; x < b.size.x; x++ {
+            b.toMoves[y][x].clear()
+            b.fromMoves[y][x].clear()
         }
     }
 
+    // TODO have a b.colorMoves array of type Array100[FastMove] and b.fromMoves/b.toMoves can be Array100[*FastMove]
     for _, pieceLocations := range b.pieceLocations {
         for _, fromLocation := range pieceLocations {
             piece, ok := b.getPiece(fromLocation)
