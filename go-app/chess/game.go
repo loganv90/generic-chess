@@ -103,46 +103,31 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return fmt.Errorf("game is over")
     }
 
-    var move Move
-
     moves, err := s.b.LegalMovesOfLocation(fromLocation)
     if err != nil {
         return err
     }
 
+    found := false
+    var move FastMove
     for _, m := range moves {
-        action := m.getAction()
-        if action.fromLocation == fromLocation && action.toLocation == toLocation {
+        if m.fromLocation == fromLocation && m.toLocation == toLocation && m.promotion == promotion {
             move = m
+            found = true
             break
+        }
+        if m.fromLocation == fromLocation && m.toLocation == toLocation && m.promotion == "" {
+            move = m
+            found = true
         }
     }
 
-    if move == nil {
+    if !found {
         return fmt.Errorf("invalid move")
     }
 
-    if _, ok := move.(*AllyDefenseMove); ok {
+    if move.allyDefense {
         return fmt.Errorf("AllyDefenseMove not possible")
-    }
-
-    if promotionMove, ok := move.(*PromotionMove); ok {
-        color := promotionMove.getNewPiece().getColor()
-
-        var promotionPiece Piece
-        if promotion == "Q" {
-            promotionPiece = pieceFactoryInstance.get(color, QUEEN)
-        } else if promotion == "R" {
-            promotionPiece = pieceFactoryInstance.get(color, ROOK_M)
-        } else if promotion == "B" {
-            promotionPiece = pieceFactoryInstance.get(color, BISHOP)
-        } else if promotion == "N" {
-            promotionPiece = pieceFactoryInstance.get(color, KNIGHT)
-        } else {
-            return fmt.Errorf("invalid promotion piece")
-        }
-
-        promotionMove.setPromotionPiece(promotionPiece)
     }
 
     transition, err := s.p.GetTransition(s.b, false, false)
@@ -174,7 +159,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
                 return err
             }
 
-            err = s.i.execute(nil, transition)
+            err = s.i.executeHalf(transition)
             if err != nil {
                 return err
             }
@@ -186,7 +171,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
                 return err
             }
 
-            err = s.i.execute(nil, transition)
+            err = s.i.executeHalf(transition)
             if err != nil {
                 return err
             }
@@ -236,11 +221,10 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         moveSet := make(map[MoveData]bool)
         moveDatas := make([]*MoveData, 0)
         for _, m := range moves {
-            _, ok := m.(*PromotionMove)
             moveData := MoveData{
-                X: m.getAction().toLocation.x,
-                Y: m.getAction().toLocation.y,
-                P: ok,
+                X: m.toLocation.x,
+                Y: m.toLocation.y,
+                P: m.promotion != "",
             }
 
             if _, ok := moveSet[moveData]; !ok {
@@ -275,10 +259,10 @@ func (s *SimpleGame) Moves(color int) ([]MoveKey, error) {
 
     for _, move := range moves {
         moveKeys = append(moveKeys, MoveKey{
-            XFrom: move.getAction().fromLocation.x,
-            YFrom: move.getAction().fromLocation.y,
-            XTo: move.getAction().toLocation.x,
-            YTo: move.getAction().toLocation.y,
+            XFrom: move.fromLocation.x,
+            YFrom: move.fromLocation.y,
+            XTo: move.toLocation.x,
+            YTo: move.toLocation.y,
             Promotion: "",
         })
     }

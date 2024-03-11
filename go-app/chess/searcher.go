@@ -57,26 +57,25 @@ func (s *SimpleSearcher) search() (MoveKey, error) {
         return MoveKey{}, err
     }
 
-    _, move, err := s.minimax(4)
+    _, move, ok, err := s.minimax(4)
     if err != nil {
         return MoveKey{}, err
     }
-
-    if move == nil {
+    
+    if !ok {
         return MoveKey{}, fmt.Errorf("no move found")
     }
 
-    action := move.getAction()
     return MoveKey{
-        XFrom: action.fromLocation.x,
-        YFrom: action.fromLocation.y,
-        XTo: action.toLocation.x,
-        YTo: action.toLocation.y,
+        XFrom: move.fromLocation.x,
+        YFrom: move.fromLocation.y,
+        XTo: move.toLocation.x,
+        YTo: move.toLocation.y,
         Promotion: "Q",
     }, nil
 }
 
-func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
+func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
     s.minimaxCalls++
 
     gameOver, err := s.p.getGameOver()
@@ -90,7 +89,7 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
             panic(err)
         }
 
-        return score, nil, nil
+        return score, FastMove{}, false, nil
     }
 
     players := s.p.getPlayers()
@@ -106,18 +105,13 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
 
     inCheck := s.b.Check(currentPlayer)
 
-    var bestMove Move
+    found := false
+    var bestMove FastMove
     bestScore := make([]int, players)
     bestScore[currentPlayer] = -1000000
-
     for _, move := range moves {
-        if _, ok := move.(*AllyDefenseMove); ok {
+        if move.allyDefense {
             continue
-        }
-
-        if promotionMove, ok := move.(*PromotionMove); ok {
-            // TODO do not get a new queen every time
-            promotionMove.setPromotionPiece(pieceFactoryInstance.get(currentPlayer, QUEEN))
         }
 
         err := move.execute()
@@ -148,7 +142,7 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
             panic(err)
         }
 
-        score, _, err := s.minimax(depth-1)
+        score, _, _, err := s.minimax(depth-1)
         if err != nil {
             panic(err)
         }
@@ -166,13 +160,14 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
         if score[currentPlayer] > bestScore[currentPlayer] {
             bestScore = score
             bestMove = move
+            found = true
         }
     }
 
-    if bestMove == nil {
+    if !found {
         // stalemate
         if !inCheck {
-            return make([]int, players), nil, nil
+            return make([]int, players), FastMove{}, false, nil
         }
 
         // checkmate
@@ -186,7 +181,7 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
             panic(err)
         }
 
-        score, _, err := s.minimax(depth)
+        score, _, _, err := s.minimax(depth)
         if err != nil {
             panic(err)
         }
@@ -196,9 +191,9 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, Move, error) {
             panic(err)
         }
 
-        return score, nil, nil
+        return score, FastMove{}, false, nil
     }
 
-    return bestScore, bestMove, nil
+    return bestScore, bestMove, true, nil
 }
 

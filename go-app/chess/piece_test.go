@@ -31,9 +31,9 @@ func (m *MockPiece) getMoved() bool {
     return args.Bool(0)
 }
 
-func (m *MockPiece) moves(board Board, location Point) []Move {
+func (m *MockPiece) moves(board Board, location Point) []FastMove {
     args := m.Called(board, location)
-	return args.Get(0).([]Move)
+	return args.Get(0).([]FastMove)
 }
 
 func (m *MockPiece) setDisabled(disabled bool) {
@@ -52,442 +52,290 @@ func (m *MockPiece) print() string {
 
 func Test_Pawn_Moves_Unmoved(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, true)
-	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]EnPassant{}, nil)
-
-	moveFactory := &MockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-	moveFactory.On("newRevealEnPassantMove", board, Point{3, 3}, Point{3, 5}, Point{3, 4}).Return(nil, nil)
-	moveFactoryInstance = moveFactory
-
     pawn := pieceFactoryInstance.get(white, PAWN_D)
 
-	moves := pawn.moves(board, Point{3, 3})
-	assert.Len(t, moves, 2)
+    b, err := newSimpleBoard(Point{7, 7}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{3, 3}, pawn)
+
+	moves := pawn.moves(b, Point{3, 3})
+    assert.Equal(t, 2, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{3, 4}])
+    assert.True(t, moveMap[Point{3, 5}])
 }
 
 func Test_Pawn_Moves_Moved(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	board.On("getPiece", mock.Anything, mock.Anything).Return(nil, true)
-	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]EnPassant{}, nil)
-
-	moveFactory := &MockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-	moveFactoryInstance = moveFactory
-
     pawn := pieceFactoryInstance.get(white, PAWN_D_M)
 
-	moves := pawn.moves(board, Point{3, 3})
-	assert.Len(t, moves, 1)
+    b, err := newSimpleBoard(Point{7, 7}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{3, 3}, pawn)
+
+	moves := pawn.moves(b, Point{3, 3})
+    assert.Equal(t, 1, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{3, 4}])
 }
 
 func Test_Pawn_Moves_Capturing(t *testing.T) {
     white := 0
     black := 1
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	board.On("getPiece", Point{2, 4}).Return(nil, true)
-	board.On("getPiece", Point{3, 4}).Return(nil, true)
-	board.On("getPiece", Point{3, 5}).Return(nil, true)
-    board.On("getPiece", Point{3, 6}).Return(nil, true)
-    board.On("getPiece", Point{4, 5}).Return(nil, true)
-	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]EnPassant{}, nil)
-
-	moveFactory := &MockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-	moveFactory.On("newRevealEnPassantMove", board, Point{3, 3}, Point{3, 5}, Point{3, 4}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 4}).Return(nil, nil)
-	moveFactoryInstance = moveFactory
-
     pawn := pieceFactoryInstance.get(white, PAWN_D)
     blackPawn := pieceFactoryInstance.get(black, PAWN_D)
 
-	board.On("getPiece", Point{4, 4}).Return(blackPawn, true)
+    b, err := newSimpleBoard(Point{7, 7}, 2)
+    assert.Nil(t, err)
 
-	moves := pawn.moves(board, Point{3, 3})
-	assert.Len(t, moves, 3)
+    b.setPiece(Point{3, 3}, pawn)
+    b.setPiece(Point{4, 4}, blackPawn)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+	moves := pawn.moves(b, Point{3, 3})
+    assert.Equal(t, 3, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{3, 4}])
+    assert.True(t, moveMap[Point{3, 5}])
+    assert.True(t, moveMap[Point{4, 4}])
 }
 
 func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	board.On("getPiece", Point{2, 4}).Return(nil, true)
-	board.On("getPiece", Point{3, 4}).Return(nil, true)
-	board.On("getPiece", Point{3, 5}).Return(nil, true)
-	board.On("getPiece", Point{4, 4}).Return(nil, true)
-    board.On("getPiece", Point{3, 6}).Return(nil, true)
-    board.On("getPiece", Point{4, 5}).Return(nil, true)
-	board.On("possibleEnPassant", white, Point{4, 4}).Return([]EnPassant{{Point{4, 4}, Point{3, 4}}}, nil)
-	board.On("possibleEnPassant", white, Point{2, 4}).Return([]EnPassant{}, nil)
-
-	moveFactory := &MockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-	moveFactory.On("newRevealEnPassantMove", board, Point{3, 3}, Point{3, 5}, Point{3, 4}).Return(nil, nil)
-	moveFactory.On("newCaptureEnPassantMove", board, Point{3, 3}, Point{4, 4}).Return(nil, nil)
-	moveFactoryInstance = moveFactory
-
+    black := 1
     pawn := pieceFactoryInstance.get(white, PAWN_D)
 
-	moves := pawn.moves(board, Point{3, 3})
-	assert.Len(t, moves, 3)
+    b, err := newSimpleBoard(Point{7, 7}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{3, 3}, pawn)
+    b.setEnPassant(black, EnPassant{Point{4, 4}, Point{3, 4}})
+
+	moves := pawn.moves(b, Point{3, 3})
+    assert.Equal(t, 3, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{3, 4}])
+    assert.True(t, moveMap[Point{3, 5}])
+    assert.True(t, moveMap[Point{4, 4}])
 }
 
 func Test_Pawn_Moves_Promotion(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	board.On("getPiece", Point{3, 4}).Return(nil, true)
-	board.On("getPiece", Point{3, 5}).Return(nil, false)
-    board.On("getPiece", Point{4, 4}).Return(nil, true)
-    board.On("getPiece", Point{2, 4}).Return(nil, true)
-	board.On("possibleEnPassant", mock.Anything, mock.Anything).Return([]EnPassant{}, nil)
-
-	moveFactory := &MockMoveFactory{}
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-    moveFactory.On("newPromotionMove", mock.Anything, mock.Anything).Return(&PromotionMove{Action{}, nil, nil}, nil)
-	moveFactoryInstance = moveFactory
-
     pawn := pieceFactoryInstance.get(white, PAWN_D)
 
-	moves := pawn.moves(board, Point{3, 3})
-	assert.Len(t, moves, 1)
+    b, err := newSimpleBoard(Point{5, 5}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{2, 2}, pawn)
+
+	moves := pawn.moves(b, Point{2, 2})
+    assert.Equal(t, 5, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{2, 3}])
+    assert.True(t, moveMap[Point{2, 4}])
 }
 
 func Test_Knight_Moves(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-    moveFactory := &MockMoveFactory{}
-
-    inPoints := []Point{
-        {2, 3},
-        {3, 2},
-        {0, 3},
-        {3, 0},
-    }
-
-    outPoints := []Point{
-        {-1, 2},
-        {2, -1},
-        {0, -1},
-        {-1, 0},
-    }
-
-    for _, p := range inPoints {
-        board.On("getPiece", p).Return(nil, true)
-        moveFactory.On("newSimpleMove", board, Point{1, 1}, p).Return(nil, nil)
-    }
-
-    for _, p := range outPoints {
-        board.On("getPiece", p).Return(nil, false)
-    }
-
-	moveFactoryInstance = moveFactory
-
     knight := pieceFactoryInstance.get(white, KNIGHT)
 
-	moves := knight.moves(board, Point{1, 1})
-	assert.Len(t, moves, 4)
+    b, err := newSimpleBoard(Point{5, 5}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{2, 2}, knight)
+
+	moves := knight.moves(b, Point{2, 2})
+    assert.Equal(t, 8, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{0, 1}])
+    assert.True(t, moveMap[Point{1, 0}])
+    assert.True(t, moveMap[Point{3, 0}])
+    assert.True(t, moveMap[Point{4, 1}])
+    assert.True(t, moveMap[Point{4, 3}])
+    assert.True(t, moveMap[Point{3, 4}])
+    assert.True(t, moveMap[Point{1, 4}])
+    assert.True(t, moveMap[Point{0, 3}])
 }
 
 func Test_Bishop_Moves(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-    moveFactory := &MockMoveFactory{}
-
-    inPoints := []Point{
-        {2, 2},
-        {3, 3},
-        {4, 4},
-        {5, 5},
-        {6, 6},
-        {7, 7},
-        {0, 2},
-        {2, 0},
-        {0, 0},
-    }
-
-    outPoints := []Point{
-        {8, 8},
-        {-1, 3},
-        {3, -1},
-        {-1, -1},
-    }
-
-    for _, p := range inPoints {
-        board.On("getPiece", p).Return(nil, true)
-        moveFactory.On("newSimpleMove", board, Point{1, 1}, p).Return(nil, nil)
-    }
-
-    for _, p := range outPoints {
-        board.On("getPiece", p).Return(nil, false)
-    }
-
-	moveFactoryInstance = moveFactory
-
     bishop := pieceFactoryInstance.get(white, BISHOP)
 
-	moves := bishop.moves(board, Point{1, 1})
-	assert.Len(t, moves, 9)
+    b, err := newSimpleBoard(Point{5, 5}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{2, 2}, bishop)
+
+	moves := bishop.moves(b, Point{2, 2})
+    assert.Equal(t, 8, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{0, 0}])
+    assert.True(t, moveMap[Point{1, 1}])
+    assert.True(t, moveMap[Point{3, 3}])
+    assert.True(t, moveMap[Point{4, 4}])
+    assert.True(t, moveMap[Point{4, 0}])
+    assert.True(t, moveMap[Point{3, 1}])
+    assert.True(t, moveMap[Point{1, 3}])
+    assert.True(t, moveMap[Point{0, 4}])
 }
 
 func Test_Rook_Moves(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	moveFactory := &MockMoveFactory{}
-
-    inPoints := []Point{
-        {2, 1},
-        {3, 1},
-        {4, 1},
-        {5, 1},
-        {6, 1},
-        {7, 1},
-        {1, 2},
-        {1, 3},
-        {1, 4},
-        {1, 5},
-        {1, 6},
-        {1, 7},
-        {0, 1},
-        {1, 0},
-    }
-
-    outPoints := []Point{
-        {8, 1},
-        {1, 8},
-        {1, -1},
-        {-1, 1},
-    }
-
-    for _, p := range inPoints {
-        board.On("getPiece", p).Return(nil, true)
-        moveFactory.On("newSimpleMove", board, Point{1, 1}, p).Return(nil, nil)
-    }
-
-    for _, p := range outPoints {
-        board.On("getPiece", p).Return(nil, false)
-    }
-
-	moveFactoryInstance = moveFactory
-
     rook := pieceFactoryInstance.get(white, ROOK)
 
-	moves := rook.moves(board, Point{1, 1})
-	assert.Len(t, moves, 14)
+    b, err := newSimpleBoard(Point{5, 5}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{2, 2}, rook)
+
+	moves := rook.moves(b, Point{2, 2})
+    assert.Equal(t, 8, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{2, 0}])
+    assert.True(t, moveMap[Point{2, 1}])
+    assert.True(t, moveMap[Point{2, 3}])
+    assert.True(t, moveMap[Point{2, 4}])
+    assert.True(t, moveMap[Point{0, 2}])
+    assert.True(t, moveMap[Point{1, 2}])
+    assert.True(t, moveMap[Point{3, 2}])
+    assert.True(t, moveMap[Point{4, 2}])
 }
 
 func Test_Queen_Moves(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	moveFactory := &MockMoveFactory{}
-
-    inPoints := []Point{
-        {2, 2},
-        {3, 3},
-        {4, 4},
-        {5, 5},
-        {6, 6},
-        {7, 7},
-        {0, 2},
-        {2, 0},
-        {0, 0},
-        {2, 1},
-        {3, 1},
-        {4, 1},
-        {5, 1},
-        {6, 1},
-        {7, 1},
-        {1, 2},
-        {1, 3},
-        {1, 4},
-        {1, 5},
-        {1, 6},
-        {1, 7},
-        {0, 1},
-        {1, 0},
-    }
-
-    outPoints := []Point{
-        {8, 8},
-        {-1, 3},
-        {3, -1},
-        {-1, -1},
-        {8, 1},
-        {1, 8},
-        {1, -1},
-        {-1, 1},
-    }
-
-    for _, p := range inPoints {
-        board.On("getPiece", p).Return(nil, true)
-        moveFactory.On("newSimpleMove", board, Point{1, 1}, p).Return(nil, nil)
-    }
-
-    for _, p := range outPoints {
-        board.On("getPiece", p).Return(nil, false)
-    }
-
-	moveFactoryInstance = moveFactory
-
     queen := pieceFactoryInstance.get(white, QUEEN)
 
-	moves := queen.moves(board, Point{1, 1})
-	assert.Len(t, moves, 23)
+    b, err := newSimpleBoard(Point{5, 5}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{2, 2}, queen)
+
+	moves := queen.moves(b, Point{2, 2})
+    assert.Equal(t, 16, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{2, 0}])
+    assert.True(t, moveMap[Point{2, 1}])
+    assert.True(t, moveMap[Point{2, 3}])
+    assert.True(t, moveMap[Point{2, 4}])
+    assert.True(t, moveMap[Point{0, 2}])
+    assert.True(t, moveMap[Point{1, 2}])
+    assert.True(t, moveMap[Point{3, 2}])
+    assert.True(t, moveMap[Point{4, 2}])
+    assert.True(t, moveMap[Point{0, 0}])
+    assert.True(t, moveMap[Point{1, 1}])
+    assert.True(t, moveMap[Point{3, 3}])
+    assert.True(t, moveMap[Point{4, 4}])
+    assert.True(t, moveMap[Point{4, 0}])
+    assert.True(t, moveMap[Point{3, 1}])
+    assert.True(t, moveMap[Point{1, 3}])
+    assert.True(t, moveMap[Point{0, 4}])
 }
 
 func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
     white := 0
-
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	moveFactory := &MockMoveFactory{}
-
-    inPoints := []Point{
-        {2, 2},
-        {3, 2},
-        {4, 2},
-        {2, 3},
-        {4, 3},
-        {2, 4},
-        {3, 4},
-        {4, 4},
-        {5, 3},
-        {1, 3},
-        {2, 3},
-        {4, 3},
-        {5, 3},
-        {6, 3},
-    }
-    for _, p := range inPoints {
-        board.On("getPiece", p).Return(nil, true)
-    }
-
-    outPoints := []Point{
-        {-1, 3},
-        {8, 3},
-    }
-    for _, p := range outPoints {
-        board.On("getPiece", p).Return(nil, false)
-    }
-
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{2, 2}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 2}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 2}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{2, 3}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 3}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{2, 4}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 4}).Return(nil, nil)
-	moveFactory.On("newCastleMove", board, Point{3, 3}, Point{0, 3}, Point{2, 3}, Point{3, 3}, Vulnerable{Point{3, 3}, Point{2, 3}}).Return(nil, nil)
-	moveFactory.On("newCastleMove", board, Point{3, 3}, Point{7, 3}, Point{6, 3}, Point{5, 3}, Vulnerable{Point{4, 3}, Point{5, 3}}).Return(nil, nil)
-	moveFactoryInstance = moveFactory
-
     king := pieceFactoryInstance.get(white, KING_D)
     rook := pieceFactoryInstance.get(white, ROOK)
 
-	board.On("getPiece", Point{0, 3}).Return(rook, true)
-	board.On("getPiece", Point{7, 3}).Return(rook, true)
+    b, err := newSimpleBoard(Point{5, 5}, 2)
+    assert.Nil(t, err)
 
-	moves := king.moves(board, Point{3, 3})
-	assert.Len(t, moves, 10)
+    b.setPiece(Point{2, 2}, king)
+    b.setPiece(Point{0, 2}, rook)
+    b.setPiece(Point{4, 2}, rook)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+	moves := king.moves(b, Point{2, 2})
+    assert.Equal(t, 10, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{2, 1}])
+    assert.True(t, moveMap[Point{2, 3}])
+    assert.True(t, moveMap[Point{0, 2}])
+    assert.True(t, moveMap[Point{1, 2}])
+    assert.True(t, moveMap[Point{3, 2}])
+    assert.True(t, moveMap[Point{4, 2}])
+    assert.True(t, moveMap[Point{1, 1}])
+    assert.True(t, moveMap[Point{3, 3}])
+    assert.True(t, moveMap[Point{3, 1}])
+    assert.True(t, moveMap[Point{1, 3}])
 }
 
 func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
     white := 0
-    t.Cleanup(func() { moveFactoryInstance = &ConcreteMoveFactory{} })
-
-	board := &MockBoard{}
-	moveFactory := &MockMoveFactory{}
-
-    inPoints := []Point{
-        {2, 2},
-        {3, 2},
-        {4, 2},
-        {2, 3},
-        {4, 3},
-        {2, 4},
-        {3, 4},
-        {4, 4},
-    }
-
-    for _, p := range inPoints {
-        board.On("getPiece", p).Return(nil, true)
-    }
-
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{2, 2}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 2}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 2}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{2, 3}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 3}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{2, 4}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{3, 4}).Return(nil, nil)
-	moveFactory.On("newSimpleMove", board, Point{3, 3}, Point{4, 4}).Return(nil, nil)
-	moveFactoryInstance = moveFactory
-
     king := pieceFactoryInstance.get(white, KING_D_M)
+    rook := pieceFactoryInstance.get(white, ROOK)
 
-	moves := king.moves(board, Point{3, 3})
-	assert.Len(t, moves, 8)
+    b, err := newSimpleBoard(Point{5, 5}, 2)
+    assert.Nil(t, err)
 
-	board.AssertExpectations(t)
-	moveFactory.AssertExpectations(t)
+    b.setPiece(Point{2, 2}, king)
+    b.setPiece(Point{0, 2}, rook)
+    b.setPiece(Point{4, 2}, rook)
+
+	moves := king.moves(b, Point{2, 2})
+    assert.Equal(t, 8, len(moves))
+
+    moveMap := map[Point]bool{}
+    for _, m := range moves {
+        moveMap[m.toLocation] = true
+    }
+
+    assert.True(t, moveMap[Point{2, 1}])
+    assert.True(t, moveMap[Point{2, 3}])
+    assert.True(t, moveMap[Point{1, 2}])
+    assert.True(t, moveMap[Point{3, 2}])
+    assert.True(t, moveMap[Point{1, 1}])
+    assert.True(t, moveMap[Point{3, 3}])
+    assert.True(t, moveMap[Point{3, 1}])
+    assert.True(t, moveMap[Point{1, 3}])
 }
 

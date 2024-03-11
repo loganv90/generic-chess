@@ -1,5 +1,6 @@
 package chess
 
+/*
 import (
     "fmt"
 )
@@ -533,4 +534,5 @@ func (m *AllyDefenseMove) execute() error {
 func (m *AllyDefenseMove) undo() error {
 	return nil
 }
+*/
 

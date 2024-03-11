@@ -37,13 +37,13 @@ func Test_Minimax(t *testing.T) {
     searcher, err := newSimpleSearcher(game)
     assert.Nil(t, err)
 
-    score, move, err := searcher.minimax(4)
+    score, move, _, err := searcher.minimax(4)
     assert.Nil(t, err)
 
     assert.Equal(t, 100000, score[white])
     assert.Equal(t, -100000, score[black])
-    assert.Equal(t, 1, move.getAction().toLocation.x)
-    assert.Equal(t, 2, move.getAction().toLocation.y)
+    assert.Equal(t, 1, move.toLocation.x)
+    assert.Equal(t, 2, move.toLocation.y)
 
     actualPrintedBoard := game.Print()
     expectedPrintedBoard := strings.Trim(`
@@ -97,11 +97,11 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
     searcher, err := newSimpleSearcher(game)
     assert.Nil(t, err)
 
-    _, move, err := searcher.minimax(3)
+    _, move, _, err := searcher.minimax(3)
     assert.Nil(t, err)
 
-    assert.Equal(t, 5, move.getAction().toLocation.x)
-    assert.Equal(t, 2, move.getAction().toLocation.y)
+    assert.Equal(t, 5, move.toLocation.x)
+    assert.Equal(t, 2, move.toLocation.y)
 
     actualPrintedBoard := game.Print()
     expectedPrintedBoard := strings.Trim(`
@@ -214,7 +214,7 @@ func Benchmark_Minimax(t *testing.B) {
         searcher, err := newSimpleSearcher(game)
         assert.Nil(t, err)
 
-        _, _, err = searcher.minimax(3)
+        _, _, _, err = searcher.minimax(3)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()

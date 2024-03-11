@@ -72,24 +72,24 @@ func (m *MockBoard) CalculateMoves() error {
     return args.Error(0)
 }
 
-func (m *MockBoard) MovesOfColor(color int) ([]Move, error) {
+func (m *MockBoard) MovesOfColor(color int) ([]FastMove, error) {
     args := m.Called(color)
-    return args.Get(0).([]Move), args.Error(1)
+    return args.Get(0).([]FastMove), args.Error(1)
 }
 
-func (m *MockBoard) MovesOfLocation(fromLocation Point) ([]Move, error) {
+func (m *MockBoard) MovesOfLocation(fromLocation Point) ([]FastMove, error) {
     args := m.Called(fromLocation)
-    return args.Get(0).([]Move), args.Error(1)
+    return args.Get(0).([]FastMove), args.Error(1)
 }
 
-func (m *MockBoard) LegalMovesOfColor(color int) ([]Move, error) {
+func (m *MockBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
     args := m.Called(color)
-    return args.Get(0).([]Move), args.Error(1)
+    return args.Get(0).([]FastMove), args.Error(1)
 }
 
-func (m *MockBoard) LegalMovesOfLocation(location Point) ([]Move, error) {
+func (m *MockBoard) LegalMovesOfLocation(location Point) ([]FastMove, error) {
     args := m.Called(location)
-    return args.Get(0).([]Move), args.Error(1)
+    return args.Get(0).([]FastMove), args.Error(1)
 }
 
 func (m *MockBoard) CheckmateAndStalemate(color int) (bool, bool, error) {
@@ -424,7 +424,7 @@ func Test_CalculateMoves_promotion(t *testing.T) {
 
     whiteMoveKeys, err := b.LegalMovesOfColor(white)
     assert.Nil(t, err)
-    assert.Equal(t, 4, len(whiteMoveKeys))
+    assert.Equal(t, 7, len(whiteMoveKeys))
 
     blackMoveKeys, err := b.LegalMovesOfColor(black)
     assert.Nil(t, err)

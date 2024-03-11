@@ -96,14 +96,14 @@ type Piece interface {
     getValue() int
 	copy() (Piece, error) // returns the moved version of the piece
     getMoved() bool
-	moves(Board, Point) []Move
+	moves(Board, Point) []FastMove
 	print() string
 }
 
 func addDirection(
     fromLocation Point,
 	b Board,
-	moves *[]Move,
+	moves *[]FastMove,
     direction Point,
 	color int,
 ) {
@@ -116,18 +116,18 @@ func addDirection(
         }
 
 		if p == nil {
-			simpleMove, err := moveFactoryInstance.newSimpleMove(b, fromLocation, currentLocation)
+            simpleMove, err := createMoveSimple(b, color, fromLocation, currentLocation, nil)
 			if err == nil {
 				*moves = append(*moves, simpleMove)
 			}
 		} else if p.getColor() != color {
-			simpleMove, err := moveFactoryInstance.newSimpleMove(b, fromLocation, currentLocation)
+            simpleMove, err := createMoveSimple(b, color, fromLocation, currentLocation, nil)
 			if err == nil {
 				*moves = append(*moves, simpleMove)
 			}
 			break
 		} else {
-            allyDefenseMove, err := moveFactoryInstance.newAllyDefenseMove(b, fromLocation, currentLocation)
+            allyDefenseMove, err := createMoveAllyDefense(b, color, fromLocation, currentLocation)
             if err == nil {
                 *moves = append(*moves, allyDefenseMove)
             }
@@ -141,7 +141,7 @@ func addDirection(
 func addSimple(
     fromLocation Point,
 	b Board,
-	moves *[]Move,
+	moves *[]FastMove,
     direction Point,
 	color int,
 ) {
@@ -153,17 +153,17 @@ func addSimple(
 	}
 
 	if p == nil {
-		simpleMove, err := moveFactoryInstance.newSimpleMove(b, fromLocation, toLocation)
+        simpleMove, err := createMoveSimple(b, color, fromLocation, toLocation, nil)
 		if err == nil {
 			*moves = append(*moves, simpleMove)
 		}
 	} else if p.getColor() != color {
-		simpleMove, err := moveFactoryInstance.newSimpleMove(b, fromLocation, toLocation)
+        simpleMove, err := createMoveSimple(b, color, fromLocation, toLocation, nil)
 		if err == nil {
 			*moves = append(*moves, simpleMove)
 		}
 	} else {
-        allyDefenseMove, err := moveFactoryInstance.newAllyDefenseMove(b, fromLocation, toLocation)
+        allyDefenseMove, err := createMoveAllyDefense(b, color, fromLocation, toLocation)
         if err == nil {
             *moves = append(*moves, allyDefenseMove)
         }
@@ -238,8 +238,8 @@ func (a *Pawn) getValue() int {
     return 1000
 }
 
-func (a *Pawn) moves(b Board, fromLocation Point) []Move {
-	moves := &[]Move{}
+func (a *Pawn) moves(b Board, fromLocation Point) []FastMove {
+	moves := &[]FastMove{}
 	a.addForward(b, fromLocation, moves)
 	a.addCaptures(b, fromLocation, moves)
 	return *moves
@@ -251,21 +251,89 @@ func (a *Pawn) nextLocationInvalid(b Board, toLocation Point) bool {
     return !ok
 }
 
-func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]Move) {
+func (a *Pawn) addPromotionsSimple(b Board, fromLocation Point, toLocation Point, moves *[]FastMove) {
+    promotionMove, err := createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN))
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M))
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP))
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT))
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+}
+
+func (a *Pawn) addPromotionsRevealEnPassant(b Board, fromLocation Point, toLocation Point, moves *[]FastMove, enPassant EnPassant) {
+    promotionMove, err := createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN), enPassant)
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M), enPassant)
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP), enPassant)
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT), enPassant)
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+}
+
+func (a *Pawn) addPromotionsCaptureEnPassant(b Board, fromLocation Point, toLocation Point, moves *[]FastMove) {
+    promotionMove, err := createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN))
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M))
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP))
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+    promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT))
+    if err != nil {
+        return
+    }
+    *moves = append(*moves, promotionMove)
+}
+
+func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]FastMove) {
     to1Location := fromLocation.add(a.forward1)
 	if piece, ok := b.getPiece(to1Location); !ok || piece != nil { // if the square is invalid or occupied
 		return
 	} else {
-		simpleMove, err := moveFactoryInstance.newSimpleMove(b, fromLocation, to1Location)
-        if err != nil {
-            return
-        } else if a.nextLocationInvalid(b, to1Location) {
-            if promotionMove, err := moveFactoryInstance.newPromotionMove(simpleMove); err == nil {
-                *moves = append(*moves, promotionMove)
-            }
+        if a.nextLocationInvalid(b, to1Location) {
+            a.addPromotionsSimple(b, fromLocation, to1Location, moves)
         } else {
-			*moves = append(*moves, simpleMove)
-		}
+            simpleMove, err := createMoveSimple(b, a.color, fromLocation, to1Location, nil)
+            if err != nil {
+                return
+            }
+            *moves = append(*moves, simpleMove)
+        }
 	}
 
 	if a.moved {
@@ -276,52 +344,50 @@ func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]Move) {
 	if piece, ok := b.getPiece(to2Location); !ok || piece != nil { // if the square is invalid or occupied
 		return
 	} else {
-		revealEnPassantMove, err := moveFactoryInstance.newRevealEnPassantMove(b, fromLocation, to2Location, to1Location)
-        if err != nil {
-            return
-        } else if a.nextLocationInvalid(b, to2Location) {
-            if promotionMove, err := moveFactoryInstance.newPromotionMove(revealEnPassantMove); err == nil {
-                *moves = append(*moves, promotionMove)
-            }
+        if a.nextLocationInvalid(b, to2Location) {
+            a.addPromotionsRevealEnPassant(b, fromLocation, to2Location, moves, EnPassant{to1Location, to2Location})
         } else {
-			*moves = append(*moves, revealEnPassantMove)
-		}
+            simpleMove, err := createMoveRevealEnPassant(b, a.color, fromLocation, to2Location, nil, EnPassant{to1Location, to2Location})
+            if err != nil {
+                return
+            }
+            *moves = append(*moves, simpleMove)
+        }
 	}
 }
 
-func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *[]Move) {
+func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *[]FastMove) {
 	for _, capture := range a.captures {
         toLocation := fromLocation.add(capture)
 
 		if piece, ok := b.getPiece(toLocation); !ok { // if the square is invalid
 			continue
         } else if ens, err := b.possibleEnPassant(a.color, toLocation); err == nil && len(ens) > 0 { // if the square is an en passant target
-			captureEnPassantMove, err := moveFactoryInstance.newCaptureEnPassantMove(b, fromLocation, toLocation)
-            if err != nil {
-                continue
-            } else if a.nextLocationInvalid(b, toLocation) {
-                if promotionMove, err := moveFactoryInstance.newPromotionMove(captureEnPassantMove); err == nil {
-                    *moves = append(*moves, promotionMove)
-                }
+            if a.nextLocationInvalid(b, toLocation) {
+                a.addPromotionsCaptureEnPassant(b, fromLocation, toLocation, moves)
             } else {
+                captureEnPassantMove, err := createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, nil)
+                if err != nil {
+                    return
+                }
                 *moves = append(*moves, captureEnPassantMove)
             }
 		} else if piece != nil && piece.getColor() != a.color { // if the square is occupied by an enemy piece
-			simpleMove, err := moveFactoryInstance.newSimpleMove(b, fromLocation, toLocation)
-            if err != nil {
-                continue
-            } else if a.nextLocationInvalid(b, toLocation) {
-                if promotionMove, err := moveFactoryInstance.newPromotionMove(simpleMove); err == nil {
-                    *moves = append(*moves, promotionMove)
-                }
+            if a.nextLocationInvalid(b, toLocation) {
+                a.addPromotionsSimple(b, fromLocation, toLocation, moves)
             } else {
+                simpleMove, err := createMoveSimple(b, a.color, fromLocation, toLocation, nil)
+                if err != nil {
+                    return
+                }
                 *moves = append(*moves, simpleMove)
             }
 		} else if piece != nil {
-            allyDefenseMove, err := moveFactoryInstance.newAllyDefenseMove(b, fromLocation, toLocation)
-            if err == nil {
-                *moves = append(*moves, allyDefenseMove)
+            allyDefenseMove, err := createMoveAllyDefense(b, a.color, fromLocation, toLocation)
+            if err != nil {
+                return
             }
+            *moves = append(*moves, allyDefenseMove)
         }
 	}
 }
@@ -363,13 +429,13 @@ func (n *Knight) getValue() int {
     return 3000
 }
 
-func (n *Knight) moves(b Board, fromLocation Point) []Move {
-	moves := &[]Move{}
+func (n *Knight) moves(b Board, fromLocation Point) []FastMove {
+	moves := &[]FastMove{}
 	n.addSimples(b, fromLocation, moves)
 	return *moves
 }
 
-func (n *Knight) addSimples(b Board, fromLocation Point, moves *[]Move) {
+func (n *Knight) addSimples(b Board, fromLocation Point, moves *[]FastMove) {
 	for _, simple := range knightSimples {
 		addSimple(fromLocation, b, moves, simple, n.color)
 	}
@@ -408,13 +474,13 @@ func (s *Bishop) getValue() int {
     return 3000
 }
 
-func (s *Bishop) moves(b Board, fromLocation Point) []Move {
-	moves := &[]Move{}
+func (s *Bishop) moves(b Board, fromLocation Point) []FastMove {
+	moves := &[]FastMove{}
 	s.addDirections(b, fromLocation, moves)
 	return *moves
 }
 
-func (s *Bishop) addDirections(b Board, fromLocation Point, moves *[]Move) {
+func (s *Bishop) addDirections(b Board, fromLocation Point, moves *[]FastMove) {
 	for _, direction := range bishopDirections {
 		addDirection(fromLocation, b, moves, direction, s.color)
 	}
@@ -455,13 +521,13 @@ func (r *Rook) getValue() int {
     return 5000
 }
 
-func (r *Rook) moves(b Board, fromLocation Point) []Move {
-	moves := &[]Move{}
+func (r *Rook) moves(b Board, fromLocation Point) []FastMove {
+	moves := &[]FastMove{}
 	r.addDirections(b, fromLocation, moves)
 	return *moves
 }
 
-func (r *Rook) addDirections(b Board, fromLocation Point, moves *[]Move) {
+func (r *Rook) addDirections(b Board, fromLocation Point, moves *[]FastMove) {
 	for _, direction := range rookDirections {
 		addDirection(fromLocation, b, moves, direction, r.color)
 	}
@@ -504,13 +570,13 @@ func (q *Queen) getValue() int {
     return 9000
 }
 
-func (q *Queen) moves(b Board, fromLocation Point) []Move {
-	moves := &[]Move{}
+func (q *Queen) moves(b Board, fromLocation Point) []FastMove {
+	moves := &[]FastMove{}
 	q.addDirections(b, fromLocation, moves)
 	return *moves
 }
 
-func (q *Queen) addDirections(b Board, fromLocation Point, moves *[]Move) {
+func (q *Queen) addDirections(b Board, fromLocation Point, moves *[]FastMove) {
 	for _, direction := range queenDirections {
 		addDirection(fromLocation, b, moves, direction, q.color)
 	}
@@ -585,14 +651,14 @@ func (k *King) getValue() int {
     return 0
 }
 
-func (k *King) moves(b Board, fromLocation Point) []Move {
-	moves := &[]Move{}
+func (k *King) moves(b Board, fromLocation Point) []FastMove {
+	moves := &[]FastMove{}
 	k.addSimples(b, fromLocation, moves)
 	k.addCastles(b, fromLocation, moves)
 	return *moves
 }
 
-func (k *King) addSimples(b Board, fromLocation Point, moves *[]Move) {
+func (k *King) addSimples(b Board, fromLocation Point, moves *[]FastMove) {
 	for _, simple := range kingSimples {
 		addSimple(fromLocation, b, moves, simple, k.color)
 	}
@@ -635,7 +701,7 @@ func (k *King) findEdgeForCastle(b Board, fromLocation Point, direction Point) (
     }
 }
 
-func (k *King) addCastles(b Board, fromLocation Point, moves *[]Move) {
+func (k *King) addCastles(b Board, fromLocation Point, moves *[]FastMove) {
 	if k.moved {
 		return
 	}
@@ -720,16 +786,11 @@ func (k *King) addCastles(b Board, fromLocation Point, moves *[]Move) {
         }
         vulnerable := Vulnerable{Point{minx, miny}, Point{maxx, maxy}}
 
-		castleMove, err := moveFactoryInstance.newCastleMove(
-            b,
-            fromLocation,
-            fromRookLocation,
-            toLocation,
-            toRookLocation,
-            vulnerable,
-        )
-		if err == nil {
-			*moves = append(*moves, castleMove)
+        castleMove, err := createMoveCastle(b, k.color, fromLocation, fromRookLocation, toLocation, toRookLocation, vulnerable)
+		if err != nil {
+            return
 		}
+        *moves = append(*moves, castleMove)
 	}
 }
+

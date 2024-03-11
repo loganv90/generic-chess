@@ -31,11 +31,15 @@ func createMoveSimple(
         return FastMove{}, err
     }
 
+    var promotion string
     if newPiece == nil {
         newPiece, err = piece.copy()
         if err != nil {
             return FastMove{}, err
         }
+        promotion = ""
+    } else {
+        promotion = newPiece.print()
     }
 
     newPieceLocations := Array4[PieceLocation]{}
@@ -52,6 +56,7 @@ func createMoveSimple(
         toLocation: toLocation,
         color: color,
         allyDefense: false,
+        promotion: promotion,
 
         newPieceLocation: newPieceLocations,
         oldPieceLocation: oldPieceLocations,
@@ -128,6 +133,7 @@ func createMoveAllyDefense(
         toLocation: toLocation,
         color: color,
         allyDefense: true,
+        promotion: "",
 
         newPieceLocation: Array4[PieceLocation]{},
         oldPieceLocation: Array4[PieceLocation]{},
@@ -197,6 +203,7 @@ func createMoveCastle(
         toLocation: toLocation,
         color: color,
         allyDefense: false,
+        promotion: "",
 
         newPieceLocation: newPieceLocations,
         oldPieceLocation: oldPieceLocations,
@@ -215,6 +222,7 @@ type FastMove struct {
     toLocation Point
     color int
     allyDefense bool
+    promotion string
 
     newPieceLocation Array4[PieceLocation]
     oldPieceLocation Array4[PieceLocation]

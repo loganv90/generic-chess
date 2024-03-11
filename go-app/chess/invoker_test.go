@@ -4,18 +4,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
     t.Cleanup(func() { playerTransitionFactoryInstance = &ConcretePlayerTransitionFactory{} })
 
-	move1 := &MockMove{}
-	move1.On("execute").Return(nil)
-	move1.On("undo").Return(nil)
-
-	move2 := &MockMove{}
-	move2.On("execute").Return(nil)
-	move2.On("undo").Return(nil)
+    b := &MockBoard{}
+    b.On("setEnPassant", mock.Anything, mock.Anything).Return(nil)
+    b.On("setVulnerable", mock.Anything, mock.Anything).Return(nil)
+    move1 := FastMove{b: b}
+    move2 := FastMove{b: b}
 
     playerTransition1 := &MockPlayerTransition{}
     playerTransition1.On("execute").Return(nil)
@@ -43,27 +42,27 @@ func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
 
 	err = simpleInvoker.execute(move1, playerTransition1)
 	assert.Nil(t, err)
-	move1.AssertNumberOfCalls(t, "execute", 1)
+	b.AssertNumberOfCalls(t, "setEnPassant", 1)
 
 	err = simpleInvoker.execute(move2, playerTransition2)
 	assert.Nil(t, err)
-	move2.AssertNumberOfCalls(t, "execute", 1)
+	b.AssertNumberOfCalls(t, "setEnPassant", 2)
 
 	err = simpleInvoker.undo()
 	assert.Nil(t, err)
-	move2.AssertNumberOfCalls(t, "undo", 1)
+	b.AssertNumberOfCalls(t, "setEnPassant", 3)
 
 	err = simpleInvoker.undo()
 	assert.Nil(t, err)
-	move1.AssertNumberOfCalls(t, "undo", 1)
+	b.AssertNumberOfCalls(t, "setEnPassant", 4)
 
 	err = simpleInvoker.redo()
 	assert.Nil(t, err)
-	move1.AssertNumberOfCalls(t, "execute", 2)
+	b.AssertNumberOfCalls(t, "setEnPassant", 5)
 
 	err = simpleInvoker.redo()
 	assert.Nil(t, err)
-	move2.AssertNumberOfCalls(t, "execute", 2)
+	b.AssertNumberOfCalls(t, "setEnPassant", 6)
 }
 
 func Test_SimpleInvoker_UndoAndRedoWithNoMoves(t *testing.T) {
@@ -80,17 +79,12 @@ func Test_SimpleInvoker_UndoAndRedoWithNoMoves(t *testing.T) {
 func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
     t.Cleanup(func() { playerTransitionFactoryInstance = &ConcretePlayerTransitionFactory{} })
 
-	move1 := &MockMove{}
-	move1.On("execute").Return(nil)
-	move1.On("undo").Return(nil)
-
-	move2 := &MockMove{}
-	move2.On("execute").Return(nil)
-	move2.On("undo").Return(nil)
-
-	move3 := &MockMove{}
-	move3.On("execute").Return(nil)
-	move3.On("undo").Return(nil)
+    b := &MockBoard{}
+    b.On("setEnPassant", mock.Anything, mock.Anything).Return(nil)
+    b.On("setVulnerable", mock.Anything, mock.Anything).Return(nil)
+    move1 := FastMove{b: b}
+    move2 := FastMove{b: b}
+    move3 := FastMove{b: b}
 
     playerTransition1 := &MockPlayerTransition{}
     playerTransition1.On("execute").Return(nil)

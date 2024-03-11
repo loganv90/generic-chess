@@ -18,7 +18,8 @@ func (f *ConcreteInvokerFactory) newSimpleInvoker() (*SimpleInvoker, error) {
 }
 
 type Invoker interface {
-	execute(m Move, p PlayerTransition) error
+	execute(m FastMove, p PlayerTransition) error
+    executeHalf(p PlayerTransition) error
 	undo() error
 	redo() error
     Copy() (Invoker, error)
@@ -29,28 +30,30 @@ type SimpleInvoker struct {
 	index int
 }
 
-func (s *SimpleInvoker) execute(m Move, p PlayerTransition) error {
-    fullMove := true
-
-    if m != nil {
-        err := m.execute()
-        if err != nil {
-            return err
-        }
-    } else {
-        fullMove = false
+func (s *SimpleInvoker) execute(m FastMove, p PlayerTransition) error {
+    err := m.execute()
+    if err != nil {
+        return err
     }
 
-    if p != nil {
-        err := p.execute()
-        if err != nil {
-            return err
-        }
-    } else {
-        fullMove = false
+    err = p.execute()
+    if err != nil {
+        return err
     }
 
-	s.history = append(s.history[:s.index+1], Command{m, p, fullMove})
+	s.history = append(s.history[:s.index+1], Command{m, p, true})
+    s.index++
+
+	return nil
+}
+
+func (s *SimpleInvoker) executeHalf(p PlayerTransition) error {
+    err := p.execute()
+    if err != nil {
+        return err
+    }
+
+	s.history = append(s.history[:s.index+1], Command{FastMove{}, p, false})
     s.index++
 
 	return nil
@@ -89,18 +92,16 @@ func (s *SimpleInvoker) undoHelper() error {
 
     command := s.history[s.index]
 
-    if command.m != nil {
+    if command.fullMove {
         err := command.m.undo()
         if err != nil {
             return err
         }
     }
 
-    if command.p != nil {
-        err := command.p.undo()
-        if err != nil {
-            return err
-        }
+    err := command.p.undo()
+    if err != nil {
+        return err
     }
 
 	s.index--
@@ -141,18 +142,16 @@ func (s *SimpleInvoker) redoHelper() error {
 
     command := s.history[s.index+1]
 
-    if command.m != nil {
+    if command.fullMove {
         err := command.m.execute()
         if err != nil {
             return err
         }
     }
 
-    if command.p != nil {
-        err := command.p.execute()
-        if err != nil {
-            return err
-        }
+    err := command.p.execute()
+    if err != nil {
+        return err
     }
 
 	s.index++

@@ -59,6 +59,7 @@ func Test_MovePromotion(t *testing.T) {
 	board.On("getPiece", to).Return(capturedPiece, true)
 	board.On("getEnPassant", white).Return(enPassant, nil)
     board.On("getVulnerable", white).Return(vulnerable, nil)
+    newPiece.On("print").Return("Q")
     promotionMove, err := createMoveSimple(board, white, from, to, newPiece)
     assert.Nil(t, err)
     assert.Equal(t, promotionMove.allyDefense, false)
@@ -78,6 +79,7 @@ func Test_MovePromotion(t *testing.T) {
     assert.Nil(t, err)
 
 	board.AssertExpectations(t)
+    newPiece.AssertExpectations(t)
 }
 
 func Test_MoveRevealEnPassant(t *testing.T) {
