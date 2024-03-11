@@ -96,14 +96,14 @@ type Piece interface {
     getValue() int
 	copy() (Piece, error) // returns the moved version of the piece
     getMoved() bool
-	moves(Board, Point) []FastMove
+	moves(Board, Point, *Array100[FastMove])
 	print() string
 }
 
 func addDirection(
     fromLocation Point,
 	b Board,
-	moves *[]FastMove,
+	moves *Array100[FastMove],
     direction Point,
 	color int,
 ) {
@@ -118,18 +118,18 @@ func addDirection(
 		if p == nil {
             simpleMove, err := createMoveSimple(b, color, fromLocation, currentLocation, nil)
 			if err == nil {
-				*moves = append(*moves, simpleMove)
+                moves.append(simpleMove)
 			}
 		} else if p.getColor() != color {
             simpleMove, err := createMoveSimple(b, color, fromLocation, currentLocation, nil)
 			if err == nil {
-				*moves = append(*moves, simpleMove)
+                moves.append(simpleMove)
 			}
 			break
 		} else {
             allyDefenseMove, err := createMoveAllyDefense(b, color, fromLocation, currentLocation)
             if err == nil {
-                *moves = append(*moves, allyDefenseMove)
+                moves.append(allyDefenseMove)
             }
 			break
 		}
@@ -141,7 +141,7 @@ func addDirection(
 func addSimple(
     fromLocation Point,
 	b Board,
-	moves *[]FastMove,
+	moves *Array100[FastMove],
     direction Point,
 	color int,
 ) {
@@ -155,17 +155,17 @@ func addSimple(
 	if p == nil {
         simpleMove, err := createMoveSimple(b, color, fromLocation, toLocation, nil)
 		if err == nil {
-			*moves = append(*moves, simpleMove)
+            moves.append(simpleMove)
 		}
 	} else if p.getColor() != color {
         simpleMove, err := createMoveSimple(b, color, fromLocation, toLocation, nil)
 		if err == nil {
-			*moves = append(*moves, simpleMove)
+            moves.append(simpleMove)
 		}
 	} else {
         allyDefenseMove, err := createMoveAllyDefense(b, color, fromLocation, toLocation)
         if err == nil {
-            *moves = append(*moves, allyDefenseMove)
+            moves.append(allyDefenseMove)
         }
     }
 }
@@ -238,11 +238,9 @@ func (a *Pawn) getValue() int {
     return 1000
 }
 
-func (a *Pawn) moves(b Board, fromLocation Point) []FastMove {
-	moves := &[]FastMove{}
+func (a *Pawn) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	a.addForward(b, fromLocation, moves)
 	a.addCaptures(b, fromLocation, moves)
-	return *moves
 }
 
 func (a *Pawn) nextLocationInvalid(b Board, toLocation Point) bool {
@@ -251,76 +249,76 @@ func (a *Pawn) nextLocationInvalid(b Board, toLocation Point) bool {
     return !ok
 }
 
-func (a *Pawn) addPromotionsSimple(b Board, fromLocation Point, toLocation Point, moves *[]FastMove) {
+func (a *Pawn) addPromotionsSimple(b Board, fromLocation Point, toLocation Point, moves *Array100[FastMove]) {
     promotionMove, err := createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN))
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M))
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP))
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT))
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
 }
 
-func (a *Pawn) addPromotionsRevealEnPassant(b Board, fromLocation Point, toLocation Point, moves *[]FastMove, enPassant EnPassant) {
+func (a *Pawn) addPromotionsRevealEnPassant(b Board, fromLocation Point, toLocation Point, moves *Array100[FastMove], enPassant EnPassant) {
     promotionMove, err := createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN), enPassant)
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M), enPassant)
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP), enPassant)
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT), enPassant)
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
 }
 
-func (a *Pawn) addPromotionsCaptureEnPassant(b Board, fromLocation Point, toLocation Point, moves *[]FastMove) {
+func (a *Pawn) addPromotionsCaptureEnPassant(b Board, fromLocation Point, toLocation Point, moves *Array100[FastMove]) {
     promotionMove, err := createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN))
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M))
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP))
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
     promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT))
     if err != nil {
         return
     }
-    *moves = append(*moves, promotionMove)
+    moves.append(promotionMove)
 }
 
-func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]FastMove) {
+func (a *Pawn) addForward(b Board, fromLocation Point, moves *Array100[FastMove]) {
     to1Location := fromLocation.add(a.forward1)
 	if piece, ok := b.getPiece(to1Location); !ok || piece != nil { // if the square is invalid or occupied
 		return
@@ -332,7 +330,7 @@ func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]FastMove) {
             if err != nil {
                 return
             }
-            *moves = append(*moves, simpleMove)
+            moves.append(simpleMove)
         }
 	}
 
@@ -351,12 +349,12 @@ func (a *Pawn) addForward(b Board, fromLocation Point, moves *[]FastMove) {
             if err != nil {
                 return
             }
-            *moves = append(*moves, simpleMove)
+            moves.append(simpleMove)
         }
 	}
 }
 
-func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *[]FastMove) {
+func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	for _, capture := range a.captures {
         toLocation := fromLocation.add(capture)
 
@@ -370,7 +368,7 @@ func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *[]FastMove) {
                 if err != nil {
                     return
                 }
-                *moves = append(*moves, captureEnPassantMove)
+                moves.append(captureEnPassantMove)
             }
 		} else if piece != nil && piece.getColor() != a.color { // if the square is occupied by an enemy piece
             if a.nextLocationInvalid(b, toLocation) {
@@ -380,14 +378,14 @@ func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *[]FastMove) {
                 if err != nil {
                     return
                 }
-                *moves = append(*moves, simpleMove)
+                moves.append(simpleMove)
             }
 		} else if piece != nil {
             allyDefenseMove, err := createMoveAllyDefense(b, a.color, fromLocation, toLocation)
             if err != nil {
                 return
             }
-            *moves = append(*moves, allyDefenseMove)
+            moves.append(allyDefenseMove)
         }
 	}
 }
@@ -429,13 +427,11 @@ func (n *Knight) getValue() int {
     return 3000
 }
 
-func (n *Knight) moves(b Board, fromLocation Point) []FastMove {
-	moves := &[]FastMove{}
+func (n *Knight) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	n.addSimples(b, fromLocation, moves)
-	return *moves
 }
 
-func (n *Knight) addSimples(b Board, fromLocation Point, moves *[]FastMove) {
+func (n *Knight) addSimples(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	for _, simple := range knightSimples {
 		addSimple(fromLocation, b, moves, simple, n.color)
 	}
@@ -474,13 +470,11 @@ func (s *Bishop) getValue() int {
     return 3000
 }
 
-func (s *Bishop) moves(b Board, fromLocation Point) []FastMove {
-	moves := &[]FastMove{}
+func (s *Bishop) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	s.addDirections(b, fromLocation, moves)
-	return *moves
 }
 
-func (s *Bishop) addDirections(b Board, fromLocation Point, moves *[]FastMove) {
+func (s *Bishop) addDirections(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	for _, direction := range bishopDirections {
 		addDirection(fromLocation, b, moves, direction, s.color)
 	}
@@ -521,13 +515,11 @@ func (r *Rook) getValue() int {
     return 5000
 }
 
-func (r *Rook) moves(b Board, fromLocation Point) []FastMove {
-	moves := &[]FastMove{}
+func (r *Rook) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	r.addDirections(b, fromLocation, moves)
-	return *moves
 }
 
-func (r *Rook) addDirections(b Board, fromLocation Point, moves *[]FastMove) {
+func (r *Rook) addDirections(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	for _, direction := range rookDirections {
 		addDirection(fromLocation, b, moves, direction, r.color)
 	}
@@ -570,13 +562,11 @@ func (q *Queen) getValue() int {
     return 9000
 }
 
-func (q *Queen) moves(b Board, fromLocation Point) []FastMove {
-	moves := &[]FastMove{}
+func (q *Queen) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	q.addDirections(b, fromLocation, moves)
-	return *moves
 }
 
-func (q *Queen) addDirections(b Board, fromLocation Point, moves *[]FastMove) {
+func (q *Queen) addDirections(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	for _, direction := range queenDirections {
 		addDirection(fromLocation, b, moves, direction, q.color)
 	}
@@ -651,14 +641,12 @@ func (k *King) getValue() int {
     return 0
 }
 
-func (k *King) moves(b Board, fromLocation Point) []FastMove {
-	moves := &[]FastMove{}
+func (k *King) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	k.addSimples(b, fromLocation, moves)
 	k.addCastles(b, fromLocation, moves)
-	return *moves
 }
 
-func (k *King) addSimples(b Board, fromLocation Point, moves *[]FastMove) {
+func (k *King) addSimples(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	for _, simple := range kingSimples {
 		addSimple(fromLocation, b, moves, simple, k.color)
 	}
@@ -701,7 +689,7 @@ func (k *King) findEdgeForCastle(b Board, fromLocation Point, direction Point) (
     }
 }
 
-func (k *King) addCastles(b Board, fromLocation Point, moves *[]FastMove) {
+func (k *King) addCastles(b Board, fromLocation Point, moves *Array100[FastMove]) {
 	if k.moved {
 		return
 	}
@@ -790,7 +778,7 @@ func (k *King) addCastles(b Board, fromLocation Point, moves *[]FastMove) {
 		if err != nil {
             return
 		}
-        *moves = append(*moves, castleMove)
+        moves.append(castleMove)
 	}
 }
 

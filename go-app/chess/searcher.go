@@ -109,7 +109,9 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
     var bestMove FastMove
     bestScore := make([]int, players)
     bestScore[currentPlayer] = -1000000
-    for _, move := range moves {
+
+    for i := 0; i < moves.count; i++ {
+        move := moves.array[i]
         if move.allyDefense {
             continue
         }

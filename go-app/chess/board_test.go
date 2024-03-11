@@ -72,14 +72,14 @@ func (m *MockBoard) CalculateMoves() error {
     return args.Error(0)
 }
 
-func (m *MockBoard) MovesOfColor(color int) ([]FastMove, error) {
+func (m *MockBoard) MovesOfColor(color int) (*Array100[FastMove], error) {
     args := m.Called(color)
-    return args.Get(0).([]FastMove), args.Error(1)
+    return args.Get(0).(*Array100[FastMove]), args.Error(1)
 }
 
-func (m *MockBoard) MovesOfLocation(fromLocation Point) ([]FastMove, error) {
+func (m *MockBoard) MovesOfLocation(fromLocation Point) (*Array100[FastMove], error) {
     args := m.Called(fromLocation)
-    return args.Get(0).([]FastMove), args.Error(1)
+    return args.Get(0).(*Array100[FastMove]), args.Error(1)
 }
 
 func (m *MockBoard) LegalMovesOfColor(color int) ([]FastMove, error) {

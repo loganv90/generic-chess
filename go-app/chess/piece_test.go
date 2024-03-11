@@ -31,9 +31,8 @@ func (m *MockPiece) getMoved() bool {
     return args.Bool(0)
 }
 
-func (m *MockPiece) moves(board Board, location Point) []FastMove {
-    args := m.Called(board, location)
-	return args.Get(0).([]FastMove)
+func (m *MockPiece) moves(board Board, location Point, moves *Array100[FastMove]) {
+    m.Called(board, location, moves)
 }
 
 func (m *MockPiece) setDisabled(disabled bool) {
@@ -59,11 +58,13 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
 
     b.setPiece(Point{3, 3}, pawn)
 
-	moves := pawn.moves(b, Point{3, 3})
-    assert.Equal(t, 2, len(moves))
+    moves := Array100[FastMove]{}
+	pawn.moves(b, Point{3, 3}, &moves)
+    assert.Equal(t, 2, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -80,11 +81,13 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
 
     b.setPiece(Point{3, 3}, pawn)
 
-	moves := pawn.moves(b, Point{3, 3})
-    assert.Equal(t, 1, len(moves))
+    moves := Array100[FastMove]{}
+	pawn.moves(b, Point{3, 3}, &moves)
+    assert.Equal(t, 1, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -103,11 +106,13 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
     b.setPiece(Point{3, 3}, pawn)
     b.setPiece(Point{4, 4}, blackPawn)
 
-	moves := pawn.moves(b, Point{3, 3})
-    assert.Equal(t, 3, len(moves))
+    moves := Array100[FastMove]{}
+	pawn.moves(b, Point{3, 3}, &moves)
+    assert.Equal(t, 3, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -127,11 +132,13 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
     b.setPiece(Point{3, 3}, pawn)
     b.setEnPassant(black, EnPassant{Point{4, 4}, Point{3, 4}})
 
-	moves := pawn.moves(b, Point{3, 3})
-    assert.Equal(t, 3, len(moves))
+    moves := Array100[FastMove]{}
+	pawn.moves(b, Point{3, 3}, &moves)
+    assert.Equal(t, 3, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -149,11 +156,13 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
 
     b.setPiece(Point{2, 2}, pawn)
 
-	moves := pawn.moves(b, Point{2, 2})
-    assert.Equal(t, 5, len(moves))
+    moves := Array100[FastMove]{}
+	pawn.moves(b, Point{2, 2}, &moves)
+    assert.Equal(t, 5, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -170,11 +179,13 @@ func Test_Knight_Moves(t *testing.T) {
 
     b.setPiece(Point{2, 2}, knight)
 
-	moves := knight.moves(b, Point{2, 2})
-    assert.Equal(t, 8, len(moves))
+    moves := Array100[FastMove]{}
+	knight.moves(b, Point{2, 2}, &moves)
+    assert.Equal(t, 8, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -197,11 +208,13 @@ func Test_Bishop_Moves(t *testing.T) {
 
     b.setPiece(Point{2, 2}, bishop)
 
-	moves := bishop.moves(b, Point{2, 2})
-    assert.Equal(t, 8, len(moves))
+    moves := Array100[FastMove]{}
+	bishop.moves(b, Point{2, 2}, &moves)
+    assert.Equal(t, 8, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -224,11 +237,13 @@ func Test_Rook_Moves(t *testing.T) {
 
     b.setPiece(Point{2, 2}, rook)
 
-	moves := rook.moves(b, Point{2, 2})
-    assert.Equal(t, 8, len(moves))
+    moves := Array100[FastMove]{}
+	rook.moves(b, Point{2, 2}, &moves)
+    assert.Equal(t, 8, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -251,11 +266,13 @@ func Test_Queen_Moves(t *testing.T) {
 
     b.setPiece(Point{2, 2}, queen)
 
-	moves := queen.moves(b, Point{2, 2})
-    assert.Equal(t, 16, len(moves))
+    moves := Array100[FastMove]{}
+	queen.moves(b, Point{2, 2}, &moves)
+    assert.Equal(t, 16, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -289,11 +306,13 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
     b.setPiece(Point{0, 2}, rook)
     b.setPiece(Point{4, 2}, rook)
 
-	moves := king.moves(b, Point{2, 2})
-    assert.Equal(t, 10, len(moves))
+    moves := Array100[FastMove]{}
+	king.moves(b, Point{2, 2}, &moves)
+    assert.Equal(t, 10, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
@@ -321,11 +340,13 @@ func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
     b.setPiece(Point{0, 2}, rook)
     b.setPiece(Point{4, 2}, rook)
 
-	moves := king.moves(b, Point{2, 2})
-    assert.Equal(t, 8, len(moves))
+    moves := Array100[FastMove]{}
+	king.moves(b, Point{2, 2}, &moves)
+    assert.Equal(t, 8, moves.count)
 
     moveMap := map[Point]bool{}
-    for _, m := range moves {
+    for i := 0; i < moves.count; i++ {
+        m := moves.array[i]
         moveMap[m.toLocation] = true
     }
 
