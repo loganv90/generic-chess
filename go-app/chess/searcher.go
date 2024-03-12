@@ -98,7 +98,8 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
         panic(fmt.Errorf("invalid player"))
     }
 
-    moves, err := s.b.MovesOfColor(currentPlayer)
+    movesPointer, err := s.b.MovesOfColor(currentPlayer)
+    moves := *movesPointer
     if err != nil {
         panic(err)
     }
