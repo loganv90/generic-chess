@@ -1,9 +1,5 @@
 package chess
 
-import (
-    "fmt"
-)
-
 const (
     EMPTY = 0
     PAWN_R = 1
@@ -29,659 +25,484 @@ const (
     KING_U_M = 21
 )
 
-var pieceFactoryInstance = newPieceFactory()
+var piece_moved_indexes = []int{
+    EMPTY,
+    PAWN_R_M,
+    PAWN_L_M,
+    PAWN_D_M,
+    PAWN_U_M,
+    PAWN_R_M,
+    PAWN_L_M,
+    PAWN_D_M,
+    PAWN_U_M,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    ROOK_M,
+    QUEEN,
+    KING_R_M,
+    KING_L_M,
+    KING_D_M,
+    KING_U_M,
+    KING_R_M,
+    KING_L_M,
+    KING_D_M,
+    KING_U_M,
+}
 
-func newPieceFactory() *PieceFactory {
-    var pieceInstances = make([][]Piece, 4)
-    for color := range pieceInstances {
-        pieceInstances[color] = generateRowForPieceReference(color)
+var piece_values = []int{
+    0,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    300,
+    300,
+    500,
+    500,
+    900,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+}
+
+var piece_names = []string{
+    "",
+    "P",
+    "P",
+    "P",
+    "P",
+    "P",
+    "P",
+    "P",
+    "P",
+    "N",
+    "B",
+    "R",
+    "R",
+    "Q",
+    "K",
+    "K",
+    "K",
+    "K",
+    "K",
+    "K",
+    "K",
+    "K",
+}
+
+var piece_move_functions = []func(Board, Piece, Point, *Array100[FastMove]) {
+    func (b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {},
+    pawn_r_moves,
+    pawn_l_moves,
+    pawn_d_moves,
+    pawn_u_moves,
+    pawn_r_moves,
+    pawn_l_moves,
+    pawn_d_moves,
+    pawn_u_moves,
+    knight_moves,
+    bishop_moves,
+    rook_moves,
+    rook_moves,
+    queen_moves,
+    king_lr_moves,
+    king_lr_moves,
+    king_ud_moves,
+    king_ud_moves,
+    king_lr_moves,
+    king_lr_moves,
+    king_ud_moves,
+    king_ud_moves,
+}
+
+var pawn_u_directions = []Point{
+    {0, -1}, // one 
+    {0, -2}, // two
+    {0, -3}, // three
+    {-1, -1}, // capture
+    {1, -1}, // capture
+}
+
+var pawn_d_directions = []Point{
+    {0, 1},
+    {0, 2},
+    {0, 3},
+    {-1, 1},
+    {1, 1},
+}
+
+var pawn_l_directions = []Point{
+    {-1, 0},
+    {-2, 0},
+    {-3, 0},
+    {-1, -1},
+    {-1, 1},
+}
+
+var pawn_r_directions = []Point{
+    {1, 0},
+    {2, 0},
+    {3, 0},
+    {1, -1},
+    {1, 1},
+}
+
+var knight_directions = []Point{
+    {1, 2},
+    {-1, 2},
+    {2, 1},
+    {-2, 1},
+    {1, -2},
+    {-1, -2},
+    {2, -1},
+    {-2, -1},
+}
+
+var bishop_directions = []Point{
+    {1, 1},
+    {-1, 1},
+    {1, -1},
+    {-1, -1},
+}
+
+var rook_directions = []Point{
+    {1, 0},
+    {-1, 0},
+    {0, 1},
+    {0, -1},
+}
+
+var queen_directions = []Point{
+    {1, 0},
+    {-1, 0},
+    {0, 1},
+    {0, -1},
+    {1, 1},
+    {-1, 1},
+    {1, -1},
+    {-1, -1},
+}
+
+var king_ud_directions = []Point{
+    {1, 0}, // castle search 1
+    {-1, 0}, // castle search 2
+    {-1, 0}, // king offset 1
+    {2, 0}, // king offset 2
+    {-2, 0}, // rook offset 1
+    {3, 0}, // rook offset 2
+}
+
+var king_lr_directions = []Point{
+    {0, 1},
+    {0, -1},
+    {0, -1},
+    {0, 2},
+    {0, -2},
+    {0, 3},
+}
+
+type Piece struct {
+    color int
+    index int
+}
+
+func (p *Piece) valid() bool {
+    return p.index > 0
+}
+
+func (p *Piece) value() int {
+    return piece_values[p.index]
+}
+
+func (p *Piece) print() string {
+    return piece_names[p.index]
+}
+
+func (p *Piece) copy() Piece {
+    return Piece{p.color, piece_moved_indexes[p.index]}
+}
+
+func (p *Piece) moved() bool {
+    if p.index > 4 && p.index < 9 {
+        return true
     }
-
-    return &PieceFactory{
-        pieceInstances: pieceInstances,
+    if p.index == 12 {
+        return true
     }
-}
-
-func generateRowForPieceReference(color int) []Piece {
-    return []Piece{
-        nil,
-        newPawn(color, false, 1, 0),
-        newPawn(color, false, -1, 0),
-        newPawn(color, false, 0, 1),
-        newPawn(color, false, 0, -1),
-        newPawn(color, true, 1, 0),
-        newPawn(color, true, -1, 0),
-        newPawn(color, true, 0, 1),
-        newPawn(color, true, 0, -1),
-        newKnight(color),
-        newBishop(color),
-        newRook(color, false),
-        newRook(color, true),
-        newQueen(color),
-        newKing(color, false, 1, 0),
-        newKing(color, false, -1, 0),
-        newKing(color, false, 0, 1),
-        newKing(color, false, 0, -1),
-        newKing(color, true, 1, 0),
-        newKing(color, true, -1, 0),
-        newKing(color, true, 0, 1),
-        newKing(color, true, 0, -1),
+    if p.index > 17 {
+        return true
     }
+    return false
 }
 
-type PieceFactory struct {
-    pieceInstances [][]Piece
-}
-
-func (r *PieceFactory) get(color int, pieceType int) Piece {
-    return r.pieceInstances[color][pieceType]
-}
-
-type CastleDirection struct {
-	Point
-	kingOffset Point
-	rookOffset Point
-}
-
-type Allegiant struct {
-	color int
-}
-
-func (a *Allegiant) getColor() int {
-	return a.color
-}
-
-type Piece interface {
-	getColor() int
-    getValue() int
-	copy() (Piece, error) // returns the moved version of the piece
-    getMoved() bool
-	moves(Board, Point, *Array100[FastMove])
-	print() string
+func (p *Piece) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
+    piece_move_functions[p.index](b, *p, fromLocation, moves)
 }
 
 func addDirection(
-    fromLocation Point,
 	b Board,
+    p Piece,
+    fromLocation Point,
 	moves *Array100[FastMove],
     direction Point,
-	color int,
 ) {
-    currentLocation := fromLocation.add(direction)
-
-    for {
-        p, ok := b.getPiece(currentLocation)
-        if !ok {
-            break
-        }
-
-		if p == nil {
-            simpleMove, err := createMoveSimple(b, color, fromLocation, currentLocation, nil)
-			if err == nil {
-                moves.append(simpleMove)
-			}
-		} else if p.getColor() != color {
-            simpleMove, err := createMoveSimple(b, color, fromLocation, currentLocation, nil)
-			if err == nil {
-                moves.append(simpleMove)
-			}
-			break
-		} else {
-            allyDefenseMove, err := createMoveAllyDefense(b, color, fromLocation, currentLocation)
-            if err == nil {
-                moves.append(allyDefenseMove)
-            }
-			break
-		}
-
-        currentLocation = currentLocation.add(direction)
-	}
-}
-
-func addSimple(
-    fromLocation Point,
-	b Board,
-	moves *Array100[FastMove],
-    direction Point,
-	color int,
-) {
-    toLocation := fromLocation.add(direction)
-
-	p, ok := b.getPiece(toLocation)
-	if !ok {
-		return
-	}
-
-	if p == nil {
-        simpleMove, err := createMoveSimple(b, color, fromLocation, toLocation, nil)
-		if err == nil {
-            moves.append(simpleMove)
-		}
-	} else if p.getColor() != color {
-        simpleMove, err := createMoveSimple(b, color, fromLocation, toLocation, nil)
-		if err == nil {
-            moves.append(simpleMove)
-		}
-	} else {
-        allyDefenseMove, err := createMoveAllyDefense(b, color, fromLocation, toLocation)
-        if err == nil {
-            moves.append(allyDefenseMove)
-        }
-    }
-}
-
-func newPawn(color int, moved bool, xDir int, yDir int) *Pawn {
-    var forward1 Point
-    var forward2 Point
-    var captures []Point
-
-	if xDir == 1 || xDir == -1 {
-		forward1 = Point{xDir, 0}
-		forward2 = Point{xDir * 2, 0}
-		captures = []Point{
-			{xDir, 1},
-			{xDir, -1},
-		}
-	} else if yDir == 1 || yDir == -1 {
-		forward1 = Point{0, yDir}
-		forward2 = Point{0, yDir * 2}
-		captures = []Point{
-			{1, yDir},
-			{-1, yDir},
-		}
-	} else {
-        panic("invalid direction")
-	}
-
-	return &Pawn{
-		Allegiant{color},
-		moved,
-		forward1,
-		forward2,
-		captures,
-        Point{xDir, yDir},
-	}
-}
-
-type Pawn struct {
-	Allegiant
-	moved bool
-	forward1 Point
-	forward2 Point
-	captures []Point
-    direction Point
-}
-
-func (a *Pawn) print() string {
-	return "P"
-}
-
-func (a *Pawn) copy() (Piece, error) {
-    if a.direction.x == 1 {
-        return pieceFactoryInstance.get(a.color, PAWN_R), nil
-    } else if a.direction.x == -1 {
-        return pieceFactoryInstance.get(a.color, PAWN_L), nil
-    } else if a.direction.y == 1 {
-        return pieceFactoryInstance.get(a.color, PAWN_D), nil
-    } else if a.direction.y == -1 {
-        return pieceFactoryInstance.get(a.color, PAWN_U), nil
-    } 
-
-    return nil, fmt.Errorf("invalid direction")
-}
-
-func (a *Pawn) getMoved() bool {
-    return a.moved
-}
-
-func (a *Pawn) getValue() int {
-    return 1000
-}
-
-func (a *Pawn) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	a.addForward(b, fromLocation, moves)
-	a.addCaptures(b, fromLocation, moves)
-}
-
-func (a *Pawn) nextLocationInvalid(b Board, toLocation Point) bool {
-    nextLocation := toLocation.add(a.direction)
-    _, ok := b.getPiece(nextLocation)
-    return !ok
-}
-
-func (a *Pawn) addPromotionsSimple(b Board, fromLocation Point, toLocation Point, moves *Array100[FastMove]) {
-    promotionMove, err := createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN))
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M))
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP))
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveSimple(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT))
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-}
-
-func (a *Pawn) addPromotionsRevealEnPassant(b Board, fromLocation Point, toLocation Point, moves *Array100[FastMove], enPassant EnPassant) {
-    promotionMove, err := createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN), enPassant)
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M), enPassant)
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP), enPassant)
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveRevealEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT), enPassant)
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-}
-
-func (a *Pawn) addPromotionsCaptureEnPassant(b Board, fromLocation Point, toLocation Point, moves *Array100[FastMove]) {
-    promotionMove, err := createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, QUEEN))
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, ROOK_M))
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, BISHOP))
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-    promotionMove, err = createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, pieceFactoryInstance.get(a.color, KNIGHT))
-    if err != nil {
-        return
-    }
-    moves.append(promotionMove)
-}
-
-func (a *Pawn) addForward(b Board, fromLocation Point, moves *Array100[FastMove]) {
-    to1Location := fromLocation.add(a.forward1)
-	if piece, ok := b.getPiece(to1Location); !ok || piece != nil { // if the square is invalid or occupied
-		return
-	} else {
-        if a.nextLocationInvalid(b, to1Location) {
-            a.addPromotionsSimple(b, fromLocation, to1Location, moves)
-        } else {
-            simpleMove, err := createMoveSimple(b, a.color, fromLocation, to1Location, nil)
-            if err != nil {
-                return
-            }
-            moves.append(simpleMove)
-        }
-	}
-
-	if a.moved {
-		return
-	}
-
-    to2Location := fromLocation.add(a.forward2)
-	if piece, ok := b.getPiece(to2Location); !ok || piece != nil { // if the square is invalid or occupied
-		return
-	} else {
-        if a.nextLocationInvalid(b, to2Location) {
-            a.addPromotionsRevealEnPassant(b, fromLocation, to2Location, moves, EnPassant{to1Location, to2Location})
-        } else {
-            simpleMove, err := createMoveRevealEnPassant(b, a.color, fromLocation, to2Location, nil, EnPassant{to1Location, to2Location})
-            if err != nil {
-                return
-            }
-            moves.append(simpleMove)
-        }
-	}
-}
-
-func (a *Pawn) addCaptures(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	for _, capture := range a.captures {
-        toLocation := fromLocation.add(capture)
-
-		if piece, ok := b.getPiece(toLocation); !ok { // if the square is invalid
-			continue
-        } else if ens, err := b.possibleEnPassant(a.color, toLocation); err == nil && len(ens) > 0 { // if the square is an en passant target
-            if a.nextLocationInvalid(b, toLocation) {
-                a.addPromotionsCaptureEnPassant(b, fromLocation, toLocation, moves)
-            } else {
-                captureEnPassantMove, err := createMoveCaptureEnPassant(b, a.color, fromLocation, toLocation, nil)
-                if err != nil {
-                    return
-                }
-                moves.append(captureEnPassantMove)
-            }
-		} else if piece != nil && piece.getColor() != a.color { // if the square is occupied by an enemy piece
-            if a.nextLocationInvalid(b, toLocation) {
-                a.addPromotionsSimple(b, fromLocation, toLocation, moves)
-            } else {
-                simpleMove, err := createMoveSimple(b, a.color, fromLocation, toLocation, nil)
-                if err != nil {
-                    return
-                }
-                moves.append(simpleMove)
-            }
-		} else if piece != nil {
-            allyDefenseMove, err := createMoveAllyDefense(b, a.color, fromLocation, toLocation)
-            if err != nil {
-                return
-            }
-            moves.append(allyDefenseMove)
-        }
-	}
-}
-
-var knightSimples = []Point{
-	{1, 2},
-	{-1, 2},
-	{2, 1},
-	{-2, 1},
-	{1, -2},
-	{-1, -2},
-	{2, -1},
-	{-2, -1},
-}
-
-func newKnight(color int) *Knight {
-	return &Knight{
-		Allegiant{color},
-	}
-}
-
-type Knight struct {
-	Allegiant
-}
-
-func (n *Knight) print() string {
-	return "N"
-}
-
-func (n *Knight) copy() (Piece, error) {
-    return pieceFactoryInstance.get(n.color, KNIGHT), nil
-}
-
-func (n *Knight) getMoved() bool {
-    return true
-}
-
-func (n *Knight) getValue() int {
-    return 3000
-}
-
-func (n *Knight) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	n.addSimples(b, fromLocation, moves)
-}
-
-func (n *Knight) addSimples(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	for _, simple := range knightSimples {
-		addSimple(fromLocation, b, moves, simple, n.color)
-	}
-}
-
-var bishopDirections = []Point{
-	{1, 1},
-	{-1, 1},
-	{1, -1},
-	{-1, -1},
-}
-
-func newBishop(color int) *Bishop {
-	return &Bishop{
-		Allegiant{color},
-	}
-}
-
-type Bishop struct {
-	Allegiant
-}
-
-func (s *Bishop) print() string {
-	return "B"
-}
-
-func (s *Bishop) copy() (Piece, error) {
-    return pieceFactoryInstance.get(s.color, BISHOP), nil
-}
-
-func (s *Bishop) getMoved() bool {
-    return true
-}
-
-func (s *Bishop) getValue() int {
-    return 3000
-}
-
-func (s *Bishop) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	s.addDirections(b, fromLocation, moves)
-}
-
-func (s *Bishop) addDirections(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	for _, direction := range bishopDirections {
-		addDirection(fromLocation, b, moves, direction, s.color)
-	}
-}
-
-var rookDirections = []Point{
-	{1, 0},
-	{-1, 0},
-	{0, 1},
-	{0, -1},
-}
-
-func newRook(color int, moved bool) *Rook {
-	return &Rook{
-		Allegiant{color},
-		moved,
-	}
-}
-
-type Rook struct {
-	Allegiant
-	moved bool
-}
-
-func (r *Rook) print() string {
-	return "R"
-}
-
-func (r *Rook) copy() (Piece, error) {
-    return pieceFactoryInstance.get(r.color, ROOK_M), nil
-}
-
-func (r *Rook) getMoved() bool {
-    return r.moved
-}
-
-func (r *Rook) getValue() int {
-    return 5000
-}
-
-func (r *Rook) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	r.addDirections(b, fromLocation, moves)
-}
-
-func (r *Rook) addDirections(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	for _, direction := range rookDirections {
-		addDirection(fromLocation, b, moves, direction, r.color)
-	}
-}
-
-var queenDirections = []Point{
-	{1, 0},
-	{-1, 0},
-	{0, 1},
-	{0, -1},
-	{1, 1},
-	{-1, 1},
-	{1, -1},
-	{-1, -1},
-}
-
-func newQueen(color int) *Queen {
-	return &Queen{
-		Allegiant{color},
-	}
-}
-
-type Queen struct {
-	Allegiant
-}
-
-func (q *Queen) print() string {
-	return "Q"
-}
-
-func (q *Queen) copy() (Piece, error) {
-    return pieceFactoryInstance.get(q.color, QUEEN), nil
-}
-
-func (q *Queen) getMoved() bool {
-    return true
-}
-
-func (q *Queen) getValue() int {
-    return 9000
-}
-
-func (q *Queen) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	q.addDirections(b, fromLocation, moves)
-}
-
-func (q *Queen) addDirections(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	for _, direction := range queenDirections {
-		addDirection(fromLocation, b, moves, direction, q.color)
-	}
-}
-
-var kingSimples = []Point{
-	{1, 0},
-	{-1, 0},
-	{0, 1},
-	{0, -1},
-	{1, 1},
-	{-1, 1},
-	{1, -1},
-	{-1, -1},
-}
-
-func newKing(color int, moved bool, xDir int, yDir int) *King {
-	var castles []*CastleDirection
-
-	if xDir == 1 || xDir == -1 {
-		castles = []*CastleDirection{
-			{Point{0, 1}, Point{0, -1}, Point{0, -2}},
-			{Point{0, -1}, Point{0, 2}, Point{0, 3}},
-		}
-	} else if yDir == 1 || yDir == -1 {
-		castles = []*CastleDirection{
-			{Point{1, 0}, Point{-1, 0}, Point{-2, 0}},
-			{Point{-1, 0}, Point{2, 0}, Point{3, 0}},
-		}
-	} else {
-        panic("invalid direction")
-	}
-
-	return &King{
-		Allegiant{color},
-		moved,
-		castles,
-        Point{xDir, yDir},
-	}
-}
-
-type King struct {
-	Allegiant
-	moved   bool
-	castles []*CastleDirection
-    direction Point
-}
-
-func (k *King) print() string {
-	return "K"
-}
-
-func (k *King) copy() (Piece, error) {
-    if k.direction.x == 1 {
-        return pieceFactoryInstance.get(k.color, KING_R), nil
-    } else if k.direction.x == -1 {
-        return pieceFactoryInstance.get(k.color, KING_L), nil
-    } else if k.direction.y == 1 {
-        return pieceFactoryInstance.get(k.color, KING_D), nil
-    } else if k.direction.y == -1 {
-        return pieceFactoryInstance.get(k.color, KING_U), nil
-    }
-
-    return nil, fmt.Errorf("invalid direction")
-}
-
-func (k *King) getMoved() bool {
-    return k.moved
-}
-
-func (k *King) getValue() int {
-    return 0
-}
-
-func (k *King) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	k.addSimples(b, fromLocation, moves)
-	k.addCastles(b, fromLocation, moves)
-}
-
-func (k *King) addSimples(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	for _, simple := range kingSimples {
-		addSimple(fromLocation, b, moves, simple, k.color)
-	}
-}
-
-func (k *King) findRookForCastle(b Board, fromLocation Point, direction Point) (Point, bool) {
     currentLocation := fromLocation.add(direction)
 
     for {
         piece, ok := b.getPiece(currentLocation)
         if !ok {
-            return Point{}, false
+            break
         }
 
-        if piece == nil {
+        if !piece.valid() { // no piece
+            moves.append(createMoveSimple(b, p, fromLocation, piece, currentLocation, Piece{0, 0}))
+        } else if piece.color != p.color { // enemy piece
+            moves.append(createMoveSimple(b, p, fromLocation, piece, currentLocation, Piece{0, 0}))
+            break
+        } else { // ally piece
+            moves.append(createMoveAllyDefense(b, p, fromLocation, currentLocation))
+            break
+        }
+
+        currentLocation = currentLocation.add(direction)
+    }
+}
+
+func addSimple(
+	b Board,
+    p Piece,
+    fromLocation Point,
+	moves *Array100[FastMove],
+    direction Point,
+) {
+    toLocation := fromLocation.add(direction)
+
+	piece, ok := b.getPiece(toLocation)
+	if !ok {
+		return
+	}
+
+	if !piece.valid() { // no piece
+        moves.append(createMoveSimple(b, p, fromLocation, piece, toLocation, Piece{0, 0}))
+	} else if piece.color != p.color { // enemy piece
+        moves.append(createMoveSimple(b, p, fromLocation, piece, toLocation, Piece{0, 0}))
+	} else { // ally piece
+        moves.append(createMoveAllyDefense(b, p, fromLocation, toLocation))
+    }
+}
+
+var pawn_r_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    pawnAddForward(b, p, fromLocation, moves, pawn_r_directions)
+    pawnAddCaptures(b, p, fromLocation, moves, pawn_r_directions)
+}
+
+var pawn_l_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    pawnAddForward(b, p, fromLocation, moves, pawn_l_directions)
+    pawnAddCaptures(b, p, fromLocation, moves, pawn_l_directions)
+}
+
+var pawn_u_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    pawnAddForward(b, p, fromLocation, moves, pawn_u_directions)
+    pawnAddCaptures(b, p, fromLocation, moves, pawn_u_directions)
+}
+
+var pawn_d_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    pawnAddForward(b, p, fromLocation, moves, pawn_d_directions)
+    pawnAddCaptures(b, p, fromLocation, moves, pawn_d_directions)
+}
+
+func pawnAddForward(b Board, p Piece, fromLocation Point, moves *Array100[FastMove], directions []Point) {
+    to1Location := fromLocation.add(directions[0])
+    to2Location := fromLocation.add(directions[1])
+    to3Location := fromLocation.add(directions[2])
+    piece1, ok1 := b.getPiece(to1Location)
+    piece2, ok2 := b.getPiece(to2Location)
+    _, ok3 := b.getPiece(to3Location)
+
+    if !ok1 {
+        return
+    }
+
+    if !piece1.valid() {
+        if !ok2 {
+            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, QUEEN}))
+            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, ROOK_M}))
+            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, BISHOP}))
+            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, KNIGHT}))
+        } else {
+            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{0, 0}))
+        }
+    }
+
+    if !ok2 {
+        return
+    }
+
+    if p.index > 4 {
+        return
+    }
+
+    if !piece2.valid() {
+        if !ok3 {
+            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, QUEEN}, EnPassant{to1Location, to2Location}))
+            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, ROOK_M}, EnPassant{to1Location, to2Location}))
+            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, BISHOP}, EnPassant{to1Location, to2Location}))
+            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, KNIGHT}, EnPassant{to1Location, to2Location}))
+        } else {
+            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{0, 0}, EnPassant{to1Location, to2Location}))
+        }
+    }
+}
+
+func pawnAddCaptures(b Board, p Piece, fromLocation Point, moves *Array100[FastMove], directions []Point) {
+    to1Location := fromLocation.add(directions[3])
+    to2Location := fromLocation.add(directions[4])
+    to3Location := to1Location.add(directions[0])
+    to4Location := to2Location.add(directions[0])
+    piece1, ok1 := b.getPiece(to1Location)
+    piece2, ok2 := b.getPiece(to2Location)
+    _, ok3 := b.getPiece(to3Location)
+    _, ok4 := b.getPiece(to4Location)
+
+    if ok1 {
+        if ens, err := b.possibleEnPassant(p.color, to1Location); err == nil && len(ens) > 0 { // if the square is an en passant target
+            if !ok3 {
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{p.color, QUEEN}, ens))
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{p.color, ROOK_M}, ens))
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{p.color, BISHOP}, ens))
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{p.color, KNIGHT}, ens))
+            } else {
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{0, 0}, ens))
+            }
+        } else if piece1.valid() && piece1.color != p.color { // if the square is occupied by an enemy piece
+            if !ok3 {
+                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, QUEEN}))
+                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, ROOK_M}))
+                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, BISHOP}))
+                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, KNIGHT}))
+            } else {
+                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{0, 0}))
+            }
+        } else if piece1.valid() {
+            moves.append(createMoveAllyDefense(b, p, fromLocation, to1Location))
+        }
+    }
+
+    if ok2 {
+        if ens, err := b.possibleEnPassant(p.color, to2Location); err == nil && len(ens) > 0 { // if the square is an en passant target
+            if !ok4 {
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, QUEEN}, ens))
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, ROOK_M}, ens))
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, BISHOP}, ens))
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, KNIGHT}, ens))
+            } else {
+                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{0, 0}, ens))
+            }
+        } else if piece2.valid() && piece2.color != p.color { // if the square is occupied by an enemy piece
+            if !ok4 {
+                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{p.color, QUEEN}))
+                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{p.color, ROOK_M}))
+                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{p.color, BISHOP}))
+                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{p.color, KNIGHT}))
+            } else {
+                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{0, 0}))
+            }
+        } else if piece2.valid() {
+            moves.append(createMoveAllyDefense(b, p, fromLocation, to2Location))
+        }
+    }
+}
+
+func knight_moves(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+	for _, direction := range knight_directions {
+		addSimple(b, p, fromLocation, moves, direction)
+	}
+}
+
+func bishop_moves(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    for _, direction := range bishop_directions {
+        addDirection(b, p, fromLocation, moves, direction)
+    }
+}
+
+func rook_moves(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    for _, direction := range rook_directions {
+        addDirection(b, p, fromLocation, moves, direction)
+    }
+}
+
+func queen_moves(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    for _, direction := range queen_directions {
+        addDirection(b, p, fromLocation, moves, direction)
+    }
+}
+
+var king_lr_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    for _, direction := range queen_directions {
+        addSimple(b, p, fromLocation, moves, direction)
+    }
+
+    if p.index > 17 {
+        return
+    }
+
+    addCastle(b, p, fromLocation, moves, king_lr_directions[0], king_lr_directions[2], king_lr_directions[4])
+    addCastle(b, p, fromLocation, moves, king_lr_directions[1], king_lr_directions[3], king_lr_directions[5])
+}
+
+var king_ud_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+    for _, direction := range queen_directions {
+        addSimple(b, p, fromLocation, moves, direction)
+    }
+
+    if p.index > 17 {
+        return
+    }
+
+    addCastle(b, p, fromLocation, moves, king_ud_directions[0], king_ud_directions[2], king_ud_directions[4])
+    addCastle(b, p, fromLocation, moves, king_ud_directions[1], king_ud_directions[3], king_ud_directions[5])
+}
+
+func findRookForCastle(b Board, p Piece, fromLocation Point, direction Point) (Point, Piece, bool) {
+    currentLocation := fromLocation.add(direction)
+
+    for {
+        piece, ok := b.getPiece(currentLocation)
+        if !ok {
+            return Point{}, Piece{}, false
+        }
+
+        if !piece.valid() {
             currentLocation = currentLocation.add(direction)
             continue
         }
 
-        if rook, ok := piece.(*Rook); !ok || rook.moved || rook.color != k.color {
-            return Point{}, false
+        if piece.index == ROOK && piece.color == p.color {
+            return currentLocation, piece, true
         }
 
-        return currentLocation, true
+        return Point{}, Piece{}, false
     }
 }
 
-func (k *King) findEdgeForCastle(b Board, fromLocation Point, direction Point) (Point, error) {
+func findEdgeForCastle(b Board, p Piece, fromLocation Point, direction Point) Point {
     previousLocation := fromLocation
     currentLocation := previousLocation.add(direction)
 
     for {
         _, ok := b.getPiece(currentLocation)
         if !ok {
-            return previousLocation, nil
+            return previousLocation
         }
 
         previousLocation = currentLocation
@@ -689,96 +510,81 @@ func (k *King) findEdgeForCastle(b Board, fromLocation Point, direction Point) (
     }
 }
 
-func (k *King) addCastles(b Board, fromLocation Point, moves *Array100[FastMove]) {
-	if k.moved {
-		return
-	}
+func addCastle(b Board, p Piece, fromLocation Point, moves *Array100[FastMove], direction Point, kingOffset Point, rookOffset Point) {
+    fromRookLocation, rook, ok := findRookForCastle(b, p, fromLocation, direction)
+    if !ok {
+        return
+    }
 
-	for _, castle := range k.castles {
-        fromRookLocation, ok := k.findRookForCastle(b, fromLocation, castle.Point)
-        if !ok {
-            continue
-        }
+    edgeLocation := findEdgeForCastle(b, p, fromRookLocation, direction)
+    toLocation := edgeLocation.add(kingOffset)
+    toRookLocation := edgeLocation.add(rookOffset)
 
-        edgeLocation, err := k.findEdgeForCastle(b, fromRookLocation, castle.Point)
-        if err != nil {
-            continue
-        }
+    xCheckedMin := min(fromLocation.x, fromRookLocation.x)
+    xCheckedMax := max(fromLocation.x, fromRookLocation.x)
+    yCheckedMin := min(fromLocation.y, fromRookLocation.y)
+    yCheckedMax := max(fromLocation.y, fromRookLocation.y)
 
-        toLocation := edgeLocation.add(castle.kingOffset)
-        toRookLocation := edgeLocation.add(castle.rookOffset)
+    xToMin := min(toLocation.x, toRookLocation.x)
+    xToMax := max(toLocation.x, toRookLocation.x)
+    yToMin := min(toLocation.y, toRookLocation.y)
+    yToMax := max(toLocation.y, toRookLocation.y)
 
-        xCheckedMin := min(fromLocation.x, fromRookLocation.x)
-        xCheckedMax := max(fromLocation.x, fromRookLocation.x)
-        yCheckedMin := min(fromLocation.y, fromRookLocation.y)
-        yCheckedMax := max(fromLocation.y, fromRookLocation.y)
+    clr := true
+    for x := xCheckedMin - 1; x >= xToMin && clr; x-- {
+        if piece, ok := b.getPiece(Point{x, fromLocation.y}); !ok || piece.valid() {
+            clr = false
+            break
+        }
+    }
+    for y := yCheckedMin - 1; y >= yToMin && clr; y-- {
+        if piece, ok := b.getPiece(Point{fromLocation.x, y}); !ok || piece.valid() {
+            clr = false
+            break
+        }
+    }
+    for x := xCheckedMax + 1; x <= xToMax && clr; x++ {
+        if piece, ok := b.getPiece(Point{x, fromLocation.y}); !ok || piece.valid() {
+            clr = false
+            break
+        }
+    }
+    for y := yCheckedMax + 1; y <= yToMax && clr; y++ {
+        if piece, ok := b.getPiece(Point{fromLocation.y, y}); !ok || piece.valid() {
+            clr = false
+            break
+        }
+    }
+    if !clr {
+        return
+    }
 
-        xToMin := min(toLocation.x, toRookLocation.x)
-        xToMax := max(toLocation.x, toRookLocation.x)
-        yToMin := min(toLocation.y, toRookLocation.y)
-        yToMax := max(toLocation.y, toRookLocation.y)
+    var minx int
+    var maxx int
+    var miny int
+    var maxy int
+    if toLocation.x > fromLocation.x {
+        minx = fromLocation.x + 1
+        maxx = toLocation.x - 1
+        miny = fromLocation.y
+        maxy = fromLocation.y
+    } else if toLocation.x < fromLocation.x {
+        minx = toLocation.x + 1
+        maxx = fromLocation.x - 1
+        miny = fromLocation.y
+        maxy = fromLocation.y
+    } else if toLocation.y > fromLocation.y {
+        minx = fromLocation.x
+        maxx = fromLocation.x
+        miny = fromLocation.y + 1
+        maxy = toLocation.y - 1
+    } else if toLocation.y < fromLocation.y {
+        minx = fromLocation.x
+        maxx = fromLocation.x
+        miny = toLocation.y + 1
+        maxy = fromLocation.y - 1
+    }
 
-        clear := true
-        for x := xCheckedMin - 1; x >= xToMin && clear; x-- {
-            if piece, ok := b.getPiece(Point{x, fromLocation.y}); !ok || piece != nil {
-                clear = false
-                break
-            }
-        }
-        for y := yCheckedMin - 1; y >= yToMin && clear; y-- {
-            if piece, ok := b.getPiece(Point{fromLocation.x, y}); !ok || piece != nil {
-                clear = false
-                break
-            }
-        }
-        for x := xCheckedMax + 1; x <= xToMax && clear; x++ {
-            if piece, ok := b.getPiece(Point{x, fromLocation.y}); !ok || piece != nil {
-                clear = false
-                break
-            }
-        }
-        for y := yCheckedMax + 1; y <= yToMax && clear; y++ {
-            if piece, ok := b.getPiece(Point{fromLocation.y, y}); !ok || piece != nil {
-                clear = false
-                break
-            }
-        }
-        if !clear {
-            continue
-        }
-
-        var minx int
-        var maxx int
-        var miny int
-        var maxy int
-        if toLocation.x > fromLocation.x {
-            minx = fromLocation.x + 1
-            maxx = toLocation.x - 1
-            miny = fromLocation.y
-            maxy = fromLocation.y
-        } else if toLocation.x < fromLocation.x {
-            minx = toLocation.x + 1
-            maxx = fromLocation.x - 1
-            miny = fromLocation.y
-            maxy = fromLocation.y
-        } else if toLocation.y > fromLocation.y {
-            minx = fromLocation.x
-            maxx = fromLocation.x
-            miny = fromLocation.y + 1
-            maxy = toLocation.y - 1
-        } else if toLocation.y < fromLocation.y {
-            minx = fromLocation.x
-            maxx = fromLocation.x
-            miny = toLocation.y + 1
-            maxy = fromLocation.y - 1
-        }
-        vulnerable := Vulnerable{Point{minx, miny}, Point{maxx, maxy}}
-
-        castleMove, err := createMoveCastle(b, k.color, fromLocation, fromRookLocation, toLocation, toRookLocation, vulnerable)
-		if err != nil {
-            return
-		}
-        moves.append(castleMove)
-	}
+    moves.append(createMoveCastle(b, p, fromLocation, rook, fromRookLocation, toLocation, toRookLocation, Vulnerable{Point{minx, miny}, Point{maxx, maxy}}))
 }
 

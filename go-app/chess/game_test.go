@@ -119,10 +119,10 @@ func Test_CastleWhenBlocked(t *testing.T) {
     b, err := newSimpleBoard(Point{4, 4}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{1, 3}, pieceFactoryInstance.get(white, PAWN_U))
-    b.setPiece(Point{2, 3}, pieceFactoryInstance.get(white, KING_U))
-    b.setPiece(Point{3, 3}, pieceFactoryInstance.get(white, ROOK))
-    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(black, KING_D))
+    b.setPiece(Point{1, 3}, Piece{white, PAWN_U})
+    b.setPiece(Point{2, 3}, Piece{white, KING_U})
+    b.setPiece(Point{3, 3}, Piece{white, ROOK})
+    b.setPiece(Point{0, 0}, Piece{black, KING_D})
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
@@ -170,9 +170,9 @@ func Test_CastleCanUndo(t *testing.T) {
 
     b, err := newSimpleBoard(Point{4, 4}, 2)
     assert.Nil(t, err)
-    b.setPiece(Point{2, 3}, pieceFactoryInstance.get(white, KING_U))
-    b.setPiece(Point{3, 3}, pieceFactoryInstance.get(white, ROOK))
-    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(black, KING_D))
+    b.setPiece(Point{2, 3}, Piece{white, KING_U})
+    b.setPiece(Point{3, 3}, Piece{white, ROOK})
+    b.setPiece(Point{0, 0}, Piece{black, KING_D})
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
@@ -380,12 +380,12 @@ func Test_DisabledPieces(t *testing.T) {
 
     b, err := newSimpleBoard(Point{8, 8}, 3)
     assert.Nil(t, err)
-    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(white, KING_D))
-    b.setPiece(Point{7, 0}, pieceFactoryInstance.get(black, KING_D))
-    b.setPiece(Point{4, 0}, pieceFactoryInstance.get(gray, KING_D))
-    b.setPiece(Point{1, 7}, pieceFactoryInstance.get(black, QUEEN))
-    b.setPiece(Point{6, 6}, pieceFactoryInstance.get(white, QUEEN))
-    b.setPiece(Point{6, 7}, pieceFactoryInstance.get(white, QUEEN))
+    b.setPiece(Point{0, 0}, Piece{white, KING_D})
+    b.setPiece(Point{7, 0}, Piece{black, KING_D})
+    b.setPiece(Point{4, 0}, Piece{gray, KING_D})
+    b.setPiece(Point{1, 7}, Piece{black, QUEEN})
+    b.setPiece(Point{6, 6}, Piece{white, QUEEN})
+    b.setPiece(Point{6, 7}, Piece{white, QUEEN})
     err = b.CalculateMoves()
     assert.Nil(t, err)
 
@@ -421,11 +421,11 @@ func Test_Stalemate(t *testing.T) {
 
     b, err := newSimpleBoard(Point{8, 8}, 3)
     assert.Nil(t, err)
-    b.setPiece(Point{0, 0}, pieceFactoryInstance.get(white, KING_D))
-    b.setPiece(Point{7, 0}, pieceFactoryInstance.get(black, KING_D))
-    b.setPiece(Point{4, 0}, pieceFactoryInstance.get(gray, KING_D))
-    b.setPiece(Point{6, 6}, pieceFactoryInstance.get(white, QUEEN))
-    b.setPiece(Point{6, 7}, pieceFactoryInstance.get(white, QUEEN))
+    b.setPiece(Point{0, 0}, Piece{white, KING_D})
+    b.setPiece(Point{7, 0}, Piece{black, KING_D})
+    b.setPiece(Point{4, 0}, Piece{gray, KING_D})
+    b.setPiece(Point{6, 6}, Piece{white, QUEEN})
+    b.setPiece(Point{6, 7}, Piece{white, QUEEN})
     err = b.CalculateMoves()
     assert.Nil(t, err)
 

@@ -71,7 +71,7 @@ func (s *SimpleSearcher) search() (MoveKey, error) {
         YFrom: move.fromLocation.y,
         XTo: move.toLocation.x,
         YTo: move.toLocation.y,
-        Promotion: "Q",
+        Promotion: move.promotion,
     }, nil
 }
 

@@ -159,7 +159,7 @@ func (b *SimpleBoard) disablePieces(color int, disable bool) error {
 
 func (b *SimpleBoard) getPiece(location Point) (Piece, bool) {
     if b.pointOutOfBounds(location) {
-        return nil, false
+        return Piece{0, 0}, false
     }
 
 	return b.pieces[location.y][location.x], true
@@ -175,12 +175,12 @@ func (b *SimpleBoard) setPiece(location Point, p Piece) bool {
         return false
     }
 
-    if oldPiece != nil {
-        if b.colorOutOfBounds(oldPiece.getColor()) {
+    if oldPiece.valid() {
+        if b.colorOutOfBounds(oldPiece.color) {
             return false
         }
 
-        pieceLocations := b.pieceLocations[oldPiece.getColor()]
+        pieceLocations := b.pieceLocations[oldPiece.color]
 
         removeIndex := -1
         for i, pieceLocation := range pieceLocations {
@@ -193,22 +193,22 @@ func (b *SimpleBoard) setPiece(location Point, p Piece) bool {
             pieceLocations[removeIndex] = pieceLocations[len(pieceLocations)-1]
             pieceLocations[len(pieceLocations)-1] = Point{}
             pieceLocations = pieceLocations[:len(pieceLocations)-1]
-            b.pieceLocations[oldPiece.getColor()] = pieceLocations
+            b.pieceLocations[oldPiece.color] = pieceLocations
         }
     }
 
-    if p != nil {
-        if b.colorOutOfBounds(p.getColor()) {
+    if p.valid() {
+        if b.colorOutOfBounds(p.color) {
             return false
         }
 
-        pieceLocations := b.pieceLocations[p.getColor()]
+        pieceLocations := b.pieceLocations[p.color]
 
         pieceLocations = append(pieceLocations, location)
-        b.pieceLocations[p.getColor()] = pieceLocations
+        b.pieceLocations[p.color] = pieceLocations
 
-        if _, ok := p.(*King); ok {
-            b.kingLocations[p.getColor()] = location
+        if p.index > 13 {
+            b.kingLocations[p.color] = location
         }
     }
 
@@ -344,10 +344,9 @@ func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
 
 func (b *SimpleBoard) LegalMovesOfLocation(fromLocation Point) ([]FastMove, error) {
     piece, ok := b.getPiece(fromLocation)
-    if piece == nil || !ok {
+    if !ok || !piece.valid() {
         return []FastMove{}, fmt.Errorf("piece not found")
     }
-    color := piece.getColor()
 
     movesPointer, err := b.MovesOfLocation(fromLocation)
     moves := *movesPointer
@@ -372,7 +371,7 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation Point) ([]FastMove, erro
             return []FastMove{}, err
         }
 
-        if !b.Check(color) {
+        if !b.Check(piece.color) {
             legalMoves = append(legalMoves, move)
         }
 
@@ -412,7 +411,7 @@ func (b *SimpleBoard) CalculateMoves() error {
     for color, pieceLocations := range b.pieceLocations {
         for _, fromLocation := range pieceLocations {
             piece, _ := b.getPiece(fromLocation)
-            if piece == nil {
+            if !piece.valid() {
                 continue
             }
 
@@ -438,6 +437,7 @@ func (b *SimpleBoard) CalculateMoves() error {
     return nil
 }
 
+// TODO edit existing structs when doing moves
 // TODO implement dynamic move calculations based on previous move
 // TODO how about we don't create massive move objects with pieces and stuff
 // stop excessive use of maps
@@ -461,7 +461,7 @@ func (b *SimpleBoard) Print() string {
 		for x, piece := range row {
             if b.pointOutOfBounds(Point{x, y}) {
                 builder.WriteString(fmt.Sprintf("|%s", strings.Repeat("X", cellWidth)))
-            } else if piece == nil {
+            } else if !piece.valid() {
 				builder.WriteString(fmt.Sprintf("|%s", strings.Repeat(" ", cellWidth)))
 			} else {
 				p := piece.print()
@@ -469,7 +469,7 @@ func (b *SimpleBoard) Print() string {
 					p = p[:1]
 				}
 
-                pColor := fmt.Sprintf("%d", piece.getColor())
+                pColor := fmt.Sprintf("%d", piece.color)
 				if len(pColor) > 8 {
 					pColor = pColor[:8]
 				}
@@ -492,11 +492,11 @@ func (b *SimpleBoard) State() *BoardData {
     pieces := []*PieceData{}
     for y, row := range b.pieces {
         for x, piece := range row {
-            if piece != nil {
-                disabled := b.playersDisabled[piece.getColor()]
+            if piece.valid() {
+                disabled := b.playersDisabled[piece.color]
                 pieces = append(pieces, &PieceData{
                     T: piece.print(),
-                    C: piece.getColor(),
+                    C: piece.color,
                     X: x,
                     Y: y,
                     D: disabled,
@@ -551,11 +551,11 @@ func (b *SimpleBoard) Check(color int) bool {
     for i := 0; i < b.toMoves[kingLocation.y][kingLocation.x].count; i++ {
         move := b.toMoves[kingLocation.y][kingLocation.x].array[i]
         piece, ok := b.getPiece(move.fromLocation)
-        if piece == nil || !ok {
+        if !ok || !piece.valid() {
             continue
         }
 
-        if piece.getColor() != color {
+        if piece.color != color {
             return true
         }
     }
@@ -566,11 +566,11 @@ func (b *SimpleBoard) Check(color int) bool {
             for i := 0; i < b.toMoves[y][x].count; i++ {
                 move := b.toMoves[y][x].array[i]
                 piece, ok := b.getPiece(move.fromLocation)
-                if piece == nil || !ok {
+                if !ok || !piece.valid() {
                     continue
                 }
 
-                if piece.getColor() != color {
+                if piece.color != color {
                     return true
                 }
             }
@@ -597,7 +597,7 @@ func (b *SimpleBoard) copy() (*SimpleBoard, error) {
     for y, row := range b.pieces {
         for x := range row {
             piece := b.pieces[y][x]
-            if piece != nil {
+            if piece.valid() {
                 simpleBoard.pieces[y][x] = piece
             }
         }
@@ -645,7 +645,7 @@ func (b *SimpleBoard) UniqueString() string {
         for x := range row {
             piece := b.pieces[y][x]
 
-            if piece == nil {
+            if !piece.valid() {
                 counter += 1
                 continue
             }
@@ -655,14 +655,14 @@ func (b *SimpleBoard) UniqueString() string {
                 counter = 0
             }
 
-            if b.playersDisabled[piece.getColor()] {
+            if b.playersDisabled[piece.color] {
                 builder.WriteString("d")
                 continue
             }
 
             builder.WriteString(piece.print())
-            builder.WriteString(fmt.Sprintf("%d", piece.getColor()))
-            if !piece.getMoved() {
+            builder.WriteString(fmt.Sprintf("%d", piece.color))
+            if piece.moved() {
                 builder.WriteString("m")
             }
         }

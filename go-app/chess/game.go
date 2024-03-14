@@ -187,7 +187,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     location := Point{x, y}
 
     piece, ok := s.b.getPiece(location)
-    if !ok || piece == nil {
+    if !ok || !piece.valid() {
         return &PieceState{
             X: x,
             Y: y,
@@ -207,7 +207,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     }
 
     currentPlayer, _ := s.p.getCurrent()
-    if currentPlayer == piece.getColor() {
+    if currentPlayer == piece.color {
         moves, err := s.b.LegalMovesOfLocation(location)
         if err != nil {
             return &PieceState{

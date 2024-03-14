@@ -4,54 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-type MockPiece struct {
-	mock.Mock
-}
-
-func (m *MockPiece) getColor() int {
-	args := m.Called()
-	return args.Int(0)
-}
-
-func (m *MockPiece) getValue() int {
-    args := m.Called()
-    return args.Int(0)
-}
-
-func (m *MockPiece) copy() (Piece, error) {
-    args := m.Called()
-    return args.Get(0).(Piece), args.Error(1)
-}
-
-func (m *MockPiece) getMoved() bool {
-    args := m.Called()
-    return args.Bool(0)
-}
-
-func (m *MockPiece) moves(board Board, location Point, moves *Array100[FastMove]) {
-    m.Called(board, location, moves)
-}
-
-func (m *MockPiece) setDisabled(disabled bool) {
-    m.Called(disabled)
-}
-
-func (m *MockPiece) getDisabled() bool {
-    args := m.Called()
-    return args.Bool(0)
-}
-
-func (m *MockPiece) print() string {
-	args := m.Called()
-	return args.String(0)
-}
 
 func Test_Pawn_Moves_Unmoved(t *testing.T) {
     white := 0
-    pawn := pieceFactoryInstance.get(white, PAWN_D)
+    pawn := Piece{white, PAWN_D}
 
     b, err := newSimpleBoard(Point{7, 7}, 2)
     assert.Nil(t, err)
@@ -74,7 +31,7 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
 
 func Test_Pawn_Moves_Moved(t *testing.T) {
     white := 0
-    pawn := pieceFactoryInstance.get(white, PAWN_D_M)
+    pawn := Piece{white, PAWN_D_M}
 
     b, err := newSimpleBoard(Point{7, 7}, 2)
     assert.Nil(t, err)
@@ -97,8 +54,8 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
 func Test_Pawn_Moves_Capturing(t *testing.T) {
     white := 0
     black := 1
-    pawn := pieceFactoryInstance.get(white, PAWN_D)
-    blackPawn := pieceFactoryInstance.get(black, PAWN_D)
+    pawn := Piece{white, PAWN_D}
+    blackPawn := Piece{black, PAWN_D}
 
     b, err := newSimpleBoard(Point{7, 7}, 2)
     assert.Nil(t, err)
@@ -124,7 +81,7 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
 func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
     white := 0
     black := 1
-    pawn := pieceFactoryInstance.get(white, PAWN_D)
+    pawn := Piece{white, PAWN_D}
 
     b, err := newSimpleBoard(Point{7, 7}, 2)
     assert.Nil(t, err)
@@ -149,7 +106,7 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
 
 func Test_Pawn_Moves_Promotion(t *testing.T) {
     white := 0
-    pawn := pieceFactoryInstance.get(white, PAWN_D)
+    pawn := Piece{white, PAWN_D}
 
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
@@ -172,7 +129,7 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
 
 func Test_Knight_Moves(t *testing.T) {
     white := 0
-    knight := pieceFactoryInstance.get(white, KNIGHT)
+    knight := Piece{white, KNIGHT}
 
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
@@ -201,7 +158,7 @@ func Test_Knight_Moves(t *testing.T) {
 
 func Test_Bishop_Moves(t *testing.T) {
     white := 0
-    bishop := pieceFactoryInstance.get(white, BISHOP)
+    bishop := Piece{white, BISHOP}
 
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
@@ -230,7 +187,7 @@ func Test_Bishop_Moves(t *testing.T) {
 
 func Test_Rook_Moves(t *testing.T) {
     white := 0
-    rook := pieceFactoryInstance.get(white, ROOK)
+    rook := Piece{white, ROOK}
 
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
@@ -259,7 +216,7 @@ func Test_Rook_Moves(t *testing.T) {
 
 func Test_Queen_Moves(t *testing.T) {
     white := 0
-    queen := pieceFactoryInstance.get(white, QUEEN)
+    queen := Piece{white, QUEEN}
 
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
@@ -296,8 +253,8 @@ func Test_Queen_Moves(t *testing.T) {
 
 func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
     white := 0
-    king := pieceFactoryInstance.get(white, KING_D)
-    rook := pieceFactoryInstance.get(white, ROOK)
+    king := Piece{white, KING_D}
+    rook := Piece{white, ROOK}
 
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
@@ -330,8 +287,8 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
 
 func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
     white := 0
-    king := pieceFactoryInstance.get(white, KING_D_M)
-    rook := pieceFactoryInstance.get(white, ROOK)
+    king := Piece{white, KING_D_M}
+    rook := Piece{white, ROOK}
 
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)

@@ -80,18 +80,19 @@ func Test_EvalMaterial(t *testing.T) {
     blue := 3
 
     tests := []struct {
-        whiteValue int
+        whiteIndex int
         whiteScore int
         blackScore int
         redScore int
         blueScore int
     }{
-        {500, 0, -300, -600, -900},
-        {100, -900, 0, -300, -600},
+        {QUEEN, 0, -1200, -1800, -2400},
+        {ROOK, 0, 0, -600, -1200},
+        {KNIGHT, -600, 0, -600, -1200},
     }
 
     for _, test := range tests {
-        testname := fmt.Sprintf("%d", test.whiteValue)
+        testname := fmt.Sprintf("%d", test.whiteIndex)
         t.Run(testname, func(t *testing.T) {
             board := &MockBoard{}
             playerCollection := &MockPlayerCollection{}
@@ -107,26 +108,22 @@ func Test_EvalMaterial(t *testing.T) {
                 {{3,0}, {3,1}, {3,2}}, // blue
             }
 
-            whitePiece := &MockPiece{}
-            whitePiece.On("getValue").Return(test.whiteValue)
+            whitePiece := Piece{white, test.whiteIndex}
             board.On("getPiece", Point{0, 0}).Return(whitePiece, true)
             board.On("getPiece", Point{0, 1}).Return(whitePiece, true)
             board.On("getPiece", Point{0, 2}).Return(whitePiece, true)
 
-            blackPiece := &MockPiece{}
-            blackPiece.On("getValue").Return(400)
+            blackPiece := Piece{black, ROOK}
             board.On("getPiece", Point{1, 0}).Return(blackPiece, true)
             board.On("getPiece", Point{1, 1}).Return(blackPiece, true)
             board.On("getPiece", Point{1, 2}).Return(blackPiece, true)
 
-            redPiece := &MockPiece{}
-            redPiece.On("getValue").Return(300)
+            redPiece := Piece{red, KNIGHT}
             board.On("getPiece", Point{2, 0}).Return(redPiece, true)
             board.On("getPiece", Point{2, 1}).Return(redPiece, true)
             board.On("getPiece", Point{2, 2}).Return(redPiece, true)
 
-            bluePiece := &MockPiece{}
-            bluePiece.On("getValue").Return(200)
+            bluePiece := Piece{blue, PAWN_D}
             board.On("getPiece", Point{3, 0}).Return(bluePiece, true)
             board.On("getPiece", Point{3, 1}).Return(bluePiece, true)
             board.On("getPiece", Point{3, 2}).Return(bluePiece, true)
@@ -139,10 +136,6 @@ func Test_EvalMaterial(t *testing.T) {
             assert.Equal(t, test.blueScore, score[blue])
 
             board.AssertExpectations(t)
-            whitePiece.AssertExpectations(t)
-            blackPiece.AssertExpectations(t)
-            redPiece.AssertExpectations(t)
-            bluePiece.AssertExpectations(t)
         })
     }
 }

@@ -91,10 +91,10 @@ func (e *SimpleEvaluator) evalMaterial(pieceLocations [][]Point) ([]int, error) 
         materialCount := 0
         for _, location := range locations {
             piece, ok := e.b.getPiece(location)
-            if !ok || piece == nil {
+            if !ok || !piece.valid() {
                 return nil, fmt.Errorf("no piece at location")
             }
-            materialCount += piece.getValue()
+            materialCount += piece.value()
         }
 
         material[color] = materialCount
