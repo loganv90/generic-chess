@@ -101,32 +101,101 @@ func Test_EvalMaterial(t *testing.T) {
             assert.Nil(t, err)
 
             playerCollection.On("getPlayers").Return(4)
-            pieceLocations := [][]Point{
-                {{0,0}, {0,1}, {0,2}}, // white
-                {{1,0}, {1,1}, {1,2}}, // black
-                {{2,0}, {2,1}, {2,2}}, // red
-                {{3,0}, {3,1}, {3,2}}, // blue
-            }
+
+            pieceLocations := make([]Array100[Point], 4)
+
+
+            pieceLocations[white] = Array100[Point]{}
+
+            p := pieceLocations[white].get()
+            p.x = 0
+            p.y = 0
+            pieceLocations[white].next()
+
+            p = pieceLocations[white].get()
+            p.x = 0
+            p.y = 1
+            pieceLocations[white].next()
+
+            p = pieceLocations[white].get()
+            p.x = 0
+            p.y = 2
+            pieceLocations[white].next()
+
+
+            pieceLocations[black] = Array100[Point]{}
+
+            p = pieceLocations[black].get()
+            p.x = 1
+            p.y = 0
+            pieceLocations[black].next()
+
+            p = pieceLocations[black].get()
+            p.x = 1
+            p.y = 1
+            pieceLocations[black].next()
+
+            p = pieceLocations[black].get()
+            p.x = 1
+            p.y = 2
+            pieceLocations[black].next()
+
+
+            pieceLocations[red] = Array100[Point]{}
+
+            p = pieceLocations[red].get()
+            p.x = 2
+            p.y = 0
+            pieceLocations[red].next()
+
+            p = pieceLocations[red].get()
+            p.x = 2
+            p.y = 1
+            pieceLocations[red].next()
+
+            p = pieceLocations[red].get()
+            p.x = 2
+            p.y = 2
+            pieceLocations[red].next()
+
+
+            pieceLocations[blue] = Array100[Point]{}
+
+            p = pieceLocations[blue].get()
+            p.x = 3
+            p.y = 0
+            pieceLocations[blue].next()
+
+            p = pieceLocations[blue].get()
+            p.x = 3
+            p.y = 1
+            pieceLocations[blue].next()
+
+            p = pieceLocations[blue].get()
+            p.x = 3
+            p.y = 2
+            pieceLocations[blue].next()
+
 
             whitePiece := Piece{white, test.whiteIndex}
-            board.On("getPiece", Point{0, 0}).Return(whitePiece, true)
-            board.On("getPiece", Point{0, 1}).Return(whitePiece, true)
-            board.On("getPiece", Point{0, 2}).Return(whitePiece, true)
+            board.On("getPiece", &Point{0, 0}).Return(&whitePiece)
+            board.On("getPiece", &Point{0, 1}).Return(&whitePiece)
+            board.On("getPiece", &Point{0, 2}).Return(&whitePiece)
 
             blackPiece := Piece{black, ROOK}
-            board.On("getPiece", Point{1, 0}).Return(blackPiece, true)
-            board.On("getPiece", Point{1, 1}).Return(blackPiece, true)
-            board.On("getPiece", Point{1, 2}).Return(blackPiece, true)
+            board.On("getPiece", &Point{1, 0}).Return(&blackPiece)
+            board.On("getPiece", &Point{1, 1}).Return(&blackPiece)
+            board.On("getPiece", &Point{1, 2}).Return(&blackPiece)
 
             redPiece := Piece{red, KNIGHT}
-            board.On("getPiece", Point{2, 0}).Return(redPiece, true)
-            board.On("getPiece", Point{2, 1}).Return(redPiece, true)
-            board.On("getPiece", Point{2, 2}).Return(redPiece, true)
+            board.On("getPiece", &Point{2, 0}).Return(&redPiece)
+            board.On("getPiece", &Point{2, 1}).Return(&redPiece)
+            board.On("getPiece", &Point{2, 2}).Return(&redPiece)
 
             bluePiece := Piece{blue, PAWN_D}
-            board.On("getPiece", Point{3, 0}).Return(bluePiece, true)
-            board.On("getPiece", Point{3, 1}).Return(bluePiece, true)
-            board.On("getPiece", Point{3, 2}).Return(bluePiece, true)
+            board.On("getPiece", &Point{3, 0}).Return(&bluePiece)
+            board.On("getPiece", &Point{3, 1}).Return(&bluePiece)
+            board.On("getPiece", &Point{3, 2}).Return(&bluePiece)
 
             score, err := evaluator.evalMaterial(pieceLocations)
             assert.Nil(t, err)

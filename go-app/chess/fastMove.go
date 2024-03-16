@@ -4,180 +4,259 @@ import (
     "fmt"
 )
 
-func createMoveSimple(
+func addMoveSimple(
     b Board,
-    fromPiece Piece,
-    fromLocation Point,
-    toPiece Piece,
-    toLocation Point,
-    newPiece Piece,
-) FastMove {
-	enPassant, err := b.getEnPassant(fromPiece.color)
-	if err != nil {
-        panic(err)
+    fromPiece *Piece,
+    fromLocation *Point,
+    toPiece *Piece,
+    toLocation *Point,
+    newPiece *Piece,
+    moves *Array100[FastMove],
+) {
+	enPassant := b.getEnPassant(fromPiece.color)
+	if enPassant == nil {
+        panic("what")
 	}
 
-    vulnerable, err := b.getVulnerable(fromPiece.color)
-    if err != nil {
-        panic(err)
+    vulnerable := b.getVulnerable(fromPiece.color)
+    if vulnerable == nil {
+        panic("what")
     }
 
     var promotion string
-    if newPiece.valid() {
+    if newPiece != nil {
         promotion = newPiece.print()
     } else {
-        newPiece = fromPiece.copy()
+        newPiece = fromPiece
         promotion = ""
     }
 
+
     newPieceLocations := Array4[PieceLocation]{}
-    newPieceLocations.append(PieceLocation{piece: Piece{0, 0}, location: fromLocation})
-    newPieceLocations.append(PieceLocation{piece: newPiece, location: toLocation})
+
+    pieceLocation := newPieceLocations.get()
+    pieceLocation.piece = Piece{0, 0}
+    pieceLocation.location = *fromLocation
+    newPieceLocations.next()
+
+    pieceLocation = newPieceLocations.get()
+    pieceLocation.piece = *newPiece
+    pieceLocation.location = *toLocation
+    newPieceLocations.next()
+
 
     oldPieceLocations := Array4[PieceLocation]{}
-    oldPieceLocations.append(PieceLocation{piece: fromPiece, location: fromLocation})
-    oldPieceLocations.append(PieceLocation{piece: toPiece, location: toLocation})
 
-    return FastMove{
-        b: b,
-        fromLocation: fromLocation,
-        toLocation: toLocation,
-        color: fromPiece.color,
-        allyDefense: false,
-        promotion: promotion,
+    pieceLocation = oldPieceLocations.get()
+    pieceLocation.piece = *fromPiece
+    pieceLocation.location = *fromLocation
+    oldPieceLocations.next()
 
-        newPieceLocation: newPieceLocations,
-        oldPieceLocation: oldPieceLocations,
+    pieceLocation = oldPieceLocations.get()
+    pieceLocation.piece = *toPiece
+    pieceLocation.location = *toLocation
+    oldPieceLocations.next()
 
-        newEnPassant: EnPassant{target: Point{-1, -1}, risk: Point{-1, -1}},
-        oldEnPassant: enPassant,
 
-        newVulnerable: Vulnerable{start: Point{-1, -1}, end: Point{-1, -1}},
-        oldVulnerable: vulnerable,
-    }
+    move := moves.get()
+    move.b = b
+    move.fromLocation = *fromLocation
+    move.toLocation = *toLocation
+    move.color = fromPiece.color
+    move.allyDefense = false
+    move.promotion = promotion
+
+    move.newPieceLocation = newPieceLocations
+    move.oldPieceLocation = oldPieceLocations
+
+    move.newEnPassant = EnPassant{target: Point{-1, -1}, risk: Point{-1, -1}}
+    move.oldEnPassant = *enPassant
+
+    move.newVulnerable = Vulnerable{start: Point{-1, -1}, end: Point{-1, -1}}
+    move.oldVulnerable = *vulnerable
+    moves.next()
 }
 
-func createMoveRevealEnPassant(
+func addMoveRevealEnPassant(
     b Board,
-    fromPiece Piece,
-    fromLocation Point,
-    toPiece Piece,
-    toLocation Point,
-    newPiece Piece,
-    newEnPassant EnPassant,
-) FastMove {
-    m := createMoveSimple(b, fromPiece, fromLocation, toPiece, toLocation, newPiece)
+    fromPiece *Piece,
+    fromLocation *Point,
+    toPiece *Piece,
+    toLocation *Point,
+    newPiece *Piece,
+    newEnPassant *EnPassant,
+    moves *Array100[FastMove],
+) {
+    move := moves.get()
 
-    m.newEnPassant = newEnPassant
+    addMoveSimple(b, fromPiece, fromLocation, toPiece, toLocation, newPiece, moves)
 
-    return m
+    move.newEnPassant = *newEnPassant
 }
 
-func createMoveCaptureEnPassant(
+func addMoveCaptureEnPassant(
     b Board,
-    fromPiece Piece,
-    fromLocation Point,
-    toPiece Piece,
-    toLocation Point,
-    newPiece Piece,
-    enPassants []EnPassant,
-) FastMove {
-    m := createMoveSimple(b, fromPiece, fromLocation, toPiece, toLocation, newPiece)
+    fromPiece *Piece,
+    fromLocation *Point,
+    toPiece *Piece,
+    toLocation *Point,
+    newPiece *Piece,
+    moves *Array100[FastMove],
+    en1 *EnPassant,
+    en2 *EnPassant,
+) {
+    move := moves.get()
 
-    if len(enPassants) > 2 {
-        panic("more than 2 possible en passant")
+    addMoveSimple(b, fromPiece, fromLocation, toPiece, toLocation, newPiece, moves)
+
+    if en1 == nil {
+        return
     }
 
-    for _, enPassant := range enPassants {
-        capturedPiece, ok := b.getPiece(enPassant.risk)
-        if !ok {
-            panic("no piece at enPassant.pieceLocation")
-        }
+    capturedPiece := b.getPiece(&en1.risk)
 
-        m.newPieceLocation.append(PieceLocation{piece: Piece{0, 0}, location: enPassant.risk})
-        m.oldPieceLocation.append(PieceLocation{piece: capturedPiece, location: enPassant.risk})
+    if capturedPiece == nil {
+        return
     }
 
-    return m
+    pieceLocation := move.newPieceLocation.get()
+    pieceLocation.piece = Piece{0, 0}
+    pieceLocation.location = en1.risk
+    move.newPieceLocation.next()
+
+    pieceLocation = move.oldPieceLocation.get()
+    pieceLocation.piece = *capturedPiece
+    pieceLocation.location = en1.risk
+    move.oldPieceLocation.next()
+
+    if en2 == nil {
+        return
+    }
+
+    capturedPiece = b.getPiece(&en2.risk)
+
+    if capturedPiece == nil {
+        return
+    }
+
+    pieceLocation = move.newPieceLocation.get()
+    pieceLocation.piece = Piece{0, 0}
+    pieceLocation.location = en2.risk
+    move.newPieceLocation.next()
+
+    pieceLocation = move.oldPieceLocation.get()
+    pieceLocation.piece = *capturedPiece
+    pieceLocation.location = en2.risk
+    move.oldPieceLocation.next()
 }
 
-func createMoveAllyDefense(
+func addMoveAllyDefense(
     b Board,
-    fromPiece Piece,
-    fromLocation Point,
-    toLocation Point,
-) FastMove {
-    return FastMove{
-        b: b,
-        fromLocation: fromLocation,
-        toLocation: toLocation,
-        color: fromPiece.color,
-        allyDefense: true,
-        promotion: "",
-
-        newPieceLocation: Array4[PieceLocation]{},
-        oldPieceLocation: Array4[PieceLocation]{},
-
-        newEnPassant: EnPassant{target: Point{-1, -1}, risk: Point{-1, -1}},
-        oldEnPassant: EnPassant{target: Point{-1, -1}, risk: Point{-1, -1}},
-
-        newVulnerable: Vulnerable{start: Point{-1, -1}, end: Point{-1, -1}},
-        oldVulnerable: Vulnerable{start: Point{-1, -1}, end: Point{-1, -1}},
-    }
+    fromPiece *Piece,
+    fromLocation *Point,
+    toLocation *Point,
+    moves *Array100[FastMove],
+) {
+    move := moves.get()
+    move.b = b
+    move.fromLocation = *fromLocation
+    move.toLocation = *toLocation
+    move.color = fromPiece.color
+    move.allyDefense = true
+    move.promotion = ""
+    moves.next()
 }
 
-func createMoveCastle(
+func addMoveCastle(
     b Board,
-    king Piece,
-    fromLocation Point,
-    rook Piece,
-    toLocation Point,
-    toKingLocation Point,
-    toRookLocation Point,
-    newVulnerable Vulnerable,
-) FastMove {
-	enPassant, err := b.getEnPassant(king.color)
-	if err != nil {
-        panic(err)
+    king *Piece,
+    fromLocation *Point,
+    toKingLocation *Point,
+    rook *Piece,
+    toLocation *Point,
+    toRookLocation *Point,
+    newVulnerable *Vulnerable,
+    moves *Array100[FastMove],
+) {
+	enPassant := b.getEnPassant(king.color)
+	if enPassant == nil {
+        panic("what")
 	}
 
-    vulnerable, err := b.getVulnerable(king.color)
-    if err != nil {
-        panic(err)
+    vulnerable := b.getVulnerable(king.color)
+    if vulnerable == nil {
+        panic("what")
     }
 
-	newKing := king.copy()
-	newRook := rook.copy()
+    newKing := Piece{0, 0}
+    newRook := Piece{0, 0}
+	king.copy(&newKing)
+	rook.copy(&newRook)
+
 
     newPieceLocations := Array4[PieceLocation]{}
-    newPieceLocations.append(PieceLocation{piece: Piece{0, 0}, location: fromLocation})
-    newPieceLocations.append(PieceLocation{piece: Piece{0, 0}, location: toLocation})
-    newPieceLocations.append(PieceLocation{piece: newKing, location: toKingLocation})
-    newPieceLocations.append(PieceLocation{piece: newRook, location: toRookLocation})
+
+    pieceLocation := newPieceLocations.get()
+    pieceLocation.piece = Piece{0, 0}
+    pieceLocation.location = *fromLocation
+    newPieceLocations.next()
+
+    pieceLocation = newPieceLocations.get()
+    pieceLocation.piece = Piece{0, 0}
+    pieceLocation.location = *toLocation
+    newPieceLocations.next()
+
+    pieceLocation = newPieceLocations.get()
+    pieceLocation.piece = newKing
+    pieceLocation.location = *toKingLocation
+    newPieceLocations.next()
+
+    pieceLocation = newPieceLocations.get()
+    pieceLocation.piece = newRook
+    pieceLocation.location = *toRookLocation
+    newPieceLocations.next()
+
 
     oldPieceLocations := Array4[PieceLocation]{}
-    oldPieceLocations.append(PieceLocation{piece: Piece{0, 0}, location: toKingLocation})
-    oldPieceLocations.append(PieceLocation{piece: Piece{0, 0}, location: toRookLocation})
-    oldPieceLocations.append(PieceLocation{piece: king, location: fromLocation})
-    oldPieceLocations.append(PieceLocation{piece: rook, location: toLocation})
 
-    return FastMove{
-        b: b,
-        fromLocation: fromLocation,
-        toLocation: toLocation,
-        color: king.color,
-        allyDefense: false,
-        promotion: "",
+    pieceLocation = oldPieceLocations.get()
+    pieceLocation.piece = Piece{0, 0}
+    pieceLocation.location = *toKingLocation
+    oldPieceLocations.next()
 
-        newPieceLocation: newPieceLocations,
-        oldPieceLocation: oldPieceLocations,
+    pieceLocation = oldPieceLocations.get()
+    pieceLocation.piece = Piece{0, 0}
+    pieceLocation.location = *toRookLocation
+    oldPieceLocations.next()
 
-        newEnPassant: EnPassant{target: Point{-1, -1}, risk: Point{-1, -1}},
-        oldEnPassant: enPassant,
+    pieceLocation = oldPieceLocations.get()
+    pieceLocation.piece = *king
+    pieceLocation.location = *fromLocation
+    oldPieceLocations.next()
 
-        newVulnerable: newVulnerable,
-        oldVulnerable: vulnerable,
-    }
+    pieceLocation = oldPieceLocations.get()
+    pieceLocation.piece = *rook
+    pieceLocation.location = *toLocation
+    oldPieceLocations.next()
+
+
+    move := moves.get()
+    move.b = b
+    move.fromLocation = *fromLocation
+    move.toLocation = *toLocation
+    move.color = king.color
+    move.allyDefense = false
+    move.promotion = ""
+
+    move.newPieceLocation = newPieceLocations
+    move.oldPieceLocation = oldPieceLocations
+
+    move.newEnPassant = EnPassant{target: Point{-1, -1}, risk: Point{-1, -1}}
+    move.oldEnPassant = *enPassant
+
+    move.newVulnerable = *newVulnerable
+    move.oldVulnerable = *vulnerable
+    moves.next()
 }
 
 type FastMove struct {
@@ -201,21 +280,28 @@ type FastMove struct {
 func (m *FastMove) execute() error {
     for i := 0; i < m.newPieceLocation.count; i++ {
         pieceLocation := m.newPieceLocation.array[i]
-        ok := m.b.setPiece(pieceLocation.location, pieceLocation.piece)
-        if !ok {
-            return fmt.Errorf("could not set piece")
+
+        piece := m.b.getPiece(&pieceLocation.location)
+        if piece == nil {
+            return fmt.Errorf("could not get piece")
         }
+        piece.color = pieceLocation.piece.color
+        piece.index = pieceLocation.piece.index
     }
 
-    err := m.b.setEnPassant(m.color, m.newEnPassant)
-    if err != nil {
-        return err
+    enPassant := m.b.getEnPassant(m.color)
+    if enPassant == nil {
+        return fmt.Errorf("could not get en passant")
     }
+    enPassant.target = m.newEnPassant.target
+    enPassant.risk = m.newEnPassant.risk
 
-    err = m.b.setVulnerable(m.color, m.newVulnerable)
-    if err != nil {
-        return err
+    vulnerable := m.b.getVulnerable(m.color)
+    if vulnerable == nil {
+        return fmt.Errorf("could not get vulnerable")
     }
+    vulnerable.start = m.newVulnerable.start
+    vulnerable.end = m.newVulnerable.end
 
     return nil
 }
@@ -223,21 +309,28 @@ func (m *FastMove) execute() error {
 func (m *FastMove) undo() error {
     for i := 0; i < m.oldPieceLocation.count; i++ {
         pieceLocation := m.oldPieceLocation.array[i]
-        ok := m.b.setPiece(pieceLocation.location, pieceLocation.piece)
-        if !ok {
-            return fmt.Errorf("could not set piece")
+
+        piece := m.b.getPiece(&pieceLocation.location)
+        if piece == nil {
+            return fmt.Errorf("could not get piece")
         }
+        piece.color = pieceLocation.piece.color
+        piece.index = pieceLocation.piece.index
     }
 
-    err := m.b.setEnPassant(m.color, m.oldEnPassant)
-    if err != nil {
-        return err
+    enPassant := m.b.getEnPassant(m.color)
+    if enPassant == nil {
+        return fmt.Errorf("could not get en passant")
     }
+    enPassant.target = m.oldEnPassant.target
+    enPassant.risk = m.oldEnPassant.risk
 
-    err = m.b.setVulnerable(m.color, m.oldVulnerable)
-    if err != nil {
-        return err
+    vulnerable := m.b.getVulnerable(m.color)
+    if vulnerable == nil {
+        return fmt.Errorf("could not get vulnerable")
     }
+    vulnerable.start = m.oldVulnerable.start
+    vulnerable.end = m.oldVulnerable.end
 
     return nil
 }

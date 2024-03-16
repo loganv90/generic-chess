@@ -13,10 +13,10 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
     b, err := newSimpleBoard(Point{7, 7}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{3, 3}, pawn)
+    setPiece(b, Point{3, 3}, pawn)
 
     moves := Array100[FastMove]{}
-	pawn.moves(b, Point{3, 3}, &moves)
+	pawn.moves(b, &Point{3, 3}, &moves)
     assert.Equal(t, 2, moves.count)
 
     moveMap := map[Point]bool{}
@@ -36,10 +36,10 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
     b, err := newSimpleBoard(Point{7, 7}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{3, 3}, pawn)
+    setPiece(b, Point{3, 3}, pawn)
 
     moves := Array100[FastMove]{}
-	pawn.moves(b, Point{3, 3}, &moves)
+	pawn.moves(b, &Point{3, 3}, &moves)
     assert.Equal(t, 1, moves.count)
 
     moveMap := map[Point]bool{}
@@ -60,11 +60,11 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
     b, err := newSimpleBoard(Point{7, 7}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{3, 3}, pawn)
-    b.setPiece(Point{4, 4}, blackPawn)
+    setPiece(b, Point{3, 3}, pawn)
+    setPiece(b, Point{4, 4}, blackPawn)
 
     moves := Array100[FastMove]{}
-	pawn.moves(b, Point{3, 3}, &moves)
+	pawn.moves(b, &Point{3, 3}, &moves)
     assert.Equal(t, 3, moves.count)
 
     moveMap := map[Point]bool{}
@@ -86,11 +86,11 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
     b, err := newSimpleBoard(Point{7, 7}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{3, 3}, pawn)
-    b.setEnPassant(black, EnPassant{Point{4, 4}, Point{3, 4}})
+    setPiece(b, Point{3, 3}, pawn)
+    setEnPassant(b, black, EnPassant{Point{4, 4}, Point{3, 4}})
 
     moves := Array100[FastMove]{}
-	pawn.moves(b, Point{3, 3}, &moves)
+	pawn.moves(b, &Point{3, 3}, &moves)
     assert.Equal(t, 3, moves.count)
 
     moveMap := map[Point]bool{}
@@ -111,10 +111,10 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{2, 2}, pawn)
+    setPiece(b, Point{2, 2}, pawn)
 
     moves := Array100[FastMove]{}
-	pawn.moves(b, Point{2, 2}, &moves)
+	pawn.moves(b, &Point{2, 2}, &moves)
     assert.Equal(t, 5, moves.count)
 
     moveMap := map[Point]bool{}
@@ -134,10 +134,10 @@ func Test_Knight_Moves(t *testing.T) {
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{2, 2}, knight)
+    setPiece(b, Point{2, 2}, knight)
 
     moves := Array100[FastMove]{}
-	knight.moves(b, Point{2, 2}, &moves)
+	knight.moves(b, &Point{2, 2}, &moves)
     assert.Equal(t, 8, moves.count)
 
     moveMap := map[Point]bool{}
@@ -163,10 +163,10 @@ func Test_Bishop_Moves(t *testing.T) {
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{2, 2}, bishop)
+    setPiece(b, Point{2, 2}, bishop)
 
     moves := Array100[FastMove]{}
-	bishop.moves(b, Point{2, 2}, &moves)
+	bishop.moves(b, &Point{2, 2}, &moves)
     assert.Equal(t, 8, moves.count)
 
     moveMap := map[Point]bool{}
@@ -192,10 +192,10 @@ func Test_Rook_Moves(t *testing.T) {
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{2, 2}, rook)
+    setPiece(b, Point{2, 2}, rook)
 
     moves := Array100[FastMove]{}
-	rook.moves(b, Point{2, 2}, &moves)
+	rook.moves(b, &Point{2, 2}, &moves)
     assert.Equal(t, 8, moves.count)
 
     moveMap := map[Point]bool{}
@@ -221,10 +221,10 @@ func Test_Queen_Moves(t *testing.T) {
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{2, 2}, queen)
+    setPiece(b, Point{2, 2}, queen)
 
     moves := Array100[FastMove]{}
-	queen.moves(b, Point{2, 2}, &moves)
+	queen.moves(b, &Point{2, 2}, &moves)
     assert.Equal(t, 16, moves.count)
 
     moveMap := map[Point]bool{}
@@ -259,12 +259,12 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{2, 2}, king)
-    b.setPiece(Point{0, 2}, rook)
-    b.setPiece(Point{4, 2}, rook)
+    setPiece(b, Point{2, 2}, king)
+    setPiece(b, Point{0, 2}, rook)
+    setPiece(b, Point{4, 2}, rook)
 
     moves := Array100[FastMove]{}
-	king.moves(b, Point{2, 2}, &moves)
+	king.moves(b, &Point{2, 2}, &moves)
     assert.Equal(t, 10, moves.count)
 
     moveMap := map[Point]bool{}
@@ -293,12 +293,12 @@ func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
     b, err := newSimpleBoard(Point{5, 5}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{2, 2}, king)
-    b.setPiece(Point{0, 2}, rook)
-    b.setPiece(Point{4, 2}, rook)
+    setPiece(b, Point{2, 2}, king)
+    setPiece(b, Point{0, 2}, rook)
+    setPiece(b, Point{4, 2}, rook)
 
     moves := Array100[FastMove]{}
-	king.moves(b, Point{2, 2}, &moves)
+	king.moves(b, &Point{2, 2}, &moves)
     assert.Equal(t, 8, moves.count)
 
     moveMap := map[Point]bool{}

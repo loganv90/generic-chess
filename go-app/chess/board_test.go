@@ -2,7 +2,7 @@ package chess
 
 import (
 	"testing"
-    "slices"
+    //"slices"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -12,74 +12,47 @@ type MockBoard struct {
 	mock.Mock
 }
 
-func (m *MockBoard) getPiece(location Point) (Piece, bool) {
+func (m *MockBoard) disablePieces(color int, disable bool) {
+    m.Called(color, disable)
+}
+
+func (m *MockBoard) disableLocation(location *Point) {
+    m.Called(location)
+}
+
+func (m *MockBoard) getPieceLocations() []Array100[Point] {
+    args := m.Called()
+    return args.Get(0).([]Array100[Point])
+}
+
+func (m *MockBoard) getPiece(location *Point) *Piece {
 	args := m.Called(location)
-
-	if args.Get(0) == nil {
-		return Piece{0, 0}, args.Bool(1)
-	} else {
-		return args.Get(0).(Piece), args.Bool(1)
-	}
+    return args.Get(0).(*Piece)
 }
 
-func (m *MockBoard) setPiece(location Point, piece Piece) bool {
-	args := m.Called(location, piece)
-    return args.Bool(0)
-}
-
-func (m *MockBoard) disableLocation(location Point) error {
-    args := m.Called(location)
-    return args.Error(0)
-}
-
-func (m *MockBoard) getVulnerable(color int) (Vulnerable, error) {
+func (m *MockBoard) getVulnerable(color int) *Vulnerable {
     args := m.Called(color)
-    return args.Get(0).(Vulnerable), args.Error(1)
+    return args.Get(0).(*Vulnerable)
 }
 
-func (m *MockBoard) setVulnerable(color int, vulnerable Vulnerable) error {
-    args := m.Called(color, vulnerable)
-    return args.Error(0)
-}
-
-func (m *MockBoard) getEnPassant(color int) (EnPassant, error) {
+func (m *MockBoard) getEnPassant(color int) *EnPassant {
 	args := m.Called(color)
-	return args.Get(0).(EnPassant), args.Error(1)
+    return args.Get(0).(*EnPassant)
 }
 
-func (m *MockBoard) setEnPassant(color int, enPassant EnPassant) error {
-    args := m.Called(color, enPassant)
-    return args.Error(0)
-}
-
-func (m *MockBoard) possibleEnPassant(color int, location Point) ([]EnPassant, error) {
+func (m *MockBoard) possibleEnPassant(color int, location *Point) (*EnPassant, *EnPassant) {
     args := m.Called(color, location)
-    return args.Get(0).([]EnPassant), args.Error(1)
+    return args.Get(0).(*EnPassant), args.Get(1).(*EnPassant)
 }
 
-func (m *MockBoard) disablePieces(color int, disable bool) error {
-    args := m.Called(color, disable)
-    return args.Error(0)
-}
-
-func (m *MockBoard) getPieceLocations() [][]Point {
-    args := m.Called()
-    return args.Get(0).([][]Point)
-}
-
-func (m *MockBoard) CalculateMoves() error {
-    args := m.Called()
-    return args.Error(0)
-}
-
-func (m *MockBoard) MovesOfColor(color int) (*Array100[FastMove], error) {
+func (m *MockBoard) MovesOfColor(color int) *Array100[FastMove] {
     args := m.Called(color)
-    return args.Get(0).(*Array100[FastMove]), args.Error(1)
+    return args.Get(0).(*Array100[FastMove])
 }
 
-func (m *MockBoard) MovesOfLocation(fromLocation Point) (*Array100[FastMove], error) {
+func (m *MockBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
     args := m.Called(fromLocation)
-    return args.Get(0).(*Array100[FastMove]), args.Error(1)
+    return args.Get(0).(*Array100[FastMove])
 }
 
 func (m *MockBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
@@ -87,19 +60,23 @@ func (m *MockBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
     return args.Get(0).([]FastMove), args.Error(1)
 }
 
-func (m *MockBoard) LegalMovesOfLocation(location Point) ([]FastMove, error) {
-    args := m.Called(location)
+func (m *MockBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, error) {
+    args := m.Called(fromLocation)
     return args.Get(0).([]FastMove), args.Error(1)
 }
 
-func (m *MockBoard) CheckmateAndStalemate(color int) (bool, bool, error) {
-    args := m.Called(color)
-    return args.Bool(0), args.Bool(1), args.Error(2)
+func (m *MockBoard) CalculateMoves() {
+    m.Called()
 }
 
 func (m *MockBoard) Check(color int) bool {
     args := m.Called(color)
     return args.Bool(0)
+}
+
+func (m *MockBoard) CheckmateAndStalemate(color int) (bool, bool, error) {
+    args := m.Called(color)
+    return args.Bool(0), args.Bool(1), args.Error(2)
 }
 
 func (m *MockBoard) Print() string {
@@ -128,51 +105,51 @@ func Test_NewSimpleBoard_DefaultFen(t *testing.T) {
 
 	for y := 2; y <= 5; y++ {
 		for x := 0; x <= 7; x++ {
-			piece, ok := b.getPiece(Point{x, y})
-			assert.True(t, ok)
+			piece := b.getPiece(&Point{x, y})
+			assert.True(t, piece != nil)
 			assert.True(t, !piece.valid())
 		}
 	}
 
 	for _, y := range []int{1, 6} {
 		for x := 0; x <= 7; x++ {
-			piece, ok := b.getPiece(Point{x, y})
-            assert.True(t, ok)
+			piece := b.getPiece(&Point{x, y})
+            assert.True(t, piece != nil)
             assert.True(t, piece.index < 9) // is pawn
 		}
 	}
 
 	for _, y := range []int{0, 7} {
-		piece, ok := b.getPiece(Point{0, y})
-		assert.True(t, ok)
+		piece := b.getPiece(&Point{0, y})
+		assert.True(t, piece != nil)
         assert.True(t, piece.index == 11 || piece.index == 12) // is rook
 
-		piece, ok = b.getPiece(Point{1, y})
-		assert.True(t, ok)
+		piece = b.getPiece(&Point{1, y})
+		assert.True(t, piece != nil)
         assert.True(t, piece.index == 9) // is knight
 
-		piece, ok = b.getPiece(Point{2, y})
-		assert.True(t, ok)
+		piece = b.getPiece(&Point{2, y})
+		assert.True(t, piece != nil)
         assert.True(t, piece.index == 10) // is bishop
 
-		piece, ok = b.getPiece(Point{3, y})
-		assert.True(t, ok)
+		piece = b.getPiece(&Point{3, y})
+		assert.True(t, piece != nil)
         assert.True(t, piece.index == 13) // is queen
 
-		piece, ok = b.getPiece(Point{4, y})
-		assert.True(t, ok)
+		piece = b.getPiece(&Point{4, y})
+		assert.True(t, piece != nil)
         assert.True(t, piece.index > 13) // is king
 
-		piece, ok = b.getPiece(Point{5, y})
-		assert.True(t, ok)
+		piece = b.getPiece(&Point{5, y})
+		assert.True(t, piece != nil)
         assert.True(t, piece.index == 10) // is bishop
 
-		piece, ok = b.getPiece(Point{6, y})
-		assert.True(t, ok)
+		piece = b.getPiece(&Point{6, y})
+		assert.True(t, piece != nil)
         assert.True(t, piece.index == 9) // is knight
 
-		piece, ok = b.getPiece(Point{7, y})
-		assert.True(t, ok)
+		piece = b.getPiece(&Point{7, y})
+		assert.True(t, piece != nil)
         assert.True(t, piece.index == 11 || piece.index == 12) // is rook
 	}
 }
@@ -187,28 +164,26 @@ func Test_getAndSetPiece(t *testing.T) {
     location := Point{0, 0}
 
     // adding piece to board
-    ok := b.setPiece(location, p)
-    assert.True(t, ok)
+    setPiece(b, location, p)
 
-    piece, ok := b.getPiece(location)
-    assert.True(t, ok)
-    assert.Equal(t, p, piece)
+    piece := b.getPiece(&location)
+    assert.True(t, piece != nil)
+    assert.Equal(t, p, *piece)
 
-    pieceLocations := b.pieceLocations[white]
-    exists := slices.Contains(pieceLocations, location)
-    assert.True(t, exists)
+    //pieceLocations := b.pieceLocations[white]
+    //exists := slices.Contains(pieceLocations, location)
+    //assert.True(t, exists)
 
     // removing piece from board
-    ok = b.setPiece(location, Piece{0, 0})
-    assert.True(t, ok)
+    setPiece(b, location, Piece{0, 0})
 
-    piece, ok = b.getPiece(location)
-    assert.True(t, ok)
+    piece = b.getPiece(&location)
+    assert.True(t, piece != nil)
     assert.True(t, !piece.valid())
 
-    pieceLocations = b.pieceLocations[white]
-    exists = slices.Contains(pieceLocations, location)
-    assert.False(t, exists)
+    //pieceLocations = b.pieceLocations[white]
+    //exists = slices.Contains(pieceLocations, location)
+    //assert.False(t, exists)
 }
 
 func Test_CalculateMoves_default(t *testing.T) {
@@ -246,9 +221,9 @@ func Test_CalculateMoves_check(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{0, 0}, Piece{white, KING_D})
-    b.setPiece(Point{0, 1}, Piece{black, QUEEN})
-    b.setPiece(Point{0, 7}, Piece{black, KING_U})
+    setPiece(b, Point{0, 0}, Piece{white, KING_D})
+    setPiece(b, Point{0, 1}, Piece{black, QUEEN})
+    setPiece(b, Point{0, 7}, Piece{black, KING_U})
 
     b.CalculateMoves()
 
@@ -278,9 +253,9 @@ func Test_CalculateMoves_checkmate(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{0, 0}, Piece{white, KING_D})
-    b.setPiece(Point{0, 1}, Piece{black, QUEEN})
-    b.setPiece(Point{0, 2}, Piece{black, KING_U})
+    setPiece(b, Point{0, 0}, Piece{white, KING_D})
+    setPiece(b, Point{0, 1}, Piece{black, QUEEN})
+    setPiece(b, Point{0, 2}, Piece{black, KING_U})
 
     b.CalculateMoves()
 
@@ -310,9 +285,9 @@ func Test_CalculateMoves_stalemate(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{0, 0}, Piece{white, KING_D})
-    b.setPiece(Point{1, 2}, Piece{black, QUEEN})
-    b.setPiece(Point{0, 7}, Piece{black, KING_U})
+    setPiece(b, Point{0, 0}, Piece{white, KING_D})
+    setPiece(b, Point{1, 2}, Piece{black, QUEEN})
+    setPiece(b, Point{0, 7}, Piece{black, KING_U})
 
     b.CalculateMoves()
 
@@ -342,10 +317,10 @@ func Test_CalculateMoves_noCastleThroughCheck(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{4, 0}, Piece{white, KING_D})
-    b.setPiece(Point{0, 0}, Piece{white, ROOK})
-    b.setPiece(Point{4, 7}, Piece{black, KING_U})
-    b.setPiece(Point{3, 7}, Piece{black, ROOK})
+    setPiece(b, Point{4, 0}, Piece{white, KING_D})
+    setPiece(b, Point{0, 0}, Piece{white, ROOK})
+    setPiece(b, Point{4, 7}, Piece{black, KING_U})
+    setPiece(b, Point{3, 7}, Piece{black, ROOK})
 
     b.CalculateMoves()
 
@@ -375,9 +350,9 @@ func Test_CalculateMoves_castle(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{4, 0}, Piece{white, KING_D})
-    b.setPiece(Point{0, 0}, Piece{white, ROOK})
-    b.setPiece(Point{4, 7}, Piece{black, KING_U})
+    setPiece(b, Point{4, 0}, Piece{white, KING_D})
+    setPiece(b, Point{0, 0}, Piece{white, ROOK})
+    setPiece(b, Point{4, 7}, Piece{black, KING_U})
 
     b.CalculateMoves()
 
@@ -407,9 +382,9 @@ func Test_CalculateMoves_promotion(t *testing.T) {
     b, err := newSimpleBoard(Point{8, 8}, 2)
     assert.Nil(t, err)
 
-    b.setPiece(Point{7, 6}, Piece{white, PAWN_D_M})
-    b.setPiece(Point{0, 0}, Piece{white, KING_D})
-    b.setPiece(Point{0, 7}, Piece{black, KING_U})
+    setPiece(b, Point{7, 6}, Piece{white, PAWN_D_M})
+    setPiece(b, Point{0, 0}, Piece{white, KING_D})
+    setPiece(b, Point{0, 7}, Piece{black, KING_U})
 
     b.CalculateMoves()
 

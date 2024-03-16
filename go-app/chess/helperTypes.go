@@ -68,12 +68,13 @@ type Point struct {
     y int
 }
 
-func (p Point) equals(other Point) bool {
+func (p *Point) equals(other *Point) bool {
     return p.x == other.x && p.y == other.y
 }
 
-func (p Point) add(other Point) Point {
-    return Point{p.x + other.x, p.y + other.y}
+func (p *Point) add(other *Point) {
+    p.x += other.x
+    p.y += other.y
 }
 
 type PieceLocation struct {
@@ -96,12 +97,11 @@ type Array4[T any] struct {
     count int
 }
 
-func (a *Array4[T]) append(item T) {
-    if a.count >= len(a.array) {
-        a.clear()
-    }
+func (a *Array4[T]) get() *T {
+    return &a.array[a.count]
+}
 
-    a.array[a.count] = item
+func (a *Array4[T]) next() {
     a.count += 1
 }
 
@@ -114,12 +114,11 @@ type Array100[T any] struct {
     count int
 }
 
-func (a *Array100[T]) append(item T) {
-    if a.count >= len(a.array) {
-        a.clear()
-    }
+func (a *Array100[T]) get() *T {
+    return &a.array[a.count]
+}
 
-    a.array[a.count] = item
+func (a *Array100[T]) next() {
     a.count += 1
 }
 

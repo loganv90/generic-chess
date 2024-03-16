@@ -101,10 +101,7 @@ func (s *PlayerTransition) execute() error {
         return err
     }
 
-    err = s.b.disablePieces(s.oldCurrent, true)
-    if err != nil {
-        return err
-    }
+    s.b.disablePieces(s.oldCurrent, true)
 
     return nil
 }
@@ -134,10 +131,7 @@ func (s *PlayerTransition) undo() error {
         return err
     }
 
-    err = s.b.disablePieces(s.oldCurrent, false)
-    if err != nil {
-        return err
-    }
+    s.b.disablePieces(s.oldCurrent, false)
 
     return nil
 }

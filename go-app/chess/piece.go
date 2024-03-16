@@ -100,8 +100,8 @@ var piece_names = []string{
     "K",
 }
 
-var piece_move_functions = []func(Board, Piece, Point, *Array100[FastMove]) {
-    func (b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {},
+var piece_move_functions = []func(Board, *Piece, *Point, *Array100[FastMove]) {
+    func (b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {},
     pawn_r_moves,
     pawn_l_moves,
     pawn_d_moves,
@@ -125,7 +125,7 @@ var piece_move_functions = []func(Board, Piece, Point, *Array100[FastMove]) {
     king_ud_moves,
 }
 
-var pawn_u_directions = []Point{
+var pawn_u_directions = []*Point{
     {0, -1}, // one 
     {0, -2}, // two
     {0, -3}, // three
@@ -133,7 +133,7 @@ var pawn_u_directions = []Point{
     {1, -1}, // capture
 }
 
-var pawn_d_directions = []Point{
+var pawn_d_directions = []*Point{
     {0, 1},
     {0, 2},
     {0, 3},
@@ -141,7 +141,7 @@ var pawn_d_directions = []Point{
     {1, 1},
 }
 
-var pawn_l_directions = []Point{
+var pawn_l_directions = []*Point{
     {-1, 0},
     {-2, 0},
     {-3, 0},
@@ -149,7 +149,7 @@ var pawn_l_directions = []Point{
     {-1, 1},
 }
 
-var pawn_r_directions = []Point{
+var pawn_r_directions = []*Point{
     {1, 0},
     {2, 0},
     {3, 0},
@@ -157,7 +157,7 @@ var pawn_r_directions = []Point{
     {1, 1},
 }
 
-var knight_directions = []Point{
+var knight_directions = []*Point{
     {1, 2},
     {-1, 2},
     {2, 1},
@@ -168,21 +168,21 @@ var knight_directions = []Point{
     {-2, -1},
 }
 
-var bishop_directions = []Point{
+var bishop_directions = []*Point{
     {1, 1},
     {-1, 1},
     {1, -1},
     {-1, -1},
 }
 
-var rook_directions = []Point{
+var rook_directions = []*Point{
     {1, 0},
     {-1, 0},
     {0, 1},
     {0, -1},
 }
 
-var queen_directions = []Point{
+var queen_directions = []*Point{
     {1, 0},
     {-1, 0},
     {0, 1},
@@ -193,7 +193,7 @@ var queen_directions = []Point{
     {-1, -1},
 }
 
-var king_ud_directions = []Point{
+var king_ud_directions = []*Point{
     {1, 0}, // castle search 1
     {-1, 0}, // castle search 2
     {-1, 0}, // king offset 1
@@ -202,7 +202,7 @@ var king_ud_directions = []Point{
     {3, 0}, // rook offset 2
 }
 
-var king_lr_directions = []Point{
+var king_lr_directions = []*Point{
     {0, 1},
     {0, -1},
     {0, -1},
@@ -228,8 +228,9 @@ func (p *Piece) print() string {
     return piece_names[p.index]
 }
 
-func (p *Piece) copy() Piece {
-    return Piece{p.color, piece_moved_indexes[p.index]}
+func (p *Piece) copy(piece *Piece) {
+    piece.color = p.color
+    piece.index = piece_moved_indexes[p.index]
 }
 
 func (p *Piece) moved() bool {
@@ -245,280 +246,302 @@ func (p *Piece) moved() bool {
     return false
 }
 
-func (p *Piece) moves(b Board, fromLocation Point, moves *Array100[FastMove]) {
-    piece_move_functions[p.index](b, *p, fromLocation, moves)
+func (p *Piece) moves(b Board, fromLocation *Point, moves *Array100[FastMove]) {
+    piece_move_functions[p.index](b, p, fromLocation, moves)
 }
 
 func addDirection(
 	b Board,
-    p Piece,
-    fromLocation Point,
+    fromPiece *Piece,
+    fromLocation *Point,
 	moves *Array100[FastMove],
-    direction Point,
+    direction *Point,
 ) {
-    currentLocation := fromLocation.add(direction)
+    currentLocation := *fromLocation
 
     for {
-        piece, ok := b.getPiece(currentLocation)
-        if !ok {
+        currentLocation.add(direction)
+
+        currentPiece := b.getPiece(&currentLocation)
+        if currentPiece == nil {
             break
         }
 
-        if !piece.valid() { // no piece
-            moves.append(createMoveSimple(b, p, fromLocation, piece, currentLocation, Piece{0, 0}))
-        } else if piece.color != p.color { // enemy piece
-            moves.append(createMoveSimple(b, p, fromLocation, piece, currentLocation, Piece{0, 0}))
+        if !currentPiece.valid() { // no piece
+            addMoveSimple(b, fromPiece, fromLocation, currentPiece, &currentLocation, nil, moves)
+        } else if currentPiece.color != fromPiece.color { // enemy piece
+            addMoveSimple(b, fromPiece, fromLocation, currentPiece, &currentLocation, nil, moves)
             break
         } else { // ally piece
-            moves.append(createMoveAllyDefense(b, p, fromLocation, currentLocation))
+            addMoveAllyDefense(b, fromPiece, fromLocation, &currentLocation, moves)
             break
         }
-
-        currentLocation = currentLocation.add(direction)
     }
 }
 
 func addSimple(
 	b Board,
-    p Piece,
-    fromLocation Point,
+    fromPiece *Piece,
+    fromLocation *Point,
 	moves *Array100[FastMove],
-    direction Point,
+    direction *Point,
 ) {
-    toLocation := fromLocation.add(direction)
+    toLocation := *fromLocation
+    toLocation.add(direction)
 
-	piece, ok := b.getPiece(toLocation)
-	if !ok {
+	toPiece := b.getPiece(&toLocation)
+	if toPiece == nil {
 		return
 	}
 
-	if !piece.valid() { // no piece
-        moves.append(createMoveSimple(b, p, fromLocation, piece, toLocation, Piece{0, 0}))
-	} else if piece.color != p.color { // enemy piece
-        moves.append(createMoveSimple(b, p, fromLocation, piece, toLocation, Piece{0, 0}))
+	if !toPiece.valid() { // no piece
+        addMoveSimple(b, fromPiece, fromLocation, toPiece, &toLocation, nil, moves)
+	} else if toPiece.color != fromPiece.color { // enemy piece
+        addMoveSimple(b, fromPiece, fromLocation, toPiece, &toLocation, nil, moves)
 	} else { // ally piece
-        moves.append(createMoveAllyDefense(b, p, fromLocation, toLocation))
+        addMoveAllyDefense(b, fromPiece, fromLocation, &toLocation, moves)
     }
 }
 
-var pawn_r_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
-    pawnAddForward(b, p, fromLocation, moves, pawn_r_directions)
-    pawnAddCaptures(b, p, fromLocation, moves, pawn_r_directions)
+var pawn_r_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
+    pawnAddForward(b, fromPiece, fromLocation, moves, pawn_r_directions)
+    pawnAddCaptures(b, fromPiece, fromLocation, moves, pawn_r_directions)
 }
 
-var pawn_l_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
-    pawnAddForward(b, p, fromLocation, moves, pawn_l_directions)
-    pawnAddCaptures(b, p, fromLocation, moves, pawn_l_directions)
+var pawn_l_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
+    pawnAddForward(b, fromPiece, fromLocation, moves, pawn_l_directions)
+    pawnAddCaptures(b, fromPiece, fromLocation, moves, pawn_l_directions)
 }
 
-var pawn_u_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
-    pawnAddForward(b, p, fromLocation, moves, pawn_u_directions)
-    pawnAddCaptures(b, p, fromLocation, moves, pawn_u_directions)
+var pawn_u_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
+    pawnAddForward(b, fromPiece, fromLocation, moves, pawn_u_directions)
+    pawnAddCaptures(b, fromPiece, fromLocation, moves, pawn_u_directions)
 }
 
-var pawn_d_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
-    pawnAddForward(b, p, fromLocation, moves, pawn_d_directions)
-    pawnAddCaptures(b, p, fromLocation, moves, pawn_d_directions)
+var pawn_d_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
+    pawnAddForward(b, fromPiece, fromLocation, moves, pawn_d_directions)
+    pawnAddCaptures(b, fromPiece, fromLocation, moves, pawn_d_directions)
 }
 
-func pawnAddForward(b Board, p Piece, fromLocation Point, moves *Array100[FastMove], directions []Point) {
-    to1Location := fromLocation.add(directions[0])
-    to2Location := fromLocation.add(directions[1])
-    to3Location := fromLocation.add(directions[2])
-    piece1, ok1 := b.getPiece(to1Location)
-    piece2, ok2 := b.getPiece(to2Location)
-    _, ok3 := b.getPiece(to3Location)
+func pawnAddForward(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove], directions []*Point) {
+    to1Location := *fromLocation
+    to2Location := *fromLocation
+    to3Location := *fromLocation
 
-    if !ok1 {
+    to1Location.add(directions[0])
+    to2Location.add(directions[1])
+    to3Location.add(directions[2])
+
+    piece1 := b.getPiece(&to1Location)
+    piece2 := b.getPiece(&to2Location)
+    piece3 := b.getPiece(&to3Location)
+
+    if piece1 == nil {
         return
     }
+
+    queen := Piece{fromPiece.color, QUEEN}
+    rook_m := Piece{fromPiece.color, ROOK_M}
+    bishop := Piece{fromPiece.color, BISHOP}
+    knight := Piece{fromPiece.color, KNIGHT}
 
     if !piece1.valid() {
-        if !ok2 {
-            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, QUEEN}))
-            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, ROOK_M}))
-            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, BISHOP}))
-            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, KNIGHT}))
+        if piece2 == nil {
+            addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, &queen, moves)
+            addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, &rook_m, moves)
+            addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, &bishop, moves)
+            addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, &knight, moves)
         } else {
-            moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{0, 0}))
+            addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, nil, moves)
         }
     }
 
-    if !ok2 {
+    if piece2 == nil {
         return
     }
 
-    if p.index > 4 {
+    if fromPiece.moved() {
         return
     }
+
+    enPassant := EnPassant{to1Location, to2Location}
 
     if !piece2.valid() {
-        if !ok3 {
-            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, QUEEN}, EnPassant{to1Location, to2Location}))
-            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, ROOK_M}, EnPassant{to1Location, to2Location}))
-            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, BISHOP}, EnPassant{to1Location, to2Location}))
-            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, KNIGHT}, EnPassant{to1Location, to2Location}))
+        if piece3 == nil {
+            addMoveRevealEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, &queen, &enPassant, moves)
+            addMoveRevealEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, &rook_m, &enPassant, moves)
+            addMoveRevealEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, &bishop, &enPassant, moves)
+            addMoveRevealEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, &knight, &enPassant, moves)
         } else {
-            moves.append(createMoveRevealEnPassant(b, p, fromLocation, piece2, to2Location, Piece{0, 0}, EnPassant{to1Location, to2Location}))
+            addMoveRevealEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, nil, &enPassant, moves)
         }
     }
 }
 
-func pawnAddCaptures(b Board, p Piece, fromLocation Point, moves *Array100[FastMove], directions []Point) {
-    to1Location := fromLocation.add(directions[3])
-    to2Location := fromLocation.add(directions[4])
-    to3Location := to1Location.add(directions[0])
-    to4Location := to2Location.add(directions[0])
-    piece1, ok1 := b.getPiece(to1Location)
-    piece2, ok2 := b.getPiece(to2Location)
-    _, ok3 := b.getPiece(to3Location)
-    _, ok4 := b.getPiece(to4Location)
+func pawnAddCaptures(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove], directions []*Point) {
+    to1Location := *fromLocation
+    to2Location := *fromLocation
+    to3Location := to1Location
+    to4Location := to2Location
 
-    if ok1 {
-        if ens, err := b.possibleEnPassant(p.color, to1Location); err == nil && len(ens) > 0 { // if the square is an en passant target
-            if !ok3 {
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{p.color, QUEEN}, ens))
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{p.color, ROOK_M}, ens))
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{p.color, BISHOP}, ens))
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{p.color, KNIGHT}, ens))
+    to1Location.add(directions[3])
+    to2Location.add(directions[4])
+    to3Location.add(directions[0])
+    to4Location.add(directions[0])
+
+    piece1 := b.getPiece(&to1Location)
+    piece2 := b.getPiece(&to2Location)
+    piece3 := b.getPiece(&to3Location)
+    piece4 := b.getPiece(&to4Location)
+
+    queen := Piece{fromPiece.color, QUEEN}
+    rook_m := Piece{fromPiece.color, ROOK_M}
+    bishop := Piece{fromPiece.color, BISHOP}
+    knight := Piece{fromPiece.color, KNIGHT}
+
+    if piece1 != nil {
+        if en1, en2 := b.possibleEnPassant(fromPiece.color, &to1Location); en1 != nil { // if the square is an en passant target
+            if piece3 == nil {
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, &to1Location, &queen, moves, en1, en2)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, &to1Location, &rook_m, moves, en1, en2)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, &to1Location, &bishop, moves, en1, en2)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, &to1Location, &knight, moves, en1, en2)
             } else {
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece1, to1Location, Piece{0, 0}, ens))
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, &to1Location, nil, moves, en1, en2)
             }
-        } else if piece1.valid() && piece1.color != p.color { // if the square is occupied by an enemy piece
-            if !ok3 {
-                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, QUEEN}))
-                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, ROOK_M}))
-                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, BISHOP}))
-                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{p.color, KNIGHT}))
+        } else if piece1.valid() && piece1.color != fromPiece.color { // if the square is occupied by an enemy piece
+            if piece3 == nil {
+                addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, &queen, moves)
+                addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, &rook_m, moves)
+                addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, &bishop, moves)
+                addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, &knight, moves)
             } else {
-                moves.append(createMoveSimple(b, p, fromLocation, piece1, to1Location, Piece{0, 0}))
+                addMoveSimple(b, fromPiece, fromLocation, piece1, &to1Location, nil, moves)
             }
         } else if piece1.valid() {
-            moves.append(createMoveAllyDefense(b, p, fromLocation, to1Location))
+            addMoveAllyDefense(b, fromPiece, fromLocation, &to1Location, moves)
         }
     }
 
-    if ok2 {
-        if ens, err := b.possibleEnPassant(p.color, to2Location); err == nil && len(ens) > 0 { // if the square is an en passant target
-            if !ok4 {
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, QUEEN}, ens))
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, ROOK_M}, ens))
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, BISHOP}, ens))
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{p.color, KNIGHT}, ens))
+    if piece2 != nil {
+        if en1, en2 := b.possibleEnPassant(fromPiece.color, &to2Location); en1 != nil { // if the square is an en passant target
+            if piece4 == nil {
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, &queen, moves, en1, en2)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, &rook_m, moves, en1, en2)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, &bishop, moves, en1, en2)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, &knight, moves, en1, en2)
             } else {
-                moves.append(createMoveCaptureEnPassant(b, p, fromLocation, piece2, to2Location, Piece{0, 0}, ens))
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, &to2Location, nil, moves, en1, en2)
             }
-        } else if piece2.valid() && piece2.color != p.color { // if the square is occupied by an enemy piece
-            if !ok4 {
-                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{p.color, QUEEN}))
-                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{p.color, ROOK_M}))
-                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{p.color, BISHOP}))
-                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{p.color, KNIGHT}))
+        } else if piece2.valid() && piece2.color != fromPiece.color { // if the square is occupied by an enemy piece
+            if piece4 == nil {
+                addMoveSimple(b, fromPiece, fromLocation, piece2, &to2Location, &queen, moves)
+                addMoveSimple(b, fromPiece, fromLocation, piece2, &to2Location, &rook_m, moves)
+                addMoveSimple(b, fromPiece, fromLocation, piece2, &to2Location, &bishop, moves)
+                addMoveSimple(b, fromPiece, fromLocation, piece2, &to2Location, &knight, moves)
             } else {
-                moves.append(createMoveSimple(b, p, fromLocation, piece2, to2Location, Piece{0, 0}))
+                addMoveSimple(b, fromPiece, fromLocation, piece2, &to2Location, nil, moves)
             }
         } else if piece2.valid() {
-            moves.append(createMoveAllyDefense(b, p, fromLocation, to2Location))
+            addMoveAllyDefense(b, fromPiece, fromLocation, &to2Location, moves)
         }
     }
 }
 
-func knight_moves(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+func knight_moves(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
 	for _, direction := range knight_directions {
-		addSimple(b, p, fromLocation, moves, direction)
+		addSimple(b, fromPiece, fromLocation, moves, direction)
 	}
 }
 
-func bishop_moves(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+func bishop_moves(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
     for _, direction := range bishop_directions {
-        addDirection(b, p, fromLocation, moves, direction)
+        addDirection(b, fromPiece, fromLocation, moves, direction)
     }
 }
 
-func rook_moves(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+func rook_moves(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
     for _, direction := range rook_directions {
-        addDirection(b, p, fromLocation, moves, direction)
+        addDirection(b, fromPiece, fromLocation, moves, direction)
     }
 }
 
-func queen_moves(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+func queen_moves(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
     for _, direction := range queen_directions {
-        addDirection(b, p, fromLocation, moves, direction)
+        addDirection(b, fromPiece, fromLocation, moves, direction)
     }
 }
 
-var king_lr_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+var king_lr_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
     for _, direction := range queen_directions {
-        addSimple(b, p, fromLocation, moves, direction)
+        addSimple(b, fromPiece, fromLocation, moves, direction)
     }
 
-    if p.index > 17 {
+    if fromPiece.moved() {
         return
     }
 
-    addCastle(b, p, fromLocation, moves, king_lr_directions[0], king_lr_directions[2], king_lr_directions[4])
-    addCastle(b, p, fromLocation, moves, king_lr_directions[1], king_lr_directions[3], king_lr_directions[5])
+    addCastle(b, fromPiece, fromLocation, moves, king_lr_directions[0], king_lr_directions[2], king_lr_directions[4])
+    addCastle(b, fromPiece, fromLocation, moves, king_lr_directions[1], king_lr_directions[3], king_lr_directions[5])
 }
 
-var king_ud_moves = func(b Board, p Piece, fromLocation Point, moves *Array100[FastMove]) {
+var king_ud_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove]) {
     for _, direction := range queen_directions {
-        addSimple(b, p, fromLocation, moves, direction)
+        addSimple(b, fromPiece, fromLocation, moves, direction)
     }
 
-    if p.index > 17 {
+    if fromPiece.moved() {
         return
     }
 
-    addCastle(b, p, fromLocation, moves, king_ud_directions[0], king_ud_directions[2], king_ud_directions[4])
-    addCastle(b, p, fromLocation, moves, king_ud_directions[1], king_ud_directions[3], king_ud_directions[5])
+    addCastle(b, fromPiece, fromLocation, moves, king_ud_directions[0], king_ud_directions[2], king_ud_directions[4])
+    addCastle(b, fromPiece, fromLocation, moves, king_ud_directions[1], king_ud_directions[3], king_ud_directions[5])
 }
 
-func findRookForCastle(b Board, p Piece, fromLocation Point, direction Point) (Point, Piece, bool) {
-    currentLocation := fromLocation.add(direction)
+func addCastle(b Board, fromPiece *Piece, fromLocation *Point, moves *Array100[FastMove], direction *Point, kingOffset *Point, rookOffset *Point) {
+    // find rook for castle
+    fromRookLocation := *fromLocation
+    var rook *Piece
 
     for {
-        piece, ok := b.getPiece(currentLocation)
-        if !ok {
-            return Point{}, Piece{}, false
+        fromRookLocation.add(direction)
+
+        rook = b.getPiece(&fromRookLocation)
+        if rook == nil {
+            return
         }
 
-        if !piece.valid() {
-            currentLocation = currentLocation.add(direction)
+        if !rook.valid() {
             continue
         }
 
-        if piece.index == ROOK && piece.color == p.color {
-            return currentLocation, piece, true
+        if rook.index == ROOK && rook.color == fromPiece.color {
+            break
         }
 
-        return Point{}, Piece{}, false
-    }
-}
-
-func findEdgeForCastle(b Board, p Piece, fromLocation Point, direction Point) Point {
-    previousLocation := fromLocation
-    currentLocation := previousLocation.add(direction)
-
-    for {
-        _, ok := b.getPiece(currentLocation)
-        if !ok {
-            return previousLocation
-        }
-
-        previousLocation = currentLocation
-        currentLocation = previousLocation.add(direction)
-    }
-}
-
-func addCastle(b Board, p Piece, fromLocation Point, moves *Array100[FastMove], direction Point, kingOffset Point, rookOffset Point) {
-    fromRookLocation, rook, ok := findRookForCastle(b, p, fromLocation, direction)
-    if !ok {
         return
     }
 
-    edgeLocation := findEdgeForCastle(b, p, fromRookLocation, direction)
-    toLocation := edgeLocation.add(kingOffset)
-    toRookLocation := edgeLocation.add(rookOffset)
+    // find edge for castle
+    edgeLocation := fromRookLocation
+    currentLocation := edgeLocation
+
+    for {
+        currentLocation.add(direction)
+
+        piece := b.getPiece(&currentLocation)
+        if piece == nil {
+            break
+        }
+
+        edgeLocation.add(direction)
+    }
+
+    // everything else
+    toLocation := edgeLocation
+    toRookLocation := edgeLocation
+    toLocation.add(kingOffset)
+    toRookLocation.add(rookOffset)
 
     xCheckedMin := min(fromLocation.x, fromRookLocation.x)
     xCheckedMax := max(fromLocation.x, fromRookLocation.x)
@@ -532,25 +555,25 @@ func addCastle(b Board, p Piece, fromLocation Point, moves *Array100[FastMove], 
 
     clr := true
     for x := xCheckedMin - 1; x >= xToMin && clr; x-- {
-        if piece, ok := b.getPiece(Point{x, fromLocation.y}); !ok || piece.valid() {
+        if piece := b.getPiece(&Point{x, fromLocation.y}); piece == nil || piece.valid() {
             clr = false
             break
         }
     }
     for y := yCheckedMin - 1; y >= yToMin && clr; y-- {
-        if piece, ok := b.getPiece(Point{fromLocation.x, y}); !ok || piece.valid() {
+        if piece := b.getPiece(&Point{fromLocation.x, y}); piece == nil || piece.valid() {
             clr = false
             break
         }
     }
     for x := xCheckedMax + 1; x <= xToMax && clr; x++ {
-        if piece, ok := b.getPiece(Point{x, fromLocation.y}); !ok || piece.valid() {
+        if piece := b.getPiece(&Point{x, fromLocation.y}); piece == nil || piece.valid() {
             clr = false
             break
         }
     }
     for y := yCheckedMax + 1; y <= yToMax && clr; y++ {
-        if piece, ok := b.getPiece(Point{fromLocation.y, y}); !ok || piece.valid() {
+        if piece := b.getPiece(&Point{fromLocation.y, y}); piece == nil || piece.valid() {
             clr = false
             break
         }
@@ -584,7 +607,8 @@ func addCastle(b Board, p Piece, fromLocation Point, moves *Array100[FastMove], 
         miny = toLocation.y + 1
         maxy = fromLocation.y - 1
     }
+    vulnerable := Vulnerable{Point{minx, miny}, Point{maxx, maxy}}
 
-    moves.append(createMoveCastle(b, p, fromLocation, rook, fromRookLocation, toLocation, toRookLocation, Vulnerable{Point{minx, miny}, Point{maxx, maxy}}))
+    addMoveCastle(b, fromPiece, fromLocation, &toLocation, rook, &fromRookLocation, &toRookLocation, &vulnerable, moves)
 }
 

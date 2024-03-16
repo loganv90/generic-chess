@@ -52,10 +52,7 @@ func (s *SimpleSearcher) search() (MoveKey, error) {
     // we can just do recursive search and pass around a single game object while execuing and undoing moves
     // first we need to make a copy of the game object
 
-    err := s.b.CalculateMoves()
-    if err != nil {
-        return MoveKey{}, err
-    }
+    s.b.CalculateMoves()
 
     _, move, ok, err := s.minimax(4)
     if err != nil {
@@ -98,11 +95,11 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
         panic(fmt.Errorf("invalid player"))
     }
 
-    movesPointer, err := s.b.MovesOfColor(currentPlayer)
-    moves := *movesPointer
-    if err != nil {
-        panic(err)
+    movesPointer := s.b.MovesOfColor(currentPlayer)
+    if movesPointer == nil {
+        panic(fmt.Errorf("invalid player"))
     }
+    moves := *movesPointer
 
     inCheck := s.b.Check(currentPlayer)
 
@@ -122,10 +119,7 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
             panic(err)
         }
 
-        err = s.b.CalculateMoves()
-        if err != nil {
-            panic(err)
-        }
+        s.b.CalculateMoves()
 
         if s.b.Check(currentPlayer) {
             err := move.undo()

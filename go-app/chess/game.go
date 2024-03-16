@@ -103,7 +103,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return fmt.Errorf("game is over")
     }
 
-    moves, err := s.b.LegalMovesOfLocation(fromLocation)
+    moves, err := s.b.LegalMovesOfLocation(&fromLocation)
     if err != nil {
         return err
     }
@@ -140,10 +140,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return err
     }
 
-    err = s.b.CalculateMoves()
-    if err != nil {
-        return err
-    }
+    s.b.CalculateMoves()
 
     for {
         currentPlayer, _ := s.p.getCurrent()
@@ -186,8 +183,8 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
 func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     location := Point{x, y}
 
-    piece, ok := s.b.getPiece(location)
-    if !ok || !piece.valid() {
+    piece := s.b.getPiece(&location)
+    if piece == nil || !piece.valid() {
         return &PieceState{
             X: x,
             Y: y,
@@ -208,7 +205,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
 
     currentPlayer, _ := s.p.getCurrent()
     if currentPlayer == piece.color {
-        moves, err := s.b.LegalMovesOfLocation(location)
+        moves, err := s.b.LegalMovesOfLocation(&location)
         if err != nil {
             return &PieceState{
                 X: x,
@@ -276,10 +273,7 @@ func (s *SimpleGame) Undo() error {
         return err
     }
 
-    err = s.b.CalculateMoves()
-    if err != nil {
-        return err
-    }
+    s.b.CalculateMoves()
 
     return nil
 }
@@ -290,10 +284,7 @@ func (s *SimpleGame) Redo() error {
         return err
     }
 
-    err = s.b.CalculateMoves()
-    if err != nil {
-        return err
-    }
+    s.b.CalculateMoves()
 
     return nil
 }

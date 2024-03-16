@@ -80,7 +80,7 @@ func (e *SimpleEvaluator) eval() ([]int, error) {
     return scores, nil
 }
 
-func (e *SimpleEvaluator) evalMaterial(pieceLocations [][]Point) ([]int, error) {
+func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[Point]) ([]int, error) {
     // idea is to compare our material to the leading player's material
 
     leadingMaterial := 0
@@ -89,11 +89,15 @@ func (e *SimpleEvaluator) evalMaterial(pieceLocations [][]Point) ([]int, error) 
 
     for color, locations := range pieceLocations {
         materialCount := 0
-        for _, location := range locations {
-            piece, ok := e.b.getPiece(location)
-            if !ok || !piece.valid() {
+
+        for i := 0; i < locations.count; i++ {
+            location := locations.array[i]
+
+            piece := e.b.getPiece(&location)
+            if piece == nil || !piece.valid() {
                 return nil, fmt.Errorf("no piece at location")
             }
+
             materialCount += piece.value()
         }
 
