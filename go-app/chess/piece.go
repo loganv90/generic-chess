@@ -228,9 +228,8 @@ func (p *Piece) print() string {
     return piece_names[p.index]
 }
 
-func (p *Piece) copy(piece *Piece) {
-    piece.color = p.color
-    piece.index = piece_moved_indexes[p.index]
+func (p *Piece) move() {
+    p.index = piece_moved_indexes[p.index]
 }
 
 func (p *Piece) moved() bool {

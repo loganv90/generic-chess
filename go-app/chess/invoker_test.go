@@ -9,8 +9,8 @@ import (
 
 func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
     b := &MockBoard{}
-    b.On("setEnPassant", mock.Anything, mock.Anything).Return(nil)
-    b.On("setVulnerable", mock.Anything, mock.Anything).Return(nil)
+    b.On("getEnPassant", mock.Anything).Return(&EnPassant{})
+    b.On("getVulnerable", mock.Anything).Return(&Vulnerable{})
     move1 := FastMove{b: b}
     move2 := FastMove{b: b}
 
@@ -26,27 +26,27 @@ func Test_SimpleInvoker_UndoAndRedoInOrder(t *testing.T) {
 
 	err = simpleInvoker.execute(move1, playerTransition1)
 	assert.Nil(t, err)
-	b.AssertNumberOfCalls(t, "setEnPassant", 1)
+	b.AssertNumberOfCalls(t, "getEnPassant", 1)
 
 	err = simpleInvoker.execute(move2, playerTransition2)
 	assert.Nil(t, err)
-	b.AssertNumberOfCalls(t, "setEnPassant", 2)
+	b.AssertNumberOfCalls(t, "getEnPassant", 2)
 
 	err = simpleInvoker.undo()
 	assert.Nil(t, err)
-	b.AssertNumberOfCalls(t, "setEnPassant", 3)
+	b.AssertNumberOfCalls(t, "getEnPassant", 3)
 
 	err = simpleInvoker.undo()
 	assert.Nil(t, err)
-	b.AssertNumberOfCalls(t, "setEnPassant", 4)
+	b.AssertNumberOfCalls(t, "getEnPassant", 4)
 
 	err = simpleInvoker.redo()
 	assert.Nil(t, err)
-	b.AssertNumberOfCalls(t, "setEnPassant", 5)
+	b.AssertNumberOfCalls(t, "getEnPassant", 5)
 
 	err = simpleInvoker.redo()
 	assert.Nil(t, err)
-	b.AssertNumberOfCalls(t, "setEnPassant", 6)
+	b.AssertNumberOfCalls(t, "getEnPassant", 6)
 }
 
 func Test_SimpleInvoker_UndoAndRedoWithNoMoves(t *testing.T) {
@@ -62,8 +62,8 @@ func Test_SimpleInvoker_UndoAndRedoWithNoMoves(t *testing.T) {
 
 func Test_SimpleInvoker_OverwriteHistory(t *testing.T) {
     b := &MockBoard{}
-    b.On("setEnPassant", mock.Anything, mock.Anything).Return(nil)
-    b.On("setVulnerable", mock.Anything, mock.Anything).Return(nil)
+    b.On("getEnPassant", mock.Anything).Return(&EnPassant{})
+    b.On("getVulnerable", mock.Anything).Return(&Vulnerable{})
     move1 := FastMove{b: b}
     move2 := FastMove{b: b}
     move3 := FastMove{b: b}

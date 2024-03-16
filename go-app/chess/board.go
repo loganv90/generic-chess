@@ -205,8 +205,10 @@ func (b *SimpleBoard) possibleEnPassant(color int, target *Point) (*EnPassant, *
     var en1 *EnPassant
     var en2 *EnPassant
 
-	for c, e := range b.enPassants {
-        if c == color {
+    for i := 0; i < b.players; i++ { // using range function here reassigns pointers to the new value address
+        e := b.enPassants[i]
+
+        if i == color {
             continue
         }
 
@@ -287,17 +289,18 @@ func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
 }
 
 func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, error) {
-    piece := b.getPiece(fromLocation)
-    if piece == nil || !piece.valid() {
+    piecePointer := b.getPiece(fromLocation)
+    if piecePointer == nil || !piecePointer.valid() {
         return nil, fmt.Errorf("invalid piece")
     }
+    color := piecePointer.color
 
     movesPointer := b.MovesOfLocation(fromLocation)
     if movesPointer == nil {
         return nil, fmt.Errorf("invalid location")
     }
-
     moves := *movesPointer
+
     legalMoves := []FastMove{}
 
     for i := 0; i < moves.count; i++ {
@@ -313,7 +316,7 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
 
         b.CalculateMoves()
 
-        if !b.Check(piece.color) {
+        if !b.Check(color) {
             legalMoves = append(legalMoves, move)
         }
 
@@ -362,6 +365,10 @@ func (b *SimpleBoard) CalculateMoves() {
 
             piece := b.pieces[y][x]
             if !piece.valid() {
+                continue
+            }
+
+            if b.playersDisabled[piece.color] {
                 continue
             }
 

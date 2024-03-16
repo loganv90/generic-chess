@@ -13,6 +13,8 @@ func addMoveSimple(
     newPiece *Piece,
     moves *Array100[FastMove],
 ) {
+    move := moves.get()
+
 	enPassant := b.getEnPassant(fromPiece.color)
 	if enPassant == nil {
         panic("what")
@@ -27,38 +29,39 @@ func addMoveSimple(
     if newPiece != nil {
         promotion = newPiece.print()
     } else {
-        newPiece = fromPiece
+        newPiece = &Piece{0, 0}
+        newPiece.color = fromPiece.color
+        newPiece.index = fromPiece.index
+        newPiece.move()
         promotion = ""
     }
 
 
-    newPieceLocations := Array4[PieceLocation]{}
+    // we can try doing this stuff everywhere
+    move.newPieceLocation.clear()
+    move.oldPieceLocation.clear()
 
-    pieceLocation := newPieceLocations.get()
+    pieceLocation := move.newPieceLocation.get()
     pieceLocation.piece = Piece{0, 0}
     pieceLocation.location = *fromLocation
-    newPieceLocations.next()
+    move.newPieceLocation.next()
 
-    pieceLocation = newPieceLocations.get()
+    pieceLocation = move.newPieceLocation.get()
     pieceLocation.piece = *newPiece
     pieceLocation.location = *toLocation
-    newPieceLocations.next()
+    move.newPieceLocation.next()
 
-
-    oldPieceLocations := Array4[PieceLocation]{}
-
-    pieceLocation = oldPieceLocations.get()
+    pieceLocation = move.oldPieceLocation.get()
     pieceLocation.piece = *fromPiece
     pieceLocation.location = *fromLocation
-    oldPieceLocations.next()
+    move.oldPieceLocation.next()
 
-    pieceLocation = oldPieceLocations.get()
+    pieceLocation = move.oldPieceLocation.get()
     pieceLocation.piece = *toPiece
     pieceLocation.location = *toLocation
-    oldPieceLocations.next()
+    move.oldPieceLocation.next()
 
 
-    move := moves.get()
     move.b = b
     move.fromLocation = *fromLocation
     move.toLocation = *toLocation
@@ -66,14 +69,12 @@ func addMoveSimple(
     move.allyDefense = false
     move.promotion = promotion
 
-    move.newPieceLocation = newPieceLocations
-    move.oldPieceLocation = oldPieceLocations
-
     move.newEnPassant = EnPassant{target: Point{-1, -1}, risk: Point{-1, -1}}
     move.oldEnPassant = *enPassant
 
     move.newVulnerable = Vulnerable{start: Point{-1, -1}, end: Point{-1, -1}}
     move.oldVulnerable = *vulnerable
+
     moves.next()
 }
 
@@ -164,6 +165,16 @@ func addMoveAllyDefense(
     move.color = fromPiece.color
     move.allyDefense = true
     move.promotion = ""
+    move.newPieceLocation.clear()
+    move.oldPieceLocation.clear()
+    move.newEnPassant.target.x = -1
+    move.newEnPassant.risk.x = -1
+    move.oldEnPassant.target.x = -1
+    move.oldEnPassant.risk.x = -1
+    move.newVulnerable.start.x = -1
+    move.newVulnerable.end.x = -1
+    move.oldVulnerable.start.x = -1
+    move.oldVulnerable.end.x = -1
     moves.next()
 }
 
@@ -188,10 +199,10 @@ func addMoveCastle(
         panic("what")
     }
 
-    newKing := Piece{0, 0}
-    newRook := Piece{0, 0}
-	king.copy(&newKing)
-	rook.copy(&newRook)
+    newKing := *king
+    newRook := *rook
+    newKing.move()
+    newRook.move()
 
 
     newPieceLocations := Array4[PieceLocation]{}
