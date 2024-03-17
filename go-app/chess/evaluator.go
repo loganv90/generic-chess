@@ -38,16 +38,12 @@ type SimpleEvaluator struct {
 }
 
 func (e *SimpleEvaluator) eval() ([]int, error) {
-    gameOver, err := e.p.getGameOver()
-    if err != nil {
-        return nil, err
-    }
-
+    gameOver := e.p.getGameOver()
     players := e.p.getPlayers()
-    scores := make([]int, players)
+    scores := make([]int, players) // TODO this is also probably a problem
 
     if gameOver {
-        winner, _ := e.p.getWinner()
+        winner := e.p.getWinner()
 
         if winner < 0 || winner >= players {
             return scores, nil
@@ -80,7 +76,7 @@ func (e *SimpleEvaluator) eval() ([]int, error) {
     return scores, nil
 }
 
-func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[Point]) ([]int, error) {
+func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[*Point]) ([]int, error) {
     // idea is to compare our material to the leading player's material
 
     leadingMaterial := 0
@@ -93,8 +89,8 @@ func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[Point]) ([]int,
         for i := 0; i < locations.count; i++ {
             location := locations.array[i]
 
-            piece := e.b.getPiece(&location)
-            if piece == nil || !piece.valid() {
+            piece := e.b.getPiece(location)
+            if piece == nil {
                 return nil, fmt.Errorf("no piece at location")
             }
 

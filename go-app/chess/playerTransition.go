@@ -1,23 +1,10 @@
 package chess
 
-import (
-    "fmt"
-)
-
-func createPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
-    oldCurrent, _ := p.getCurrent()
-
-    oldWinner, _ := p.getWinner()
-
-    oldGameOver, err := p.getGameOver()
-    if err != nil {
-        return PlayerTransition{}, err
-    }
-
-    next, remaining, err := p.getNextAndRemaining()
-    if err != nil {
-        return PlayerTransition{}, err
-    }
+func createPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool, t *PlayerTransition) {
+    oldCurrent := p.getCurrent()
+    oldWinner := p.getWinner()
+    oldGameOver := p.getGameOver()
+    next, remaining := p.getNextAndRemaining()
 
     var newCurrent int
     var newWinner int
@@ -51,17 +38,15 @@ func createPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inSta
         newGameOver = false
     }
 
-    return PlayerTransition{
-        p: p,
-        b: b,
-        oldCurrent: oldCurrent,
-        newCurrent: newCurrent,
-        newWinner: newWinner,
-        oldWinner: oldWinner,
-        oldGameOver: oldGameOver,
-        newGameOver: newGameOver,
-        eliminated: inCheckmate,
-    }, nil
+    t.p = p
+    t.b = b
+    t.oldCurrent = oldCurrent
+    t.newCurrent = newCurrent
+    t.oldWinner = oldWinner
+    t.newWinner = newWinner
+    t.oldGameOver = oldGameOver
+    t.newGameOver = newGameOver
+    t.eliminated = inCheckmate
 }
 
 type PlayerTransition struct {
@@ -76,63 +61,29 @@ type PlayerTransition struct {
     eliminated bool
 }
 
-func (s *PlayerTransition) execute() error {
-    ok := s.p.setCurrent(s.newCurrent)
-    if !ok {
-        return fmt.Errorf("invalid color")
-    }
-
-    ok = s.p.setWinner(s.newWinner)
-    if !ok {
-        return fmt.Errorf("invalid color")
-    }
-
-    err := s.p.setGameOver(s.newGameOver)
-    if err != nil {
-        return err
-    }
+func (s *PlayerTransition) execute() {
+    s.p.setCurrent(s.newCurrent)
+    s.p.setWinner(s.newWinner)
+    s.p.setGameOver(s.newGameOver)
 
     if !s.eliminated {
-        return nil
+        return
     }
 
-    err = s.p.eliminate(s.oldCurrent)
-    if err != nil {
-        return err
-    }
-
+    s.p.eliminate(s.oldCurrent)
     s.b.disablePieces(s.oldCurrent, true)
-
-    return nil
 }
 
-func (s *PlayerTransition) undo() error {
-    ok := s.p.setCurrent(s.oldCurrent)
-    if !ok {
-        return fmt.Errorf("invalid color")
-    }
-
-    ok = s.p.setWinner(s.oldWinner)
-    if !ok {
-        return fmt.Errorf("invalid color")
-    }
-
-    err := s.p.setGameOver(s.oldGameOver)
-    if err != nil {
-        return err
-    }
+func (s *PlayerTransition) undo() {
+    s.p.setCurrent(s.oldCurrent)
+    s.p.setWinner(s.oldWinner)
+    s.p.setGameOver(s.oldGameOver)
 
     if !s.eliminated {
-        return nil
+        return
     }
 
-    err = s.p.restore(s.oldCurrent)
-    if err != nil {
-        return err
-    }
-
+    s.p.restore(s.oldCurrent)
     s.b.disablePieces(s.oldCurrent, false)
-
-    return nil
 }
 

@@ -76,34 +76,35 @@ type SimpleGame struct {
 func (s *SimpleGame) State() (*BoardData, error) {
     boardData := s.b.State()
 
-    currentPlayer, _ := s.p.getCurrent()
-
+    currentPlayer := s.p.getCurrent()
     boardData.CurrentPlayer = currentPlayer
 
-    winningPlayer, _ := s.p.getWinner()
-
+    winningPlayer := s.p.getWinner()
     boardData.WinningPlayer = winningPlayer
 
-    gameOver, err := s.p.getGameOver()
-    if err != nil {
-        return nil, err
-    }
-
+    gameOver := s.p.getGameOver()
     boardData.GameOver = gameOver
 
     return boardData, nil
 }
 
 func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion string) error {
-    fromLocation := Point{xFrom, yFrom}
-    toLocation := Point{xTo, yTo}
+    fromLocation := s.b.getIndex(xFrom, yFrom)
+    if fromLocation == nil {
+        return fmt.Errorf("invalid from location")
+    }
 
-    gameOver, err := s.p.getGameOver()
-    if err != nil || gameOver {
+    toLocation := s.b.getIndex(xTo, yTo)
+    if toLocation == nil {
+        return fmt.Errorf("invalid to location")
+    }
+
+    gameOver := s.p.getGameOver()
+    if gameOver {
         return fmt.Errorf("game is over")
     }
 
-    moves, err := s.b.LegalMovesOfLocation(&fromLocation)
+    moves, err := s.b.LegalMovesOfLocation(fromLocation)
     if err != nil {
         return err
     }
@@ -111,12 +112,18 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
     found := false
     var move FastMove
     for _, m := range moves {
-        if m.fromLocation == fromLocation && m.toLocation == toLocation && m.promotion == promotion {
+        promotionString := ""
+        if m.promotionIndex >= 0 {
+            promotionString = piece_names[m.promotionIndex]
+        }
+
+        if m.fromLocation == fromLocation && m.toLocation == toLocation && promotionString == promotion {
             move = m
             found = true
             break
         }
-        if m.fromLocation == fromLocation && m.toLocation == toLocation && m.promotion == "" {
+
+        if m.fromLocation == fromLocation && m.toLocation == toLocation && promotionString == "" {
             move = m
             found = true
         }
@@ -130,10 +137,8 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         return fmt.Errorf("AllyDefenseMove not possible")
     }
 
-    transition, err := s.p.GetTransition(s.b, false, false)
-    if err != nil {
-        return err
-    }
+    transition := PlayerTransition{}
+    createPlayerTransition(s.b, s.p, false, false, &transition)
 
     err = s.i.execute(move, transition)
     if err != nil {
@@ -143,7 +148,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
     s.b.CalculateMoves()
 
     for {
-        currentPlayer, _ := s.p.getCurrent()
+        currentPlayer := s.p.getCurrent()
 
         checkmate, stalemate, err := s.b.CheckmateAndStalemate(currentPlayer)
         if err != nil {
@@ -151,10 +156,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
         }
 
         if checkmate {
-            transition, err := s.p.GetTransition(s.b, true, false)
-            if err != nil {
-                return err
-            }
+            createPlayerTransition(s.b, s.p, true, false, &transition)
 
             err = s.i.executeHalf(transition)
             if err != nil {
@@ -163,10 +165,7 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
 
             continue
         } else if stalemate {
-            transition, err := s.p.GetTransition(s.b, false, true)
-            if err != nil {
-                return err
-            }
+            createPlayerTransition(s.b, s.p, false, true, &transition)
 
             err = s.i.executeHalf(transition)
             if err != nil {
@@ -184,7 +183,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
     location := Point{x, y}
 
     piece := s.b.getPiece(&location)
-    if piece == nil || !piece.valid() {
+    if piece == nil {
         return &PieceState{
             X: x,
             Y: y,
@@ -193,8 +192,8 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         }, nil
     }
 
-    gameOver, err := s.p.getGameOver()
-    if err != nil || gameOver {
+    gameOver := s.p.getGameOver()
+    if gameOver {
         return &PieceState{
             X: x,
             Y: y,
@@ -203,7 +202,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
         }, nil
     }
 
-    currentPlayer, _ := s.p.getCurrent()
+    currentPlayer := s.p.getCurrent()
     if currentPlayer == piece.color {
         moves, err := s.b.LegalMovesOfLocation(&location)
         if err != nil {
@@ -221,7 +220,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
             moveData := MoveData{
                 X: m.toLocation.x,
                 Y: m.toLocation.y,
-                P: m.promotion != "",
+                P: m.promotionIndex >= 0,
             }
 
             if _, ok := moveSet[moveData]; !ok {

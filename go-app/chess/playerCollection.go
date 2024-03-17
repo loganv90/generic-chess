@@ -9,19 +9,18 @@ Responsible for:
 - keeping track of the players in the game
 */
 type PlayerCollection interface {
-    eliminate(color int) error
-    restore(color int) error
-    getCurrent() (int, bool)
-    setCurrent(color int) bool
-    getWinner() (int, bool)
-    setWinner(color int) bool
-    getGameOver() (bool, error)
-    setGameOver(gameOver bool) error
+    eliminate(color int)
+    restore(color int)
+    getCurrent() int
+    setCurrent(color int)
+    getWinner() int
+    setWinner(color int)
+    getGameOver() bool
+    setGameOver(gameOver bool)
 
-    getNextAndRemaining() (int, int, error)
+    getNextAndRemaining() (int, int)
     getPlayers() int
 
-    GetTransition(b Board, inCheckmate bool, inStalemate bool) (PlayerTransition, error)
     Copy() (PlayerCollection, error)
 }
 
@@ -52,69 +51,59 @@ type SimplePlayerCollection struct {
     gameOver bool
 }
 
-func (s *SimplePlayerCollection) eliminate(color int) error {
+func (s *SimplePlayerCollection) colorOutOfBounds(color int) bool {
+    return color < 0 || color >= s.players
+}
+
+func (s *SimplePlayerCollection) eliminate(color int) {
     if s.colorOutOfBounds(color) {
-        return fmt.Errorf("invalid color")
+        return
     }
 
     s.playersAlive[color] = false
-    return nil
 }
 
-func (s *SimplePlayerCollection) restore(color int) error {
+func (s *SimplePlayerCollection) restore(color int) {
     if s.colorOutOfBounds(color) {
-        return fmt.Errorf("invalid color")
+        return
     }
 
     s.playersAlive[color] = true
-    return nil
 }
 
-func (s *SimplePlayerCollection) getCurrent() (int, bool) {
+func (s *SimplePlayerCollection) getCurrent() int {
     if s.colorOutOfBounds(s.currentPlayer) {
-        return -1, false
+        return -1
     }
 
-    return s.currentPlayer, true
+    return s.currentPlayer
 }
 
-func (s *SimplePlayerCollection) setCurrent(color int) bool {
+func (s *SimplePlayerCollection) setCurrent(color int) {
     if s.colorOutOfBounds(color) {
-        return false
+        return
     }
 
     s.currentPlayer = color
-    return true
 }
 
-func (s *SimplePlayerCollection) getWinner() (int, bool) {
-    if s.colorOutOfBounds(s.winningPlayer) {
-        return -1, true
-    }
-
-    return s.winningPlayer, true
+func (s *SimplePlayerCollection) getWinner() int {
+    return s.winningPlayer
 }
 
-func (s *SimplePlayerCollection) setWinner(color int) bool {
-    if s.colorOutOfBounds(color) {
-        s.winningPlayer = -1
-        return true
-    }
-
+func (s *SimplePlayerCollection) setWinner(color int) {
     s.winningPlayer = color
-    return true
 }
 
-func (s *SimplePlayerCollection) getGameOver() (bool, error) {
-    return s.gameOver, nil
+func (s *SimplePlayerCollection) getGameOver() bool {
+    return s.gameOver
 }
 
-func (s *SimplePlayerCollection) setGameOver(gameOver bool) error {
+func (s *SimplePlayerCollection) setGameOver(gameOver bool) {
     s.gameOver = gameOver
-    return nil
 }
 
-func (s *SimplePlayerCollection) getNextAndRemaining() (int, int, error) {
+func (s *SimplePlayerCollection) getNextAndRemaining() (int, int) {
     currentPlayer := s.currentPlayer
     for {
         currentPlayer = s.incrementOnce(currentPlayer)
@@ -135,7 +124,7 @@ func (s *SimplePlayerCollection) getNextAndRemaining() (int, int, error) {
         }
     }
 
-    return currentPlayer, remaining, nil
+    return currentPlayer, remaining
 }
 
 func (s *SimplePlayerCollection) incrementOnce(start int) int {
@@ -148,10 +137,6 @@ func (s *SimplePlayerCollection) incrementOnce(start int) int {
 
 func (s *SimplePlayerCollection) getPlayers() int {
     return s.players
-}
-
-func (s *SimplePlayerCollection) GetTransition(b Board, inCheckmate bool, inStalemate bool) (PlayerTransition, error) {
-    return createPlayerTransition(b, s, inCheckmate, inStalemate)
 }
 
 func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {
@@ -167,9 +152,5 @@ func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {
         winningPlayer: s.winningPlayer,
         gameOver: s.gameOver,
     }, nil
-}
-
-func (s *SimplePlayerCollection) colorOutOfBounds(color int) bool {
-    return color < 0 || color >= s.players
 }
 

@@ -63,23 +63,24 @@ func (s *SimpleSearcher) search() (MoveKey, error) {
         return MoveKey{}, fmt.Errorf("no move found")
     }
 
+    promotionString := ""
+    if move.promotionIndex >= 0 {
+        promotionString = piece_names[move.promotionIndex]
+    }
+
     return MoveKey{
         XFrom: move.fromLocation.x,
         YFrom: move.fromLocation.y,
         XTo: move.toLocation.x,
         YTo: move.toLocation.y,
-        Promotion: move.promotion,
+        Promotion: promotionString,
     }, nil
 }
 
 func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
     s.minimaxCalls++
 
-    gameOver, err := s.p.getGameOver()
-    if err != nil {
-        panic(err)
-    }
-
+    gameOver := s.p.getGameOver()
     if depth == 0 || gameOver {
         score, err := s.e.eval()
         if err != nil {
@@ -90,7 +91,7 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
     }
 
     players := s.p.getPlayers()
-    currentPlayer, _ := s.p.getCurrent()
+    currentPlayer := s.p.getCurrent()
     if currentPlayer < 0 || currentPlayer >= players {
         panic(fmt.Errorf("invalid player"))
     }
@@ -105,6 +106,7 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
 
     found := false
     var bestMove FastMove
+    var transition PlayerTransition
     bestScore := make([]int, players)
     bestScore[currentPlayer] = -1000000
 
@@ -114,45 +116,27 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
             continue
         }
 
-        err := move.execute()
-        if err != nil {
-            panic(err)
-        }
+        move.execute()
 
         s.b.CalculateMoves()
 
         if s.b.Check(currentPlayer) {
-            err := move.undo()
-            if err != nil {
-                panic(err)
-            }
+            move.undo()
             continue
         }
 
-        transition, err := s.p.GetTransition(s.b, false, false)
-        if err != nil {
-            panic(err)
-        }
+        createPlayerTransition(s.b, s.p, false, false, &transition)
 
-        err = transition.execute()
-        if err != nil {
-            panic(err)
-        }
+        transition.execute()
 
         score, _, _, err := s.minimax(depth-1)
         if err != nil {
             panic(err)
         }
 
-        err = move.undo()
-        if err != nil {
-            panic(err)
-        }
+        move.undo()
 
-        err = transition.undo()
-        if err != nil {
-            panic(err)
-        }
+        transition.undo()
 
         if score[currentPlayer] > bestScore[currentPlayer] {
             bestScore = score
@@ -164,29 +148,20 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
     if !found {
         // stalemate
         if !inCheck {
-            return make([]int, players), FastMove{}, false, nil
+            return make([]int, players), FastMove{}, false, nil // TODO this is probably a problem
         }
 
         // checkmate
-        transition, err := s.p.GetTransition(s.b, true, false)
-        if err != nil {
-            panic(err)
-        }
+        createPlayerTransition(s.b, s.p, true, false, &transition)
 
-        err = transition.execute()
-        if err != nil {
-            panic(err)
-        }
+        transition.execute()
 
         score, _, _, err := s.minimax(depth)
         if err != nil {
             panic(err)
         }
 
-        err = transition.undo()
-        if err != nil {
-            panic(err)
-        }
+        transition.undo()
 
         return score, FastMove{}, false, nil
     }

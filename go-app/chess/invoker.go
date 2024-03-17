@@ -31,15 +31,8 @@ type SimpleInvoker struct {
 }
 
 func (s *SimpleInvoker) execute(m FastMove, p PlayerTransition) error {
-    err := m.execute()
-    if err != nil {
-        return err
-    }
-
-    err = p.execute()
-    if err != nil {
-        return err
-    }
+    m.execute()
+    p.execute()
 
 	s.history = append(s.history[:s.index+1], Command{m, p, true})
     s.index++
@@ -48,10 +41,7 @@ func (s *SimpleInvoker) execute(m FastMove, p PlayerTransition) error {
 }
 
 func (s *SimpleInvoker) executeHalf(p PlayerTransition) error {
-    err := p.execute()
-    if err != nil {
-        return err
-    }
+    p.execute()
 
 	s.history = append(s.history[:s.index+1], Command{FastMove{}, p, false})
     s.index++
@@ -93,16 +83,10 @@ func (s *SimpleInvoker) undoHelper() error {
     command := s.history[s.index]
 
     if command.fullMove {
-        err := command.m.undo()
-        if err != nil {
-            return err
-        }
+        command.m.undo()
     }
 
-    err := command.p.undo()
-    if err != nil {
-        return err
-    }
+    command.p.undo()
 
 	s.index--
 
@@ -143,16 +127,10 @@ func (s *SimpleInvoker) redoHelper() error {
     command := s.history[s.index+1]
 
     if command.fullMove {
-        err := command.m.execute()
-        if err != nil {
-            return err
-        }
+        command.m.execute()
     }
 
-    err := command.p.execute()
-    if err != nil {
-        return err
-    }
+    command.p.execute()
 
 	s.index++
 

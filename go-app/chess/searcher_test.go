@@ -13,12 +13,13 @@ func Test_Minimax(t *testing.T) {
     white := 0
     black := 1
 
-    b, err := newSimpleBoard(Point{4, 4}, 2)
+    b, err := newSimpleBoard(4, 4, 2)
     assert.Nil(t, err)
-    setPiece(b, Point{2, 3}, Piece{white, KING_U})
-    setPiece(b, Point{3, 3}, Piece{white, ROOK})
-    setPiece(b, Point{0, 0}, Piece{black, KING_D})
-    b.disableLocation(&Point{0, 3})
+
+    b.setPiece(b.getIndex(2, 3), b.getAllPiece(white, KING_U))
+    b.setPiece(b.getIndex(3, 3), b.getAllPiece(white, ROOK))
+    b.setPiece(b.getIndex(0, 0), b.getAllPiece(black, KING_D))
+    b.disableLocation(b.getIndex(0, 3))
     b.CalculateMoves()
 
     p, err := newSimplePlayerCollection(2)
@@ -73,10 +74,11 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
 
     b, err := createSimpleBoardWithDefaultPieceLocations()
     assert.Nil(t, err)
-    setPiece(b, Point{5, 4}, Piece{white, QUEEN})
-    setPiece(b, Point{5, 3}, Piece{white, QUEEN})
-    setPiece(b, Point{3, 2}, Piece{black, PAWN_D_M})
-    setPiece(b, Point{6, 0}, Piece{0, 0})
+
+    b.setPiece(b.getIndex(5, 4), b.getAllPiece(white, QUEEN))
+    b.setPiece(b.getIndex(5, 3), b.getAllPiece(white, QUEEN))
+    b.setPiece(b.getIndex(3, 2), b.getAllPiece(black, PAWN_D_M))
+    b.setPiece(b.getIndex(6, 0), nil)
     b.CalculateMoves()
 
     p, err := createSimplePlayerCollectionWithDefaultPlayers()
@@ -95,13 +97,8 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
     searcher, err := newSimpleSearcher(game)
     assert.Nil(t, err)
 
-    what, move, ok, err := searcher.minimax(3)
+    _, move, _, err := searcher.minimax(3)
     assert.Nil(t, err)
-
-    fmt.Println("ok", ok)
-    fmt.Println("err", err)
-    fmt.Println("move", move)
-    fmt.Println("what", what)
 
     assert.Equal(t, 5, move.toLocation.x)
     assert.Equal(t, 2, move.toLocation.y)
@@ -155,45 +152,45 @@ func Benchmark_Minimax(t *testing.B) {
     black := 1
 
     for i := 0; i < t.N; i++ {
-        b, err := newSimpleBoard(Point{8, 8}, 2)
+        b, err := newSimpleBoard(8, 8, 2)
         assert.Nil(t, err)
 
-        setPiece(b, Point{0, 0}, Piece{black, QUEEN})
-        setPiece(b, Point{3, 0}, Piece{black, KING_U})
-        setPiece(b, Point{6, 0}, Piece{black, QUEEN})
+        b.setPiece(b.getIndex(0, 0), b.getAllPiece(black, QUEEN))
+        b.setPiece(b.getIndex(3, 0), b.getAllPiece(black, KING_U))
+        b.setPiece(b.getIndex(6, 0), b.getAllPiece(black, QUEEN))
 
-        setPiece(b, Point{2, 1}, Piece{black, KNIGHT})
-        setPiece(b, Point{3, 1}, Piece{black, QUEEN})
-        setPiece(b, Point{4, 1}, Piece{black, KNIGHT})
-        setPiece(b, Point{7, 1}, Piece{black, BISHOP})
+        b.setPiece(b.getIndex(2, 1), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(3, 1), b.getAllPiece(black, QUEEN))
+        b.setPiece(b.getIndex(4, 1), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(7, 1), b.getAllPiece(black, BISHOP))
 
-        setPiece(b, Point{1, 2}, Piece{black, KNIGHT})
-        setPiece(b, Point{3, 2}, Piece{white, PAWN_U})
-        setPiece(b, Point{5, 2}, Piece{black, KNIGHT})
-        setPiece(b, Point{7, 2}, Piece{black, BISHOP})
+        b.setPiece(b.getIndex(1, 2), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(3, 2), b.getAllPiece(white, PAWN_U))
+        b.setPiece(b.getIndex(5, 2), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(7, 2), b.getAllPiece(black, BISHOP))
 
-        setPiece(b, Point{2, 3}, Piece{black, ROOK})
-        setPiece(b, Point{3, 3}, Piece{black, KNIGHT})
-        setPiece(b, Point{4, 3}, Piece{black, ROOK})
-        setPiece(b, Point{7, 3}, Piece{white, QUEEN})
+        b.setPiece(b.getIndex(2, 3), b.getAllPiece(black, ROOK))
+        b.setPiece(b.getIndex(3, 3), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(4, 3), b.getAllPiece(black, ROOK))
+        b.setPiece(b.getIndex(7, 3), b.getAllPiece(white, QUEEN))
 
-        setPiece(b, Point{1, 4}, Piece{white, KNIGHT})
-        setPiece(b, Point{2, 4}, Piece{white, QUEEN})
-        setPiece(b, Point{4, 4}, Piece{white, QUEEN})
-        setPiece(b, Point{5, 4}, Piece{white, KNIGHT})
-        setPiece(b, Point{7, 4}, Piece{white, QUEEN})
+        b.setPiece(b.getIndex(1, 4), b.getAllPiece(white, KNIGHT))
+        b.setPiece(b.getIndex(2, 4), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(4, 4), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(5, 4), b.getAllPiece(white, KNIGHT))
+        b.setPiece(b.getIndex(7, 4), b.getAllPiece(white, QUEEN))
 
-        setPiece(b, Point{3, 5}, Piece{white, QUEEN})
-        setPiece(b, Point{7, 5}, Piece{white, BISHOP})
+        b.setPiece(b.getIndex(3, 5), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(7, 5), b.getAllPiece(white, BISHOP))
 
-        setPiece(b, Point{2, 6}, Piece{white, ROOK})
-        setPiece(b, Point{3, 6}, Piece{white, QUEEN})
-        setPiece(b, Point{4, 6}, Piece{white, ROOK})
-        setPiece(b, Point{7, 6}, Piece{white, BISHOP})
+        b.setPiece(b.getIndex(2, 6), b.getAllPiece(white, ROOK))
+        b.setPiece(b.getIndex(3, 6), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(4, 6), b.getAllPiece(white, ROOK))
+        b.setPiece(b.getIndex(7, 6), b.getAllPiece(white, BISHOP))
 
-        setPiece(b, Point{0, 7}, Piece{white, QUEEN})
-        setPiece(b, Point{3, 7}, Piece{white, KING_U})
-        setPiece(b, Point{6, 7}, Piece{white, QUEEN})
+        b.setPiece(b.getIndex(0, 7), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(3, 7), b.getAllPiece(white, KING_U))
+        b.setPiece(b.getIndex(6, 7), b.getAllPiece(white, QUEEN))
 
         b.CalculateMoves()
 
@@ -216,7 +213,7 @@ func Benchmark_Minimax(t *testing.B) {
         searcher, err := newSimpleSearcher(game)
         assert.Nil(t, err)
 
-        _, _, _, err = searcher.minimax(4)
+        _, _, _, err = searcher.minimax(3)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()
@@ -269,45 +266,45 @@ func Benchmark_CalculateMoves(t *testing.B) {
     black := 1
 
     for i := 0; i < t.N; i++ {
-        b, err := newSimpleBoard(Point{8, 8}, 2)
+        b, err := newSimpleBoard(8, 8, 2)
         assert.Nil(t, err)
 
-        setPiece(b, Point{0, 0}, Piece{black, QUEEN})
-        setPiece(b, Point{3, 0}, Piece{black, KING_U})
-        setPiece(b, Point{6, 0}, Piece{black, QUEEN})
+        b.setPiece(b.getIndex(0, 0), b.getAllPiece(black, QUEEN))
+        b.setPiece(b.getIndex(3, 0), b.getAllPiece(black, KING_U))
+        b.setPiece(b.getIndex(6, 0), b.getAllPiece(black, QUEEN))
 
-        setPiece(b, Point{2, 1}, Piece{black, KNIGHT})
-        setPiece(b, Point{3, 1}, Piece{black, QUEEN})
-        setPiece(b, Point{4, 1}, Piece{black, KNIGHT})
-        setPiece(b, Point{7, 1}, Piece{black, BISHOP})
+        b.setPiece(b.getIndex(2, 1), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(3, 1), b.getAllPiece(black, QUEEN))
+        b.setPiece(b.getIndex(4, 1), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(7, 1), b.getAllPiece(black, BISHOP))
 
-        setPiece(b, Point{1, 2}, Piece{black, KNIGHT})
-        setPiece(b, Point{3, 2}, Piece{white, PAWN_U})
-        setPiece(b, Point{5, 2}, Piece{black, KNIGHT})
-        setPiece(b, Point{7, 2}, Piece{black, BISHOP})
+        b.setPiece(b.getIndex(1, 2), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(3, 2), b.getAllPiece(white, PAWN_U))
+        b.setPiece(b.getIndex(5, 2), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(7, 2), b.getAllPiece(black, BISHOP))
 
-        setPiece(b, Point{2, 3}, Piece{black, ROOK})
-        setPiece(b, Point{3, 3}, Piece{black, KNIGHT})
-        setPiece(b, Point{4, 3}, Piece{black, ROOK})
-        setPiece(b, Point{7, 3}, Piece{white, QUEEN})
+        b.setPiece(b.getIndex(2, 3), b.getAllPiece(black, ROOK))
+        b.setPiece(b.getIndex(3, 3), b.getAllPiece(black, KNIGHT))
+        b.setPiece(b.getIndex(4, 3), b.getAllPiece(black, ROOK))
+        b.setPiece(b.getIndex(7, 3), b.getAllPiece(white, QUEEN))
 
-        setPiece(b, Point{1, 4}, Piece{white, KNIGHT})
-        setPiece(b, Point{2, 4}, Piece{white, QUEEN})
-        setPiece(b, Point{4, 4}, Piece{white, QUEEN})
-        setPiece(b, Point{5, 4}, Piece{white, KNIGHT})
-        setPiece(b, Point{7, 4}, Piece{white, QUEEN})
+        b.setPiece(b.getIndex(1, 4), b.getAllPiece(white, KNIGHT))
+        b.setPiece(b.getIndex(2, 4), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(4, 4), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(5, 4), b.getAllPiece(white, KNIGHT))
+        b.setPiece(b.getIndex(7, 4), b.getAllPiece(white, QUEEN))
 
-        setPiece(b, Point{3, 5}, Piece{white, QUEEN})
-        setPiece(b, Point{7, 5}, Piece{white, BISHOP})
+        b.setPiece(b.getIndex(3, 5), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(7, 5), b.getAllPiece(white, BISHOP))
 
-        setPiece(b, Point{2, 6}, Piece{white, ROOK})
-        setPiece(b, Point{3, 6}, Piece{white, QUEEN})
-        setPiece(b, Point{4, 6}, Piece{white, ROOK})
-        setPiece(b, Point{7, 6}, Piece{white, BISHOP})
+        b.setPiece(b.getIndex(2, 6), b.getAllPiece(white, ROOK))
+        b.setPiece(b.getIndex(3, 6), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(4, 6), b.getAllPiece(white, ROOK))
+        b.setPiece(b.getIndex(7, 6), b.getAllPiece(white, BISHOP))
 
-        setPiece(b, Point{0, 7}, Piece{white, QUEEN})
-        setPiece(b, Point{3, 7}, Piece{white, KING_U})
-        setPiece(b, Point{6, 7}, Piece{white, QUEEN})
+        b.setPiece(b.getIndex(0, 7), b.getAllPiece(white, QUEEN))
+        b.setPiece(b.getIndex(3, 7), b.getAllPiece(white, KING_U))
+        b.setPiece(b.getIndex(6, 7), b.getAllPiece(white, QUEEN))
 
         // the time is around 1ms right now
         // when we skip the calculation it's around 40ns

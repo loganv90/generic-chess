@@ -116,13 +116,13 @@ func Test_CastleWhenBlocked(t *testing.T) {
     white := 0
     black := 1
 
-    b, err := newSimpleBoard(Point{4, 4}, 2)
+    b, err := newSimpleBoard(4, 4, 2)
     assert.Nil(t, err)
 
-    setPiece(b, Point{1, 3}, Piece{white, PAWN_U})
-    setPiece(b, Point{2, 3}, Piece{white, KING_U})
-    setPiece(b, Point{3, 3}, Piece{white, ROOK})
-    setPiece(b, Point{0, 0}, Piece{black, KING_D})
+    b.setPiece(b.getIndex(1, 3), b.getAllPiece(white, PAWN_U))
+    b.setPiece(b.getIndex(2, 3), b.getAllPiece(white, KING_U))
+    b.setPiece(b.getIndex(3, 3), b.getAllPiece(white, ROOK))
+    b.setPiece(b.getIndex(0, 0), b.getAllPiece(black, KING_D))
     b.CalculateMoves()
     assert.Nil(t, err)
 
@@ -168,11 +168,12 @@ func Test_CastleCanUndo(t *testing.T) {
     white := 0
     black := 1
 
-    b, err := newSimpleBoard(Point{4, 4}, 2)
+    b, err := newSimpleBoard(4, 4, 2)
     assert.Nil(t, err)
-    setPiece(b, Point{2, 3}, Piece{white, KING_U})
-    setPiece(b, Point{3, 3}, Piece{white, ROOK})
-    setPiece(b, Point{0, 0}, Piece{black, KING_D})
+
+    b.setPiece(b.getIndex(2, 3), b.getAllPiece(white, KING_U))
+    b.setPiece(b.getIndex(3, 3), b.getAllPiece(white, ROOK))
+    b.setPiece(b.getIndex(0, 0), b.getAllPiece(black, KING_D))
     b.CalculateMoves()
     assert.Nil(t, err)
 
@@ -460,14 +461,15 @@ func Test_DisabledPieces(t *testing.T) {
     black := 1
     gray := 2
 
-    b, err := newSimpleBoard(Point{8, 8}, 3)
+    b, err := newSimpleBoard(8, 8, 3)
     assert.Nil(t, err)
-    setPiece(b, Point{0, 0}, Piece{white, KING_D})
-    setPiece(b, Point{7, 0}, Piece{black, KING_D})
-    setPiece(b, Point{4, 0}, Piece{gray, KING_D})
-    setPiece(b, Point{1, 7}, Piece{black, QUEEN})
-    setPiece(b, Point{6, 6}, Piece{white, QUEEN})
-    setPiece(b, Point{6, 7}, Piece{white, QUEEN})
+
+    b.setPiece(b.getIndex(0, 0), b.getAllPiece(white, KING_D))
+    b.setPiece(b.getIndex(7, 0), b.getAllPiece(black, KING_D))
+    b.setPiece(b.getIndex(4, 0), b.getAllPiece(gray, KING_D))
+    b.setPiece(b.getIndex(1, 7), b.getAllPiece(black, QUEEN))
+    b.setPiece(b.getIndex(6, 6), b.getAllPiece(white, QUEEN))
+    b.setPiece(b.getIndex(6, 7), b.getAllPiece(white, QUEEN))
     b.CalculateMoves()
 
     p, err := newSimplePlayerCollection(3)
@@ -500,13 +502,14 @@ func Test_Stalemate(t *testing.T) {
     black := 1
     gray := 2
 
-    b, err := newSimpleBoard(Point{8, 8}, 3)
+    b, err := newSimpleBoard(8, 8, 3)
     assert.Nil(t, err)
-    setPiece(b, Point{0, 0}, Piece{white, KING_D})
-    setPiece(b, Point{7, 0}, Piece{black, KING_D})
-    setPiece(b, Point{4, 0}, Piece{gray, KING_D})
-    setPiece(b, Point{6, 6}, Piece{white, QUEEN})
-    setPiece(b, Point{6, 7}, Piece{white, QUEEN})
+
+    b.setPiece(b.getIndex(0, 0), b.getAllPiece(white, KING_D))
+    b.setPiece(b.getIndex(7, 0), b.getAllPiece(black, KING_D))
+    b.setPiece(b.getIndex(4, 0), b.getAllPiece(gray, KING_D))
+    b.setPiece(b.getIndex(6, 6), b.getAllPiece(white, QUEEN))
+    b.setPiece(b.getIndex(6, 7), b.getAllPiece(white, QUEEN))
     b.CalculateMoves()
     assert.Nil(t, err)
 

@@ -14,13 +14,23 @@ type Board interface {
     disablePieces(color int, disable bool)
     disableLocation(location *Point)
 
-    getPieceLocations() []Array100[Point]
-	getPiece(location *Point) *Piece
-    getVulnerable(color int) *Vulnerable
-	getEnPassant(color int) *EnPassant
-    possibleEnPassant(color int, location *Point) (*EnPassant, *EnPassant)
+    getIndex(x int, y int) *Point
+    addIndex(index1 *Point, index2 *Point) *Point
 
-    MovesOfColor(color int) *Array100[FastMove]
+    getAllPiece(color int, index int) *Piece
+    getPieceLocations() []Array100[*Point]
+	getPiece(location *Point) *Piece
+    movePiece(piece *Piece) *Piece
+    setPiece(location *Point, piece *Piece)
+
+    getVulnerable(color int) (*Point, *Point)
+    setVulnerable(color int, start *Point, end *Point)
+
+	getEnPassant(color int) (*Point, *Point)
+	setEnPassant(color int, target *Point, risk *Point)
+    possibleEnPassant(color int, location *Point) (*Point, *Point, *Point, *Point)
+
+    MovesOfColor(color int) *Array1000[FastMove]
     MovesOfLocation(fromLocation *Point) *Array100[FastMove]
     LegalMovesOfColor(color int) ([]FastMove, error)
     LegalMovesOfLocation(fromLocation *Point) ([]FastMove, error)
@@ -35,122 +45,140 @@ type Board interface {
     UniqueString() string
 }
 
-func newSimpleBoard(boardSize Point, numberOfPlayers int) (*SimpleBoard, error) {
-    if boardSize.x <= 0 || boardSize.y <= 0 {
+func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
+    if x <= 0 || y <= 0 {
         return nil, fmt.Errorf("invalid board size")
     }
 
-    if numberOfPlayers <= 0 {
+    if players <= 0 {
         return nil, fmt.Errorf("invalid number of players")
     }
 
-    playersDisabled := make([]bool, numberOfPlayers)
-    for p := range playersDisabled {
-        playersDisabled[p] = false
-    }
+    test := false
 
-    pieces := make([][]Piece, boardSize.y)
-    for p := range pieces {
-        pieces[p] = make([]Piece, boardSize.x)
-    }
-
-    disableds := make([][]bool, boardSize.y)
-    for d := range disableds {
-        disableds[d] = make([]bool, boardSize.x)
-    }
-
-    kingLocations := make([]Point, numberOfPlayers)
-    for k := range kingLocations {
-        kingLocations[k] = Point{-1, -1}
-    }
-
-    pieceLocations := make([]Array100[Point], numberOfPlayers)
-    for p := range pieceLocations {
-        pieceLocations[p] = Array100[Point]{}
-    }
-
-    enPassants := make([]EnPassant, numberOfPlayers)
-    for e := range enPassants {
-        enPassants[e] = EnPassant{Point{-1, -1}, Point{-1, -1}}
-    }
-
-    vulnerables := make([]Vulnerable, numberOfPlayers)
-    for v := range vulnerables {
-        vulnerables[v] = Vulnerable{Point{-1, -1}, Point{-1, -1}}
-    }
-
-    playerMoves := make([]Array100[FastMove], numberOfPlayers)
-    for p := range playerMoves {
-        playerMoves[p] = Array100[FastMove]{}
-    }
-
-    fromMoves := make([][]Array100[*FastMove], boardSize.y)
-    for row := range fromMoves {
-        fromMoves[row] = make([]Array100[*FastMove], boardSize.x)
-        for col := range fromMoves[row] {
-            fromMoves[row][col] = Array100[*FastMove]{}
+    playersDisabled := make([]bool, players)
+    enPassantTargets := make([]*Point, players)
+    enPassantRisks := make([]*Point, players)
+    vulnerableStarts := make([]*Point, players)
+    vulnerableEnds := make([]*Point, players)
+    kingLocations := make([]*Point, players)
+    pieceLocations := make([]Array100[*Point], players)
+    moves := make([]Array1000[FastMove], players)
+    allPieces := make([][]Piece, players)
+    for i := 0; i < players; i++ {
+        playersDisabled[i] = false
+        enPassantTargets[i] = nil // TODO we don't account for this being nil
+        enPassantRisks[i] = nil
+        vulnerableStarts[i] = nil
+        vulnerableEnds[i] = nil
+        kingLocations[i] = nil
+        pieceLocations[i] = Array100[*Point]{}
+        moves[i] = Array1000[FastMove]{}
+        allPieces[i] = []Piece{
+            {i, PAWN_R},
+            {i, PAWN_L},
+            {i, PAWN_D},
+            {i, PAWN_U},
+            {i, PAWN_R_M},
+            {i, PAWN_L_M},
+            {i, PAWN_D_M},
+            {i, PAWN_U_M},
+            {i, KNIGHT},
+            {i, BISHOP},
+            {i, ROOK},
+            {i, ROOK_M},
+            {i, QUEEN},
+            {i, KING_R},
+            {i, KING_L},
+            {i, KING_D},
+            {i, KING_U},
+            {i, KING_R_M},
+            {i, KING_L_M},
+            {i, KING_D_M},
+            {i, KING_U_M},
         }
     }
 
-    toMoves := make([][]Array100[*FastMove], boardSize.y)
-    for row := range toMoves {
-        toMoves[row] = make([]Array100[*FastMove], boardSize.x)
-        for col := range toMoves[row] {
-            toMoves[row][col] = Array100[*FastMove]{}
+    disableds := make([][]bool, y)
+    indexes := make([][]Point, y)
+    pieces := make([][]*Piece, y)
+    toMoves := make([][]Array100[*FastMove], y)
+    fromMoves := make([][]Array100[*FastMove], y)
+    for i := 0; i < y; i++ {
+        disableds[i] = make([]bool, x)
+        indexes[i] = make([]Point, x)
+        pieces[i] = make([]*Piece, x)
+        toMoves[i] = make([]Array100[*FastMove], x)
+        fromMoves[i] = make([]Array100[*FastMove], x)
+
+        for j := 0; j < x; j++ {
+            disableds[i][j] = false
+            indexes[i][j] = Point{j, i}
+            pieces[i][j] = nil
+            toMoves[i][j] = Array100[*FastMove]{}
+            fromMoves[i][j] = Array100[*FastMove]{}
         }
     }
 
 	return &SimpleBoard{
-        size: boardSize,
-        players: numberOfPlayers,
+        x: x,
+        y: y,
+        players: players,
+        test: test,
 
         playersDisabled: playersDisabled,
-
-		pieces: pieces,
-        disableds: disableds,
-
+        enPassantTargets: enPassantTargets,
+        enPassantRisks: enPassantRisks,
+        vulnerableStarts: vulnerableStarts,
+        vulnerableEnds: vulnerableEnds,
         kingLocations: kingLocations,
         pieceLocations: pieceLocations,
+        moves: moves,
+        allPieces: allPieces,
 
-		enPassants: enPassants,
-        vulnerables: vulnerables,
-
-        playerMoves: playerMoves,
-        fromMoves: fromMoves,
+        disableds: disableds,
+        indexes: indexes,
+        pieces: pieces,
         toMoves: toMoves,
-
-        test: false,
+        fromMoves: fromMoves,
 	}, nil
 }
 
 type SimpleBoard struct {
-    size Point
+    x int
+    y int
     players int
-
-    playersDisabled []bool
-
-	pieces [][]Piece
-    disableds [][]bool
-
-    kingLocations []Point
-    pieceLocations []Array100[Point]
-
-	enPassants []EnPassant
-    vulnerables []Vulnerable
-
-    playerMoves []Array100[FastMove]
-    fromMoves [][]Array100[*FastMove]
-    toMoves [][]Array100[*FastMove]
-
     test bool
+
+    // arrays of size PLAYERS
+    playersDisabled []bool
+	enPassantTargets []*Point
+    enPassantRisks []*Point
+    vulnerableStarts []*Point
+    vulnerableEnds []*Point
+    kingLocations []*Point
+    pieceLocations []Array100[*Point]
+    moves []Array1000[FastMove]
+    allPieces [][]Piece
+
+    // arrays of size X * Y
+    disableds [][]bool
+    indexes [][]Point
+    pieces [][]*Piece
+    toMoves [][]Array100[*FastMove]
+    fromMoves [][]Array100[*FastMove]
 }
 
 func (b *SimpleBoard) pointOutOfBounds(p *Point) bool {
-    return p.y < 0 || p.y >= b.size.y || p.x < 0 || p.x >= b.size.x || b.disableds[p.y][p.x]
+    if p == nil {
+        return true
+    }
+
+    return p.y < 0 || p.y >= b.y || p.x < 0 || p.x >= b.x || b.disableds[p.y][p.x]
 }
 
-func (b *SimpleBoard) colorOutOfBounds(color int) bool {
-    return color < 0 || color >= b.players
+func (b *SimpleBoard) colorOutOfBounds(c int) bool {
+    return c < 0 || c >= b.players
 }
 
 func (b *SimpleBoard) disablePieces(color int, disable bool) {
@@ -169,7 +197,39 @@ func (b *SimpleBoard) disableLocation(location *Point) {
     b.disableds[location.y][location.x] = true
 }
 
-func (b *SimpleBoard) getPieceLocations() []Array100[Point] {
+func (b *SimpleBoard) getIndex(x int, y int) *Point {
+    if x < 0 || x >= b.x || y < 0 || y >= b.y {
+        return nil
+    }
+
+    if b.disableds[y][x] {
+        return nil
+    }
+
+    return &b.indexes[y][x]
+}
+
+func (b *SimpleBoard) addIndex(index1 *Point, index2 *Point) *Point {
+    if index1 == nil || index2 == nil {
+        return nil
+    }
+
+    return b.getIndex(index1.x + index2.x, index1.y + index2.y)
+}
+
+func (b *SimpleBoard) getAllPiece(color int, index int) *Piece {
+    if b.colorOutOfBounds(color) {
+        return nil
+    }
+
+    if index < 0 {
+        return nil
+    }
+
+    return &b.allPieces[color][index]
+}
+
+func (b *SimpleBoard) getPieceLocations() []Array100[*Point] {
     return b.pieceLocations
 }
 
@@ -178,62 +238,104 @@ func (b *SimpleBoard) getPiece(location *Point) *Piece {
         return nil
     }
 
-    return &b.pieces[location.y][location.x]
+    return b.pieces[location.y][location.x]
 }
 
-func (b *SimpleBoard) getVulnerable(color int) *Vulnerable {
-    if b.colorOutOfBounds(color) {
-        return nil
+func (b *SimpleBoard) movePiece(piece *Piece) *Piece {
+    return b.getAllPiece(piece.color, piece.movedIndex())
+}
+
+func (b *SimpleBoard) setPiece(location *Point, piece *Piece) {
+    if b.pointOutOfBounds(location) {
+        return
     }
 
-    return &b.vulnerables[color]
+    b.pieces[location.y][location.x] = piece
 }
 
-func (b *SimpleBoard) getEnPassant(color int) *EnPassant {
-    if b.colorOutOfBounds(color) {
-        return nil
-    }
-
-    return &b.enPassants[color]
-}
-
-func (b *SimpleBoard) possibleEnPassant(color int, target *Point) (*EnPassant, *EnPassant) {
+func (b *SimpleBoard) getVulnerable(color int) (*Point, *Point) {
     if b.colorOutOfBounds(color) {
         return nil, nil
     }
 
-    var en1 *EnPassant
-    var en2 *EnPassant
+    return b.vulnerableStarts[color], b.vulnerableEnds[color]
+}
 
-    for i := 0; i < b.players; i++ { // using range function here reassigns pointers to the new value address
-        e := b.enPassants[i]
+func (b *SimpleBoard) getEnPassant(color int) (*Point, *Point) {
+    if b.colorOutOfBounds(color) {
+        return nil, nil
+    }
 
+    return b.enPassantTargets[color], b.enPassantRisks[color]
+}
+
+func (b *SimpleBoard) setEnPassant(color int, target *Point, risk *Point) {
+    if b.colorOutOfBounds(color) {
+        return
+    }
+
+    b.enPassantTargets[color] = target
+    b.enPassantRisks[color] = risk
+}
+
+func (b *SimpleBoard) setVulnerable(color int, start *Point, end *Point) {
+    if b.colorOutOfBounds(color) {
+        return
+    }
+
+    b.vulnerableStarts[color] = start
+    b.vulnerableEnds[color] = end
+}
+
+func (b *SimpleBoard) possibleEnPassant(color int, target *Point) (*Point, *Point, *Point, *Point) {
+    if target == nil {
+        return nil, nil, nil, nil
+    }
+
+    if b.colorOutOfBounds(color) {
+        return nil, nil, nil, nil
+    }
+
+    var target1 *Point
+    var target2 *Point
+    var risk1 *Point
+    var risk2 *Point
+
+    for i := 0; i < b.players; i++ {
         if i == color {
             continue
         }
 
-        if !e.target.equals(target) {
+        t := b.enPassantTargets[i]
+        r := b.enPassantRisks[i]
+        if t == nil || r == nil {
             continue
         }
 
-        if en1 == nil {
-            en1 = &e
-        } else if en2 == nil {
-            en2 = &e
+        if !target.equals(t) {
+            continue
+        }
+
+        if target1 == nil {
+            target1 = t
+            risk1 = r
+        } else if target2 == nil {
+            target2 = t
+            risk2 = r
         } else {
             panic("too many en passants")
         }
 	}
 
-    return en1, en2
+    return target1, target2, risk1, risk2
 }
 
-func (b *SimpleBoard) MovesOfColor(color int) *Array100[FastMove] {
+func (b *SimpleBoard) MovesOfColor(color int) *Array1000[FastMove] {
     if b.colorOutOfBounds(color) {
         return nil
     }
 
-    return &b.playerMoves[color]
+    return &b.moves[color]
 }
 
 func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
@@ -256,8 +358,8 @@ func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
     if movesPointer == nil {
         return nil, fmt.Errorf("invalid color")
     }
-
     moves := *movesPointer
+
     legalMoves := []FastMove{}
 
     for i := 0; i < moves.count; i++ {
@@ -266,21 +368,14 @@ func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
             continue
         }
 
-        err := move.execute()
-        if err != nil {
-            return nil, err
-        }
+        move.execute()
 
         b.CalculateMoves()
-
         if !b.Check(color) {
             legalMoves = append(legalMoves, move)
         }
 
-        err = move.undo()
-        if err != nil {
-            return nil, err
-        }
+        move.undo()
     }
 
     b.CalculateMoves()
@@ -290,7 +385,7 @@ func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
 
 func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, error) {
     piecePointer := b.getPiece(fromLocation)
-    if piecePointer == nil || !piecePointer.valid() {
+    if piecePointer == nil {
         return nil, fmt.Errorf("invalid piece")
     }
     color := piecePointer.color
@@ -309,21 +404,14 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
             continue
         }
 
-        err := move.execute()
-        if err != nil {
-            return nil, err
-        }
+        move.execute()
 
         b.CalculateMoves()
-
         if !b.Check(color) {
             legalMoves = append(legalMoves, move)
         }
 
-        err = move.undo()
-        if err != nil {
-            return nil, err
-        }
+        move.undo()
     }
 
     b.CalculateMoves()
@@ -331,6 +419,8 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
     return legalMoves, nil
 }
 
+// don't use the make function
+// remove the remaining interfaces
 // get indexes from board to avoid creating a lot of points
 // Returning items from functions results in heap allocation
 // TODO remove set piece and just return pointers from this struct
@@ -346,25 +436,25 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
 // TODO add rule to check for checkmate and stalemate on all players after every move
 func (b *SimpleBoard) CalculateMoves() {
     for i := 0; i < b.players; i++ {
-        b.playerMoves[i].clear()
+        b.moves[i].clear()
         b.pieceLocations[i].clear()
     }
 
-    for y := 0; y < b.size.y; y++ {
-        for x := 0; x < b.size.x; x++ {
+    for y := 0; y < b.y; y++ {
+        for x := 0; x < b.x; x++ {
             b.toMoves[y][x].clear()
             b.fromMoves[y][x].clear()
         }
     }
 
-    for y := 0; y < b.size.y; y++ {
-        for x := 0; x < b.size.x; x++ {
+    for y := 0; y < b.y; y++ {
+        for x := 0; x < b.x; x++ {
             if b.disableds[y][x] {
                 continue
             }
 
             piece := b.pieces[y][x]
-            if !piece.valid() {
+            if piece == nil {
                 continue
             }
 
@@ -372,31 +462,32 @@ func (b *SimpleBoard) CalculateMoves() {
                 continue
             }
 
-            pieceLocations := b.pieceLocations[piece.color]
-            pieceLocation := pieceLocations.get()
-            pieceLocation.x = x
-            pieceLocation.y = y
-            pieceLocations.next()
-            if piece.index > 13 {
-                b.kingLocations[piece.color] = Point{x, y}
+            index := b.getIndex(x, y)
+
+            p := b.pieceLocations[piece.color].get()
+            *p = index
+            b.pieceLocations[piece.color].next()
+
+            if piece.isKing() {
+                b.kingLocations[piece.color] = index
             }
 
-            piece.moves(b, &Point{x, y}, &b.playerMoves[piece.color])
+            piece.moves(b, index, &b.moves[piece.color])
         }
     }
 
     for i := 0; i < b.players; i++ {
-        moves := b.playerMoves[i]
+        moves := b.moves[i]
 
         for j := 0; j < moves.count; j++ {
-            move := moves.array[j]
+            move := &moves.array[j]
 
             fromMove := b.fromMoves[move.fromLocation.y][move.fromLocation.x].get()
-            *fromMove = &move
+            *fromMove = move
             b.fromMoves[move.fromLocation.y][move.fromLocation.x].next()
 
             toMove := b.toMoves[move.toLocation.y][move.toLocation.x].get()
-            *toMove = &move
+            *toMove = move
             b.toMoves[move.toLocation.y][move.toLocation.x].next()
         }
     }
@@ -407,11 +498,11 @@ func (b *SimpleBoard) Check(color int) bool {
         return false
     }
 
-    if b.pointOutOfBounds(&b.kingLocations[color]) {
+    kingLocation := b.kingLocations[color]
+    if b.pointOutOfBounds(kingLocation) {
         return false
     }
 
-    kingLocation := b.kingLocations[color]
     for i := 0; i < b.toMoves[kingLocation.y][kingLocation.x].count; i++ {
         move := b.toMoves[kingLocation.y][kingLocation.x].array[i]
 
@@ -420,19 +511,22 @@ func (b *SimpleBoard) Check(color int) bool {
         }
     }
 
-    if b.pointOutOfBounds(&b.vulnerables[color].start) {
+    vulnerableStart := b.vulnerableStarts[color]
+    if b.pointOutOfBounds(b.vulnerableStarts[color]) {
         return false
     }
 
-    if b.pointOutOfBounds(&b.vulnerables[color].end) {
+    vulnerableEnd := b.vulnerableEnds[color]
+    if b.pointOutOfBounds(b.vulnerableEnds[color]) {
         return false
     }
 
-    vulnerable := b.vulnerables[color]
-    for x := vulnerable.start.x; x <= vulnerable.end.x; x++ {
-        for y := vulnerable.start.y; y <= vulnerable.end.y; y++ {
-            for i := 0; i < b.toMoves[y][x].count; i++ {
-                move := b.toMoves[y][x].array[i]
+    for y := vulnerableStart.y; y <= vulnerableEnd.y; y++ {
+        for x := vulnerableStart.x; x <= vulnerableEnd.x; x++ {
+            moves := b.toMoves[y][x]
+
+            for i := 0; i < moves.count; i++ {
+                move := moves.array[i]
 
                 if move.color != color {
                     return true
@@ -466,15 +560,15 @@ func (b *SimpleBoard) Print() string {
 	var cellWidth int = 12
 
 	for y, row := range b.pieces {
-		builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*b.size.x-1)))
+		builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*b.x-1)))
 		for x := range row {
 			builder.WriteString(fmt.Sprintf("|%s%2dx ", strings.Repeat(" ", cellWidth-4), x))
 		}
 		builder.WriteString("|\n")
 		for x, piece := range row {
-            if b.pointOutOfBounds(&Point{x, y}) {
+            if b.pointOutOfBounds(b.getIndex(x, y)) {
                 builder.WriteString(fmt.Sprintf("|%s", strings.Repeat("X", cellWidth)))
-            } else if !piece.valid() {
+            } else if piece == nil {
 				builder.WriteString(fmt.Sprintf("|%s", strings.Repeat(" ", cellWidth)))
 			} else {
 				p := piece.print()
@@ -496,7 +590,7 @@ func (b *SimpleBoard) Print() string {
 		}
 		builder.WriteString("|\n")
 	}
-	builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*b.size.x-1)))
+	builder.WriteString(fmt.Sprintf("+%s+\n", strings.Repeat("-", (cellWidth+1)*b.x-1)))
 
 	return builder.String()
 }
@@ -505,7 +599,7 @@ func (b *SimpleBoard) State() *BoardData {
     pieces := []*PieceData{}
     for y, row := range b.pieces {
         for x, piece := range row {
-            if piece.valid() {
+            if piece != nil {
                 disabled := b.playersDisabled[piece.color]
                 pieces = append(pieces, &PieceData{
                     T: piece.print(),
@@ -531,41 +625,32 @@ func (b *SimpleBoard) State() *BoardData {
     }
 
     return &BoardData{
-        XSize: b.size.x,
-        YSize: b.size.y,
+        XSize: b.x,
+        YSize: b.y,
         Disabled: disabled,
         Pieces: pieces,
     }
 }
 
 func (b *SimpleBoard) Copy() (Board, error) {
-    simpleBoard, err := newSimpleBoard(b.size, b.players)
+    simpleBoard, err := newSimpleBoard(b.x, b.y, b.players)
     if err != nil {
         return nil, err
     }
 
-    for color, disabled := range b.playersDisabled {
-        simpleBoard.playersDisabled[color] = disabled
+    for i := 0; i < b.players; i++ {
+        simpleBoard.playersDisabled[i] = b.playersDisabled[i]
+        simpleBoard.enPassantTargets[i] = simpleBoard.getIndex(b.enPassantTargets[i].x, b.enPassantTargets[i].y)
+        simpleBoard.enPassantRisks[i] = simpleBoard.getIndex(b.enPassantRisks[i].x, b.enPassantRisks[i].y)
+        simpleBoard.vulnerableStarts[i] = simpleBoard.getIndex(b.vulnerableStarts[i].x, b.vulnerableStarts[i].y)
+        simpleBoard.vulnerableEnds[i] = simpleBoard.getIndex(b.vulnerableEnds[i].x, b.vulnerableEnds[i].y)
     }
 
-    for y, row := range b.pieces {
-        for x := range row {
-            simpleBoard.pieces[y][x] = b.pieces[y][x]
+    for i := 0; i < b.y; i++ {
+        for j := 0; j < b.x; j++ {
+            simpleBoard.disableds[i][j] = b.disableds[i][j]
+            simpleBoard.pieces[i][j] = b.pieces[i][j]
         }
-    }
-
-    for y, row := range b.disableds {
-        for x := range row {
-            simpleBoard.disableds[y][x] = b.disableds[y][x]
-        }
-    }
-
-    for color, enPassant := range b.enPassants {
-        simpleBoard.enPassants[color] = enPassant
-    }
-
-    for color, vulnerable := range b.vulnerables {
-        simpleBoard.vulnerables[color] = vulnerable
     }
 
     return simpleBoard, nil
@@ -579,7 +664,7 @@ func (b *SimpleBoard) UniqueString() string {
         for x := range row {
             piece := b.pieces[y][x]
 
-            if !piece.valid() {
+            if piece == nil {
                 counter += 1
                 continue
             }

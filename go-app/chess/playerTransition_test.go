@@ -10,63 +10,49 @@ func Test_IncrementalTransition_inCheckmate(t *testing.T) {
     white := 0
     black := 1
 
-	board := &MockBoard{}
-    playerCollection := &MockPlayerCollection{}
-
-    playerCollection.On("getCurrent").Return(white, true).Once()
-    playerCollection.On("getWinner").Return(-1, true).Once()
-    playerCollection.On("getGameOver").Return(false, nil).Once()
-    playerCollection.On("getNextAndRemaining").Return(black, 2, nil).Once()
-    incrementalTransition, err := createPlayerTransition(board, playerCollection, true, false)
+    b, err := newSimpleBoard(10, 10, 2)
     assert.Nil(t, err)
 
-    playerCollection.On("setCurrent", black).Return(true)
-    playerCollection.On("setWinner", black).Return(true)
-    playerCollection.On("setGameOver", true).Return(nil)
-    playerCollection.On("eliminate", white).Return(nil)
-    board.On("disablePieces", white, true).Return(nil)
-    err = incrementalTransition.execute()
+    p, err := newSimplePlayerCollection(2)
     assert.Nil(t, err)
 
-    playerCollection.On("setCurrent", white).Return(true)
-    playerCollection.On("setWinner", -1).Return(true)
-    playerCollection.On("setGameOver", false).Return(nil)
-    playerCollection.On("restore", white).Return(nil)
-    board.On("disablePieces", white, false).Return(nil)
-    err = incrementalTransition.undo()
-    assert.Nil(t, err)
+    var transition PlayerTransition
+    createPlayerTransition(b, p, true, false, &transition)
+    assert.Equal(t, transition.eliminated, true)
 
-	board.AssertExpectations(t)
-	playerCollection.AssertExpectations(t)
+    transition.execute()
+    assert.Equal(t, p.getWinner(), black)
+    assert.Equal(t, p.getGameOver(), true)
+    assert.Equal(t, p.getCurrent(), black)
+
+    transition.undo()
+    assert.Equal(t, p.getWinner(), -1)
+    assert.Equal(t, p.getGameOver(), false)
+    assert.Equal(t, p.getCurrent(), white)
 }
 
 func Test_IncrementalTransition_noCheckmate(t *testing.T) {
     white := 0
     black := 1
 
-	board := &MockBoard{}
-    playerCollection := &MockPlayerCollection{}
-
-    playerCollection.On("getCurrent").Return(white, true)
-    playerCollection.On("getWinner").Return(-1, true)
-    playerCollection.On("getGameOver").Return(false, nil)
-    playerCollection.On("getNextAndRemaining").Return(black, 2, nil)
-    incrementalTransition, err := createPlayerTransition(board, playerCollection, false, false)
+    b, err := newSimpleBoard(10, 10, 2)
     assert.Nil(t, err)
 
-    playerCollection.On("setCurrent", black).Return(true)
-    playerCollection.On("setWinner", -1).Return(true)
-    playerCollection.On("setGameOver", false).Return(nil)
-    err = incrementalTransition.execute()
+    p, err := newSimplePlayerCollection(2)
     assert.Nil(t, err)
 
-    playerCollection.On("setCurrent", white).Return(true)
-    playerCollection.On("setWinner", -1).Return(true)
-    playerCollection.On("setGameOver", false).Return(nil)
-    err = incrementalTransition.undo()
-    assert.Nil(t, err)
+    var transition PlayerTransition
+    createPlayerTransition(b, p, false, false, &transition)
+    assert.Equal(t, transition.eliminated, false)
 
-	board.AssertExpectations(t)
-	playerCollection.AssertExpectations(t)
+    transition.execute()
+    assert.Equal(t, p.getWinner(), -1)
+    assert.Equal(t, p.getGameOver(), false)
+    assert.Equal(t, p.getCurrent(), black)
+
+    transition.undo()
+    assert.Equal(t, p.getWinner(), -1)
+    assert.Equal(t, p.getGameOver(), false)
+    assert.Equal(t, p.getCurrent(), white)
 }
 

@@ -9,299 +9,279 @@ import (
 func Test_MoveSimple(t *testing.T) {
     white := 0
     black := 1
-    from := Point{0, 0}
-    to := Point{1, 1}
-    vulnerable := Vulnerable{Point{2, 2}, Point{3, 3}}
-    enPassant := EnPassant{Point{4, 4}, Point{5, 5}}
-    board := &MockBoard{}
-    piece := Piece{white, 1}
-    newPiece := Piece{white, 5}
-    capturedPiece := Piece{black, 1}
 
-    testPiece1 := Piece{}
-    testPiece2 := Piece{}
-    testEnPassant := EnPassant{}
-    testVulnerable := Vulnerable{}
+    b, err := newSimpleBoard(10, 10, 2)
+    assert.Nil(t, err)
 
-    moves := Array100[FastMove]{}
+    b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
+    b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
+
+    moves := Array1000[FastMove]{}
     move := moves.get()
-
-	board.On("getEnPassant", white).Return(&enPassant).Once()
-    board.On("getVulnerable", white).Return(&vulnerable).Once()
-    addMoveSimple(board, &piece, &from, &capturedPiece, &to, nil, &moves)
+    addMoveSimple(
+        b,
+        b.getAllPiece(white, PAWN_D),
+        b.getIndex(0, 0),
+        b.getAllPiece(black, PAWN_D),
+        b.getIndex(1, 1),
+        nil,
+        &moves,
+    )
     assert.Equal(t, move.allyDefense, false)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-    err := move.execute()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, Piece{0, 0})
-    assert.Equal(t, testPiece2, newPiece)
-    assert.Equal(t, testEnPassant, EnPassant{Point{-1, -1}, Point{-1, -1}})
-    assert.Equal(t, testVulnerable, Vulnerable{Point{-1, -1}, Point{-1, -1}})
+    move.execute()
+    assert.True(t, b.getPiece(b.getIndex(0, 0)) == nil)
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(white, PAWN_D_M))
+    target, risk := b.getEnPassant(white)
+    start, end := b.getVulnerable(white)
+    assert.True(t, target == nil)
+    assert.True(t, risk == nil)
+    assert.True(t, start == nil)
+    assert.True(t, end == nil)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-    err = move.undo()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, piece)
-    assert.Equal(t, testPiece2, capturedPiece)
-    assert.Equal(t, testEnPassant, enPassant)
-    assert.Equal(t, testVulnerable, vulnerable)
-
-	board.AssertExpectations(t)
+    move.undo()
+    assert.Equal(t, b.getPiece(b.getIndex(0, 0)), b.getAllPiece(white, PAWN_D))
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(black, PAWN_D))
+    target, risk = b.getEnPassant(white)
+    start, end = b.getVulnerable(white)
+    assert.Equal(t, target, b.getIndex(2, 2))
+    assert.Equal(t, risk, b.getIndex(3, 3))
+    assert.Equal(t, start, b.getIndex(4, 4))
+    assert.Equal(t, end, b.getIndex(5, 5))
 }
 
 func Test_MovePromotion(t *testing.T) {
     white := 0
     black := 1
-    from := Point{0, 0}
-    to := Point{1, 1}
-    vulnerable := Vulnerable{Point{2, 2}, Point{3, 3}}
-    enPassant := EnPassant{Point{4, 4}, Point{5, 5}}
-    board := &MockBoard{}
-    piece := Piece{white, 1}
-    newPiece := Piece{white, 13}
-    capturedPiece := Piece{black, 1}
 
-    testPiece1 := Piece{}
-    testPiece2 := Piece{}
-    testEnPassant := EnPassant{}
-    testVulnerable := Vulnerable{}
+    b, err := newSimpleBoard(10, 10, 2)
+    assert.Nil(t, err)
 
-    moves := Array100[FastMove]{}
+    b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
+    b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
+
+    moves := Array1000[FastMove]{}
     move := moves.get()
-
-	board.On("getEnPassant", white).Return(&enPassant).Once()
-    board.On("getVulnerable", white).Return(&vulnerable).Once()
-    addMoveSimple(board, &piece, &from, &capturedPiece, &to, &newPiece, &moves)
+    addMoveSimple(
+        b,
+        b.getAllPiece(white, PAWN_D),
+        b.getIndex(0, 0),
+        b.getAllPiece(black, PAWN_D),
+        b.getIndex(1, 1),
+        b.getAllPiece(white, QUEEN),
+        &moves,
+    )
     assert.Equal(t, move.allyDefense, false)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-    err := move.execute()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, Piece{0, 0})
-    assert.Equal(t, testPiece2, newPiece)
-    assert.Equal(t, testEnPassant, EnPassant{Point{-1, -1}, Point{-1, -1}})
-    assert.Equal(t, testVulnerable, Vulnerable{Point{-1, -1}, Point{-1, -1}})
+    move.execute()
+    assert.True(t, b.getPiece(b.getIndex(0, 0)) == nil)
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(white, QUEEN))
+    target, risk := b.getEnPassant(white)
+    start, end := b.getVulnerable(white)
+    assert.True(t, target == nil)
+    assert.True(t, risk == nil)
+    assert.True(t, start == nil)
+    assert.True(t, end == nil)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-    err = move.undo()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, piece)
-    assert.Equal(t, testPiece2, capturedPiece)
-    assert.Equal(t, testEnPassant, enPassant)
-    assert.Equal(t, testVulnerable, vulnerable)
-
-	board.AssertExpectations(t)
+    move.undo()
+    assert.Equal(t, b.getPiece(b.getIndex(0, 0)), b.getAllPiece(white, PAWN_D))
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(black, PAWN_D))
+    target, risk = b.getEnPassant(white)
+    start, end = b.getVulnerable(white)
+    assert.Equal(t, target, b.getIndex(2, 2))
+    assert.Equal(t, risk, b.getIndex(3, 3))
+    assert.Equal(t, start, b.getIndex(4, 4))
+    assert.Equal(t, end, b.getIndex(5, 5))
 }
 
 func Test_MoveRevealEnPassant(t *testing.T) {
     white := 0
-    black := 0
-    from := Point{0, 0}
-    to := Point{1, 1}
-    vulnerable := Vulnerable{Point{2, 2}, Point{3, 3}}
-    enPassant := EnPassant{Point{4, 4}, Point{5, 5}}
-    board := &MockBoard{}
-    piece := Piece{white, 1}
-    newPiece := Piece{white, 5}
-    capturedPiece := Piece{black, 1}
-    newEnPassant := EnPassant{Point{6, 6}, to}
+    black := 1
 
-    testPiece1 := Piece{}
-    testPiece2 := Piece{}
-    testEnPassant := EnPassant{}
-    testVulnerable := Vulnerable{}
+    b, err := newSimpleBoard(10, 10, 2)
+    assert.Nil(t, err)
 
-    moves := Array100[FastMove]{}
+    b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
+    b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
+
+    moves := Array1000[FastMove]{}
     move := moves.get()
-
-	board.On("getEnPassant", white).Return(&enPassant).Once()
-    board.On("getVulnerable", white).Return(&vulnerable).Once()
-    addMoveRevealEnPassant(board, &piece, &from, &capturedPiece, &to, nil, &newEnPassant, &moves)
+    addMoveRevealEnPassant(
+        b,
+        b.getAllPiece(white, PAWN_D),
+        b.getIndex(0, 0),
+        b.getAllPiece(black, PAWN_D),
+        b.getIndex(1, 1),
+        nil,
+        b.getIndex(6, 6),
+        b.getIndex(7, 7),
+        &moves,
+    )
     assert.Equal(t, move.allyDefense, false)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-    err := move.execute()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, Piece{0, 0})
-    assert.Equal(t, testPiece2, newPiece)
-    assert.Equal(t, testEnPassant, newEnPassant)
-    assert.Equal(t, testVulnerable, Vulnerable{Point{-1, -1}, Point{-1, -1}})
+    move.execute()
+    assert.True(t, b.getPiece(b.getIndex(0, 0)) == nil)
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(white, PAWN_D_M))
+    target, risk := b.getEnPassant(white)
+    start, end := b.getVulnerable(white)
+    assert.Equal(t, target, b.getIndex(6, 6))
+    assert.Equal(t, risk, b.getIndex(7, 7))
+    assert.True(t, start == nil)
+    assert.True(t, end == nil)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-    err = move.undo()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, piece)
-    assert.Equal(t, testPiece2, capturedPiece)
-    assert.Equal(t, testEnPassant, enPassant)
-    assert.Equal(t, testVulnerable, vulnerable)
-
-	board.AssertExpectations(t)
+    move.undo()
+    assert.Equal(t, b.getPiece(b.getIndex(0, 0)), b.getAllPiece(white, PAWN_D))
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(black, PAWN_D))
+    target, risk = b.getEnPassant(white)
+    start, end = b.getVulnerable(white)
+    assert.Equal(t, target, b.getIndex(2, 2))
+    assert.Equal(t, risk, b.getIndex(3, 3))
+    assert.Equal(t, start, b.getIndex(4, 4))
+    assert.Equal(t, end, b.getIndex(5, 5))
 }
 
 func Test_MoveCaptureEnPassant(t *testing.T) {
     white := 0
-    black := 0
-    from := Point{0, 0}
-    to := Point{1, 1}
-    vulnerable := Vulnerable{Point{2, 2}, Point{3, 3}}
-    enPassant := EnPassant{Point{4, 4}, Point{5, 5}}
-    board := &MockBoard{}
-    piece := Piece{white, 1}
-    newPiece := Piece{white, 5}
-    capturedPiece := Piece{black, 1}
+    black := 1
 
-    enPassantRisk1 := Point{7, 7}
-    enPassantRisk2 := Point{9, 9}
-    enPassant1 := EnPassant{Point{6, 6}, enPassantRisk1}
-    enPassant2 := EnPassant{Point{8, 8}, enPassantRisk2}
-    enPassantCapturedPiece1 := Piece{black, 2}
-    enPassantCapturedPiece2 := Piece{black, 3}
+    b, err := newSimpleBoard(10, 10, 2)
+    assert.Nil(t, err)
 
-    testPiece1 := Piece{}
-    testPiece2 := Piece{}
-    testPiece3 := Piece{}
-    testPiece4 := Piece{}
-    testEnPassant := EnPassant{}
-    testVulnerable := Vulnerable{}
+    b.setPiece(b.getIndex(8, 8), b.getAllPiece(black, PAWN_D))
+    b.setPiece(b.getIndex(9, 9), b.getAllPiece(black, PAWN_D))
+    b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
+    b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array100[FastMove]{}
+    moves := Array1000[FastMove]{}
     move := moves.get()
-
-	board.On("getEnPassant", white).Return(&enPassant).Once()
-    board.On("getVulnerable", white).Return(&vulnerable).Once()
-    board.On("getPiece", &enPassantRisk1).Return(&enPassantCapturedPiece1).Once()
-    board.On("getPiece", &enPassantRisk2).Return(&enPassantCapturedPiece2).Once()
-    addMoveCaptureEnPassant(board, &piece, &from, &capturedPiece, &to, nil, &moves, &enPassant1, &enPassant2)
+    addMoveCaptureEnPassant(
+        b,
+        b.getAllPiece(white, PAWN_D),
+        b.getIndex(0, 0),
+        b.getAllPiece(black, PAWN_D),
+        b.getIndex(1, 1),
+        nil,
+        b.getIndex(6, 6),
+        b.getIndex(7, 7),
+        b.getIndex(8, 8),
+        b.getIndex(9, 9),
+        &moves,
+    )
     assert.Equal(t, move.allyDefense, false)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-	board.On("getPiece", &enPassantRisk1).Return(&testPiece3).Once()
-	board.On("getPiece", &enPassantRisk2).Return(&testPiece4).Once()
-    err := move.execute()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, Piece{0, 0})
-    assert.Equal(t, testPiece2, newPiece)
-    assert.Equal(t, testEnPassant, EnPassant{Point{-1, -1}, Point{-1, -1}})
-    assert.Equal(t, testVulnerable, Vulnerable{Point{-1, -1}, Point{-1, -1}})
-    assert.Equal(t, testPiece3, Piece{0, 0})
-    assert.Equal(t, testPiece4, Piece{0, 0})
+    move.execute()
+    assert.True(t, b.getPiece(b.getIndex(0, 0)) == nil)
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(white, PAWN_D_M))
+    assert.True(t, b.getPiece(b.getIndex(8, 8)) == nil)
+    assert.True(t, b.getPiece(b.getIndex(9, 9)) == nil)
+    target, risk := b.getEnPassant(white)
+    start, end := b.getVulnerable(white)
+    assert.True(t, target == nil)
+    assert.True(t, risk == nil)
+    assert.True(t, start == nil)
+    assert.True(t, end == nil)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-	board.On("getPiece", &enPassantRisk1).Return(&testPiece3).Once()
-	board.On("getPiece", &enPassantRisk2).Return(&testPiece4).Once()
-    err = move.undo()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, piece)
-    assert.Equal(t, testPiece2, capturedPiece)
-    assert.Equal(t, testEnPassant, enPassant)
-    assert.Equal(t, testVulnerable, vulnerable)
-    assert.Equal(t, testPiece3, enPassantCapturedPiece1)
-    assert.Equal(t, testPiece4, enPassantCapturedPiece2)
-
-	board.AssertExpectations(t)
+    move.undo()
+    assert.Equal(t, b.getPiece(b.getIndex(0, 0)), b.getAllPiece(white, PAWN_D))
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(black, PAWN_D))
+    assert.Equal(t, b.getPiece(b.getIndex(8, 8)), b.getAllPiece(black, PAWN_D))
+    assert.Equal(t, b.getPiece(b.getIndex(9, 9)), b.getAllPiece(black, PAWN_D))
+    target, risk = b.getEnPassant(white)
+    start, end = b.getVulnerable(white)
+    assert.Equal(t, target, b.getIndex(2, 2))
+    assert.Equal(t, risk, b.getIndex(3, 3))
+    assert.Equal(t, start, b.getIndex(4, 4))
+    assert.Equal(t, end, b.getIndex(5, 5))
 }
 
 func Test_MoveAllyDefense(t *testing.T) {
     white := 0
-    from := Point{0, 0}
-    to := Point{1, 1}
-    piece := Piece{white, 1}
-    board := &MockBoard{}
 
-    moves := Array100[FastMove]{}
+    b, err := newSimpleBoard(10, 10, 2)
+    assert.Nil(t, err)
+
+    b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
+    b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
+
+    moves := Array1000[FastMove]{}
     move := moves.get()
-
-    addMoveAllyDefense(board, &piece, &from, &to, &moves)
+    addMoveAllyDefense(
+        b,
+        b.getAllPiece(white, PAWN_D),
+        b.getIndex(0, 0),
+        b.getIndex(1, 1),
+        &moves,
+    )
     assert.Equal(t, move.allyDefense, true)
 
-    board.AssertExpectations(t)
+    move.execute()
+    assert.True(t, b.getPiece(b.getIndex(0, 0)) == nil)
+    assert.True(t, b.getPiece(b.getIndex(1, 1)) == nil)
+    target, risk := b.getEnPassant(white)
+    start, end := b.getVulnerable(white)
+    assert.True(t, target == nil)
+    assert.True(t, risk == nil)
+    assert.True(t, start == nil)
+    assert.True(t, end == nil)
+
+    move.undo()
+    assert.True(t, b.getPiece(b.getIndex(0, 0)) == nil)
+    assert.True(t, b.getPiece(b.getIndex(1, 1)) == nil)
+    target, risk = b.getEnPassant(white)
+    start, end = b.getVulnerable(white)
+    assert.True(t, target == nil)
+    assert.True(t, risk == nil)
+    assert.True(t, start == nil)
+    assert.True(t, end == nil)
 }
 
 func Test_MoveCastle(t *testing.T) {
     white := 0
-    from := Point{0, 0}
-    to := Point{1, 1}
-    vulnerable := Vulnerable{Point{2, 2}, Point{3, 3}}
-    enPassant := EnPassant{Point{4, 4}, Point{5, 5}}
-    toKing := Point{6, 6}
-    toRook := Point{7, 7}
-    newVulnerable := Vulnerable{Point{8, 8}, Point{9, 9}}
-    board := &MockBoard{}
-    king := Piece{white, 1}
-    newKing := Piece{white, 5}
-    rook := Piece{white, 2}
-    newRook := Piece{white, 6}
 
-    testPiece1 := Piece{}
-    testPiece2 := Piece{}
-    testPiece3 := Piece{}
-    testPiece4 := Piece{}
-    testEnPassant := EnPassant{}
-    testVulnerable := Vulnerable{}
+    b, err := newSimpleBoard(10, 10, 2)
+    assert.Nil(t, err)
 
-    moves := Array100[FastMove]{}
+    b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
+    b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
+
+    moves := Array1000[FastMove]{}
     move := moves.get()
-
-	board.On("getEnPassant", white).Return(&enPassant).Once()
-    board.On("getVulnerable", white).Return(&vulnerable).Once()
-    addMoveCastle(board, &king, &from, &toKing, &rook, &to, &toRook, &newVulnerable, &moves)
+    addMoveCastle(
+        b,
+        b.getAllPiece(white, KING_D),
+        b.getIndex(0, 0),
+        b.getIndex(6, 6),
+        b.getAllPiece(white, ROOK),
+        b.getIndex(1, 1),
+        b.getIndex(7, 7),
+        b.getIndex(8, 8),
+        b.getIndex(9, 9),
+        &moves,
+    )
     assert.Equal(t, move.allyDefense, false)
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getPiece", &toKing).Return(&testPiece3).Once()
-	board.On("getPiece", &toRook).Return(&testPiece4).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-    err := move.execute()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, Piece{0, 0})
-    assert.Equal(t, testPiece2, Piece{0, 0})
-    assert.Equal(t, testPiece3, newKing)
-    assert.Equal(t, testPiece4, newRook)
-    assert.Equal(t, testEnPassant, EnPassant{Point{-1, -1}, Point{-1, -1}})
-    assert.Equal(t, testVulnerable, newVulnerable)
+    move.execute()
+    assert.True(t, b.getPiece(b.getIndex(0, 0)) == nil)
+    assert.True(t, b.getPiece(b.getIndex(1, 1)) == nil)
+    assert.Equal(t, b.getPiece(b.getIndex(6, 6)), b.getAllPiece(white, KING_D_M))
+    assert.Equal(t, b.getPiece(b.getIndex(7, 7)), b.getAllPiece(white, ROOK_M))
+    target, risk := b.getEnPassant(white)
+    start, end := b.getVulnerable(white)
+    assert.True(t, target == nil)
+    assert.True(t, risk == nil)
+    assert.Equal(t, start, b.getIndex(8, 8))
+    assert.Equal(t, end, b.getIndex(9, 9))
 
-	board.On("getPiece", &from).Return(&testPiece1).Once()
-	board.On("getPiece", &to).Return(&testPiece2).Once()
-	board.On("getPiece", &toKing).Return(&testPiece3).Once()
-	board.On("getPiece", &toRook).Return(&testPiece4).Once()
-	board.On("getEnPassant", white).Return(&testEnPassant).Once()
-    board.On("getVulnerable", white).Return(&testVulnerable).Once()
-    err = move.undo()
-    assert.Nil(t, err)
-    assert.Equal(t, testPiece1, king)
-    assert.Equal(t, testPiece2, rook)
-    assert.Equal(t, testPiece3, Piece{0, 0})
-    assert.Equal(t, testPiece4, Piece{0, 0})
-    assert.Equal(t, testEnPassant, enPassant)
-    assert.Equal(t, testVulnerable, vulnerable)
-
-	board.AssertExpectations(t)
+    move.undo()
+    assert.Equal(t, b.getPiece(b.getIndex(0, 0)), b.getAllPiece(white, KING_D))
+    assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(white, ROOK))
+    assert.True(t, b.getPiece(b.getIndex(6, 6)) == nil)
+    assert.True(t, b.getPiece(b.getIndex(7, 7)) == nil)
+    target, risk = b.getEnPassant(white)
+    start, end = b.getVulnerable(white)
+    assert.Equal(t, target, b.getIndex(2, 2))
+    assert.Equal(t, risk, b.getIndex(3, 3))
+    assert.Equal(t, start, b.getIndex(4, 4))
+    assert.Equal(t, end, b.getIndex(5, 5))
 }
 

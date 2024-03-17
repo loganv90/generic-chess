@@ -63,6 +63,8 @@ type Player struct {
     alive bool
 }
 
+
+
 type Point struct {
     x int
     y int
@@ -72,25 +74,43 @@ func (p *Point) equals(other *Point) bool {
     return p.x == other.x && p.y == other.y
 }
 
-func (p *Point) add(other *Point) {
-    p.x += other.x
-    p.y += other.y
-}
+
 
 type PieceLocation struct {
-    piece Piece
-    location Point
+    piece *Piece
+    location *Point
 }
+
+func (p *PieceLocation) set(other *PieceLocation) {
+    p.piece = other.piece
+    p.location = other.location
+}
+
+
 
 type EnPassant struct {
-    target Point
-    risk Point
+    target *Point
+    risk *Point
 }
 
-type Vulnerable struct {
-    start Point
-    end Point
+func (e *EnPassant) set(other *EnPassant) {
+    e.target = other.target
+    e.risk = other.risk
 }
+
+
+
+type Vulnerable struct {
+    start *Point
+    end *Point
+}
+
+func (v *Vulnerable) set(other *Vulnerable) {
+    v.start = other.start
+    v.end = other.end
+}
+
+
 
 type Array4[T any] struct {
     array [4]T
@@ -101,6 +121,10 @@ func (a *Array4[T]) get() *T {
     return &a.array[a.count]
 }
 
+func (a *Array4[T]) set(value T) {
+    a.array[a.count] = value
+}
+
 func (a *Array4[T]) next() {
     a.count += 1
 }
@@ -108,6 +132,8 @@ func (a *Array4[T]) next() {
 func (a *Array4[T]) clear() {
     a.count = 0
 }
+
+
 
 type Array100[T any] struct {
     array [100]T
@@ -118,11 +144,38 @@ func (a *Array100[T]) get() *T {
     return &a.array[a.count]
 }
 
+func (a *Array100[T]) set(value T) {
+    a.array[a.count] = value
+}
+
 func (a *Array100[T]) next() {
     a.count += 1
 }
 
 func (a *Array100[T]) clear() {
+    a.count = 0
+}
+
+
+
+type Array1000[T any] struct {
+    array [200]T
+    count int
+}
+
+func (a *Array1000[T]) get() *T {
+    return &a.array[a.count]
+}
+
+func (a *Array1000[T]) set(value T) {
+    a.array[a.count] = value
+}
+
+func (a *Array1000[T]) next() {
+    a.count += 1
+}
+
+func (a *Array1000[T]) clear() {
     a.count = 0
 }
 
