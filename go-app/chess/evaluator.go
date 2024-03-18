@@ -21,11 +21,7 @@ Bonus for queen-rook, queen-bishop, bishop-bishop, rook-rook combos
 Responsible for:
 - evaluating a board and returning a score
 */
-type Evaluator interface {
-    eval() ([]int, error)
-}
-
-func newSimpleEvaluator(b Board, p PlayerCollection) (*SimpleEvaluator, error) {
+func newSimpleEvaluator(b *SimpleBoard, p *SimplePlayerCollection) (*SimpleEvaluator, error) {
     return &SimpleEvaluator{
         b: b,
         p: p,
@@ -33,8 +29,8 @@ func newSimpleEvaluator(b Board, p PlayerCollection) (*SimpleEvaluator, error) {
 }
 
 type SimpleEvaluator struct {
-    b Board
-    p PlayerCollection
+    b *SimpleBoard
+    p *SimplePlayerCollection
 }
 
 func (e *SimpleEvaluator) eval() ([]int, error) {

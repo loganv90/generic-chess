@@ -20,10 +20,6 @@ q2k2q1/2nqn2b/1n1P1n1b/2rnr2Q/1NQ1QN1Q/3Q3B/2RQR2B/Q2K2Q1 w - - this position ca
 Responsible for:
 - searching for moves given the current state of the game
 */
-type Searcher interface {
-    search() (MoveKey, error)
-}
-
 func newSimpleSearcher(g Game) (*SimpleSearcher, error) {
     e, err := newSimpleEvaluator(g.getBoard(), g.getPlayerCollection())
     if err != nil {
@@ -40,9 +36,9 @@ func newSimpleSearcher(g Game) (*SimpleSearcher, error) {
 }
 
 type SimpleSearcher struct {
-    b Board
-    p PlayerCollection
-    e Evaluator
+    b *SimpleBoard
+    p *SimplePlayerCollection
+    e *SimpleEvaluator
     transpositionMap map[string]MoveKeyAndScore
     minimaxCalls int
 }

@@ -157,7 +157,7 @@ func Test_CalculateMoves_promotion(t *testing.T) {
 
 func Assert_CountsAndMatest(
     t *testing.T,
-    b Board,
+    b *SimpleBoard,
     white int,
     whiteCount int,
     whiteCheckmate bool,

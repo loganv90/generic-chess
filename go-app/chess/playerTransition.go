@@ -1,6 +1,6 @@
 package chess
 
-func createPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inStalemate bool, t *PlayerTransition) {
+func createPlayerTransition(b *SimpleBoard, p *SimplePlayerCollection, inCheckmate bool, inStalemate bool, t *PlayerTransition) {
     oldCurrent := p.getCurrent()
     oldWinner := p.getWinner()
     oldGameOver := p.getGameOver()
@@ -50,8 +50,8 @@ func createPlayerTransition(b Board, p PlayerCollection, inCheckmate bool, inSta
 }
 
 type PlayerTransition struct {
-    p PlayerCollection
-    b Board
+    p *SimplePlayerCollection
+    b *SimpleBoard
     oldCurrent int
     newCurrent int
     oldWinner int

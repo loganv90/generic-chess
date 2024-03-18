@@ -1,7 +1,7 @@
 package chess
 
 func addMoveSimple(
-    b Board,
+    b *SimpleBoard,
     fromPiece *Piece,
     fromLocation *Point,
     toPiece *Piece,
@@ -67,7 +67,7 @@ func addMoveSimple(
 }
 
 func addMoveRevealEnPassant(
-    b Board,
+    b *SimpleBoard,
     fromPiece *Piece,
     fromLocation *Point,
     toPiece *Piece,
@@ -86,7 +86,7 @@ func addMoveRevealEnPassant(
 }
 
 func addMoveCaptureEnPassant(
-    b Board,
+    b *SimpleBoard,
     fromPiece *Piece,
     fromLocation *Point,
     toPiece *Piece,
@@ -146,7 +146,7 @@ func addMoveCaptureEnPassant(
 }
 
 func addMoveAllyDefense(
-    b Board,
+    b *SimpleBoard,
     fromPiece *Piece,
     fromLocation *Point,
     toLocation *Point,
@@ -180,7 +180,7 @@ func addMoveAllyDefense(
 }
 
 func addMoveCastle(
-    b Board,
+    b *SimpleBoard,
     king *Piece,
     fromLocation *Point,
     toKingLocation *Point,
@@ -262,7 +262,7 @@ func addMoveCastle(
 }
 
 type FastMove struct {
-    b Board
+    b *SimpleBoard
     fromLocation *Point
     toLocation *Point
     color int

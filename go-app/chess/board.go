@@ -10,41 +10,6 @@ Responsible for:
 - keeping track of the pieces on the board
 - keeping track of availalbe moves for all pieces
 */
-type Board interface {
-    disablePieces(color int, disable bool)
-    disableLocation(location *Point)
-
-    getIndex(x int, y int) *Point
-    addIndex(index1 *Point, index2 *Point) *Point
-
-    getAllPiece(color int, index int) *Piece
-    getPieceLocations() []Array100[*Point]
-	getPiece(location *Point) *Piece
-    movePiece(piece *Piece) *Piece
-    setPiece(location *Point, piece *Piece)
-
-    getVulnerable(color int) (*Point, *Point)
-    setVulnerable(color int, start *Point, end *Point)
-
-	getEnPassant(color int) (*Point, *Point)
-	setEnPassant(color int, target *Point, risk *Point)
-    possibleEnPassant(color int, location *Point) (*Point, *Point, *Point, *Point)
-
-    MovesOfColor(color int) *Array1000[FastMove]
-    MovesOfLocation(fromLocation *Point) *Array100[FastMove]
-    LegalMovesOfColor(color int) ([]FastMove, error)
-    LegalMovesOfLocation(fromLocation *Point) ([]FastMove, error)
-
-    CalculateMoves()
-    Check(color int) bool
-    CheckmateAndStalemate(color int) (bool, bool, error)
-
-	Print() string
-    State() *BoardData
-    Copy() (Board, error) 
-    UniqueString() string
-}
-
 func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
     if x <= 0 || y <= 0 {
         return nil, fmt.Errorf("invalid board size")
@@ -67,7 +32,7 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
     allPieces := make([][]Piece, players)
     for i := 0; i < players; i++ {
         playersDisabled[i] = false
-        enPassantTargets[i] = nil // TODO we don't account for this being nil
+        enPassantTargets[i] = nil
         enPassantRisks[i] = nil
         vulnerableStarts[i] = nil
         vulnerableEnds[i] = nil
@@ -102,21 +67,15 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
     disableds := make([][]bool, y)
     indexes := make([][]Point, y)
     pieces := make([][]*Piece, y)
-    toMoves := make([][]Array100[*FastMove], y)
-    fromMoves := make([][]Array100[*FastMove], y)
     for i := 0; i < y; i++ {
         disableds[i] = make([]bool, x)
         indexes[i] = make([]Point, x)
         pieces[i] = make([]*Piece, x)
-        toMoves[i] = make([]Array100[*FastMove], x)
-        fromMoves[i] = make([]Array100[*FastMove], x)
 
         for j := 0; j < x; j++ {
             disableds[i][j] = false
             indexes[i][j] = Point{j, i}
             pieces[i][j] = nil
-            toMoves[i][j] = Array100[*FastMove]{}
-            fromMoves[i][j] = Array100[*FastMove]{}
         }
     }
 
@@ -139,8 +98,6 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         disableds: disableds,
         indexes: indexes,
         pieces: pieces,
-        toMoves: toMoves,
-        fromMoves: fromMoves,
 	}, nil
 }
 
@@ -165,8 +122,6 @@ type SimpleBoard struct {
     disableds [][]bool
     indexes [][]Point
     pieces [][]*Piece
-    toMoves [][]Array100[*FastMove]
-    fromMoves [][]Array100[*FastMove]
 }
 
 func (b *SimpleBoard) pointOutOfBounds(p *Point) bool {
@@ -198,11 +153,7 @@ func (b *SimpleBoard) disableLocation(location *Point) {
 }
 
 func (b *SimpleBoard) getIndex(x int, y int) *Point {
-    if x < 0 || x >= b.x || y < 0 || y >= b.y {
-        return nil
-    }
-
-    if b.disableds[y][x] {
+    if x < 0 || x >= b.x || y < 0 || y >= b.y || b.disableds[y][x] {
         return nil
     }
 
@@ -288,7 +239,7 @@ func (b *SimpleBoard) setVulnerable(color int, start *Point, end *Point) {
 }
 
 func (b *SimpleBoard) possibleEnPassant(color int, target *Point) (*Point, *Point, *Point, *Point) {
-    if target == nil {
+    if b.pointOutOfBounds(target) {
         return nil, nil, nil, nil
     }
 
@@ -343,14 +294,23 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
         return nil
     }
 
-    moves := Array100[FastMove]{}
-    for i := 0; i < b.fromMoves[fromLocation.y][fromLocation.x].count; i++ {
-        move := b.fromMoves[fromLocation.y][fromLocation.x].array[i]
-        currentMove := moves.get()
-        *currentMove = *move
-        moves.next()
+    res := Array100[FastMove]{}
+
+    for i := 0; i < b.players; i++ {
+        moves := b.MovesOfColor(i)
+
+        for j := 0; j < moves.count; j++ {
+            move := moves.array[j]
+
+            if move.fromLocation == fromLocation {
+                currentMove := res.get()
+                *currentMove = move
+                res.next()
+            }
+        }
     }
-    return &moves
+
+    return &res
 }
 
 func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
@@ -419,12 +379,7 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
     return legalMoves, nil
 }
 
-// don't use the make function
-// remove the remaining interfaces
-// get indexes from board to avoid creating a lot of points
-// Returning items from functions results in heap allocation
-// TODO remove set piece and just return pointers from this struct
-// TODO edit existing structs when doing moves
+// TODO don't copy so much
 // TODO implement dynamic move calculations based on previous move
 // TODO how about we don't create massive move objects with pieces and stuff
 // stop excessive use of maps
@@ -438,13 +393,6 @@ func (b *SimpleBoard) CalculateMoves() {
     for i := 0; i < b.players; i++ {
         b.moves[i].clear()
         b.pieceLocations[i].clear()
-    }
-
-    for y := 0; y < b.y; y++ {
-        for x := 0; x < b.x; x++ {
-            b.toMoves[y][x].clear()
-            b.fromMoves[y][x].clear()
-        }
     }
 
     for y := 0; y < b.y; y++ {
@@ -475,22 +423,6 @@ func (b *SimpleBoard) CalculateMoves() {
             piece.moves(b, index, &b.moves[piece.color])
         }
     }
-
-    for i := 0; i < b.players; i++ {
-        moves := b.moves[i]
-
-        for j := 0; j < moves.count; j++ {
-            move := &moves.array[j]
-
-            fromMove := b.fromMoves[move.fromLocation.y][move.fromLocation.x].get()
-            *fromMove = move
-            b.fromMoves[move.fromLocation.y][move.fromLocation.x].next()
-
-            toMove := b.toMoves[move.toLocation.y][move.toLocation.x].get()
-            *toMove = move
-            b.toMoves[move.toLocation.y][move.toLocation.x].next()
-        }
-    }
 }
 
 func (b *SimpleBoard) Check(color int) bool {
@@ -498,39 +430,23 @@ func (b *SimpleBoard) Check(color int) bool {
         return false
     }
 
-    kingLocation := b.kingLocations[color]
-    if b.pointOutOfBounds(kingLocation) {
-        return false
-    }
-
-    for i := 0; i < b.toMoves[kingLocation.y][kingLocation.x].count; i++ {
-        move := b.toMoves[kingLocation.y][kingLocation.x].array[i]
-
-        if move.color != color {
-            return true
+    king := b.kingLocations[color]
+    start := b.vulnerableStarts[color]
+    end := b.vulnerableEnds[color]
+    for i := 0; i < b.players; i++ {
+        if i == color {
+            continue
         }
-    }
+        moves := &b.moves[i]
 
-    vulnerableStart := b.vulnerableStarts[color]
-    if b.pointOutOfBounds(b.vulnerableStarts[color]) {
-        return false
-    }
+        for j := 0; j < moves.count; j++ {
+            to := moves.array[j].toLocation
 
-    vulnerableEnd := b.vulnerableEnds[color]
-    if b.pointOutOfBounds(b.vulnerableEnds[color]) {
-        return false
-    }
-
-    for y := vulnerableStart.y; y <= vulnerableEnd.y; y++ {
-        for x := vulnerableStart.x; x <= vulnerableEnd.x; x++ {
-            moves := b.toMoves[y][x]
-
-            for i := 0; i < moves.count; i++ {
-                move := moves.array[i]
-
-                if move.color != color {
-                    return true
-                }
+            if to == king {
+                return true
+            }
+            if start != nil && end != nil && to.y >= start.y && to.y <= end.y && to.x >= start.x && to.x <= end.x {
+                return true
             }
         }
     }
@@ -632,7 +548,7 @@ func (b *SimpleBoard) State() *BoardData {
     }
 }
 
-func (b *SimpleBoard) Copy() (Board, error) {
+func (b *SimpleBoard) Copy() (*SimpleBoard, error) {
     simpleBoard, err := newSimpleBoard(b.x, b.y, b.players)
     if err != nil {
         return nil, err

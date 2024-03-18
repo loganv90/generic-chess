@@ -96,7 +96,7 @@ var piece_names = []string{
     "K",
 }
 
-var piece_move_functions = []func(Board, *Piece, *Point, *Array1000[FastMove]) {
+var piece_move_functions = []func(*SimpleBoard, *Piece, *Point, *Array1000[FastMove]) {
     pawn_r_moves,
     pawn_l_moves,
     pawn_d_moves,
@@ -244,12 +244,12 @@ func (p *Piece) moved() bool {
     return false
 }
 
-func (p *Piece) moves(b Board, fromLocation *Point, moves *Array1000[FastMove]) {
+func (p *Piece) moves(b *SimpleBoard, fromLocation *Point, moves *Array1000[FastMove]) {
     piece_move_functions[p.index](b, p, fromLocation, moves)
 }
 
 func addDirection(
-	b Board,
+	b *SimpleBoard,
     fromPiece *Piece,
     fromLocation *Point,
 	moves *Array1000[FastMove],
@@ -278,7 +278,7 @@ func addDirection(
 }
 
 func addSimple(
-	b Board,
+	b *SimpleBoard,
     fromPiece *Piece,
     fromLocation *Point,
 	moves *Array1000[FastMove],
@@ -299,27 +299,27 @@ func addSimple(
     }
 }
 
-var pawn_r_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+var pawn_r_moves = func(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     pawnAddForward(b, fromPiece, fromLocation, moves, pawn_r_directions)
     pawnAddCaptures(b, fromPiece, fromLocation, moves, pawn_r_directions)
 }
 
-var pawn_l_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+var pawn_l_moves = func(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     pawnAddForward(b, fromPiece, fromLocation, moves, pawn_l_directions)
     pawnAddCaptures(b, fromPiece, fromLocation, moves, pawn_l_directions)
 }
 
-var pawn_u_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+var pawn_u_moves = func(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     pawnAddForward(b, fromPiece, fromLocation, moves, pawn_u_directions)
     pawnAddCaptures(b, fromPiece, fromLocation, moves, pawn_u_directions)
 }
 
-var pawn_d_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+var pawn_d_moves = func(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     pawnAddForward(b, fromPiece, fromLocation, moves, pawn_d_directions)
     pawnAddCaptures(b, fromPiece, fromLocation, moves, pawn_d_directions)
 }
 
-func pawnAddForward(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove], directions []*Point) {
+func pawnAddForward(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove], directions []*Point) {
     to1Location := b.addIndex(fromLocation, directions[0])
     if to1Location == nil { // location doesn't exist
         return
@@ -364,7 +364,7 @@ func pawnAddForward(b Board, fromPiece *Piece, fromLocation *Point, moves *Array
     }
 }
 
-func pawnAddCaptures(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove], directions []*Point) {
+func pawnAddCaptures(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove], directions []*Point) {
     to1Location := b.addIndex(fromLocation, directions[3])
     to2Location := b.addIndex(fromLocation, directions[4])
     to3Location := b.addIndex(to1Location, directions[0])
@@ -425,31 +425,31 @@ func pawnAddCaptures(b Board, fromPiece *Piece, fromLocation *Point, moves *Arra
     }
 }
 
-func knight_moves(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+func knight_moves(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
 	for _, direction := range knight_directions {
 		addSimple(b, fromPiece, fromLocation, moves, direction)
 	}
 }
 
-func bishop_moves(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+func bishop_moves(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     for _, direction := range bishop_directions {
         addDirection(b, fromPiece, fromLocation, moves, direction)
     }
 }
 
-func rook_moves(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+func rook_moves(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     for _, direction := range rook_directions {
         addDirection(b, fromPiece, fromLocation, moves, direction)
     }
 }
 
-func queen_moves(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+func queen_moves(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     for _, direction := range queen_directions {
         addDirection(b, fromPiece, fromLocation, moves, direction)
     }
 }
 
-var king_lr_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+var king_lr_moves = func(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     for _, direction := range queen_directions {
         addSimple(b, fromPiece, fromLocation, moves, direction)
     }
@@ -462,7 +462,7 @@ var king_lr_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *
     addCastle(b, fromPiece, fromLocation, moves, king_lr_directions[1], king_lr_directions[3], king_lr_directions[5])
 }
 
-var king_ud_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
+var king_ud_moves = func(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove]) {
     for _, direction := range queen_directions {
         addSimple(b, fromPiece, fromLocation, moves, direction)
     }
@@ -475,7 +475,7 @@ var king_ud_moves = func(b Board, fromPiece *Piece, fromLocation *Point, moves *
     addCastle(b, fromPiece, fromLocation, moves, king_ud_directions[1], king_ud_directions[3], king_ud_directions[5])
 }
 
-func addCastle(b Board, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove], direction *Point, kingOffset *Point, rookOffset *Point) {
+func addCastle(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, moves *Array1000[FastMove], direction *Point, kingOffset *Point, rookOffset *Point) {
     // find rook for castle
     fromRookLocation := fromLocation
     var rook *Piece

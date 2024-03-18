@@ -8,22 +8,6 @@ import (
 Responsible for:
 - keeping track of the players in the game
 */
-type PlayerCollection interface {
-    eliminate(color int)
-    restore(color int)
-    getCurrent() int
-    setCurrent(color int)
-    getWinner() int
-    setWinner(color int)
-    getGameOver() bool
-    setGameOver(gameOver bool)
-
-    getNextAndRemaining() (int, int)
-    getPlayers() int
-
-    Copy() (PlayerCollection, error)
-}
-
 func newSimplePlayerCollection(numberOfPlayers int) (*SimplePlayerCollection, error) {
     if numberOfPlayers <= 0 {
         return nil, fmt.Errorf("not enough players")
@@ -139,7 +123,7 @@ func (s *SimplePlayerCollection) getPlayers() int {
     return s.players
 }
 
-func (s *SimplePlayerCollection) Copy() (PlayerCollection, error) {
+func (s *SimplePlayerCollection) Copy() (*SimplePlayerCollection, error) {
     playersAlive := make([]bool, s.players)
     for color, alive := range s.playersAlive {
         playersAlive[color] = alive

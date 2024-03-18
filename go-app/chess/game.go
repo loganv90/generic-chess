@@ -17,8 +17,8 @@ type Game interface {
 	Print() string
     Copy() (Game, error)
 
-    getBoard() Board
-    getPlayerCollection() PlayerCollection
+    getBoard() *SimpleBoard
+    getPlayerCollection() *SimplePlayerCollection
 }
 
 func NewSimpleGame() (Game, error) {
@@ -68,8 +68,8 @@ func NewSimpleFourPlayerGame() (Game, error) {
 }
 
 type SimpleGame struct {
-	b Board
-    p PlayerCollection
+	b *SimpleBoard
+    p *SimplePlayerCollection
 	i Invoker
 }
 
@@ -315,11 +315,11 @@ func (s *SimpleGame) Copy() (Game, error) {
     }, nil
 }
 
-func (s *SimpleGame) getBoard() Board {
+func (s *SimpleGame) getBoard() *SimpleBoard {
     return s.b
 }
 
-func (s *SimpleGame) getPlayerCollection() PlayerCollection {
+func (s *SimpleGame) getPlayerCollection() *SimplePlayerCollection {
     return s.p
 }
 
