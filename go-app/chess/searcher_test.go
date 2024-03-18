@@ -9,6 +9,60 @@ import (
     "github.com/stretchr/testify/assert"
 )
 
+func Test_Minimax_depth1(t *testing.T) {
+    white := 0
+    black := 1
+
+    b, err := newSimpleBoard(4, 4, 2)
+    assert.Nil(t, err)
+
+    p, err := newSimplePlayerCollection(2)
+    assert.Nil(t, err)
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    b.setPiece(b.getIndex(2, 0), b.getAllPiece(black, KING_U))
+    b.setPiece(b.getIndex(3, 0), b.getAllPiece(black, ROOK_M))
+    b.setPiece(b.getIndex(2, 3), b.getAllPiece(white, KING_U))
+    b.setPiece(b.getIndex(3, 3), b.getAllPiece(white, ROOK_M))
+    b.CalculateMoves()
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+
+    searcher := newSimpleSearcher(game)
+    moveKey, err := searcher.search(1)
+    assert.Nil(t, err)
+    assert.Equal(t, 3, moveKey.XTo)
+    assert.Equal(t, 0, moveKey.YTo)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            | K 1        | R 1        |
+|         0y |         0y |         0y |         0y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            |            |            |
+|         1y |         1y |         1y |         1y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            |            |            |
+|         2y |         2y |         2y |         2y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            | K 0        | R 0        |
+|         3y |         3y |         3y |         3y |
++---------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
 func Test_Minimax(t *testing.T) {
     white := 0
     black := 1
@@ -35,14 +89,10 @@ func Test_Minimax(t *testing.T) {
     }
 
     searcher := newSimpleSearcher(game)
-
-    score, move, _, err := searcher.minimax(4)
+    moveKey, err := searcher.search(4)
     assert.Nil(t, err)
-
-    assert.Equal(t, 100000, score[white])
-    assert.Equal(t, -100000, score[black])
-    assert.Equal(t, 1, move.toLocation.x)
-    assert.Equal(t, 2, move.toLocation.y)
+    assert.Equal(t, 1, moveKey.XTo)
+    assert.Equal(t, 2, moveKey.YTo)
 
     actualPrintedBoard := game.Print()
     expectedPrintedBoard := strings.Trim(`
@@ -94,12 +144,10 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
     }
 
     searcher := newSimpleSearcher(game)
-
-    _, move, _, err := searcher.minimax(3)
+    moveKey, err := searcher.search(3)
     assert.Nil(t, err)
-
-    assert.Equal(t, 5, move.toLocation.x)
-    assert.Equal(t, 2, move.toLocation.y)
+    assert.Equal(t, 5, moveKey.XTo)
+    assert.Equal(t, 2, moveKey.YTo)
 
     actualPrintedBoard := game.Print()
     expectedPrintedBoard := strings.Trim(`
@@ -209,8 +257,7 @@ func Benchmark_Minimax(t *testing.B) {
         }
 
         searcher := newSimpleSearcher(game)
-
-        _, _, _, err = searcher.minimax(4)
+        _, err = searcher.search(4)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()

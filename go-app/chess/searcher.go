@@ -1,9 +1,5 @@
 package chess
 
-import (
-    "fmt"
-)
-
 /*
 Chess Search:
 Alpha beta search
@@ -21,10 +17,16 @@ Responsible for:
 - searching for moves given the current state of the game
 */
 func newSimpleSearcher(g Game) *SimpleSearcher {
+    board := g.getBoard()
+    playerCollection := g.getPlayerCollection()
+
     return &SimpleSearcher{
-        b: g.getBoard(),
-        p: g.getPlayerCollection(),
-        e: newSimpleEvaluator(g.getBoard(), g.getPlayerCollection()),
+        b: board,
+        p: playerCollection,
+        e: newSimpleEvaluator(board, playerCollection),
+
+        players: playerCollection.getPlayers(),
+        scores: [][]int{},
         transpositionMap: map[string]MoveKeyAndScore{},
         minimaxCalls: 0,
     }
@@ -35,68 +37,44 @@ type SimpleSearcher struct {
     p *SimplePlayerCollection
     e *SimpleEvaluator
 
+    players int
+    scores [][]int
     transpositionMap map[string]MoveKeyAndScore
     minimaxCalls int
 }
 
-func (s *SimpleSearcher) search() (MoveKey, error) {
+func (s *SimpleSearcher) search(depth int) (MoveKey, error) {
+    s.scores = make([][]int, depth + 1)
+    for i := 0; i < depth + 1; i++ {
+        s.scores[i] = make([]int, s.players)
+    }
+
+    moveKey := MoveKey{}
+
     s.b.CalculateMoves()
+    s.minimax(depth, &moveKey)
 
-    _, move, ok, err := s.minimax(4)
-    if err != nil {
-        return MoveKey{}, err
-    }
-    
-    if !ok {
-        return MoveKey{}, fmt.Errorf("no move found")
-    }
-
-    promotionString := ""
-    if move.promotionIndex >= 0 {
-        promotionString = piece_names[move.promotionIndex]
-    }
-
-    return MoveKey{
-        XFrom: move.fromLocation.x,
-        YFrom: move.fromLocation.y,
-        XTo: move.toLocation.x,
-        YTo: move.toLocation.y,
-        Promotion: promotionString,
-    }, nil
+    return moveKey, nil
 }
 
-func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
+func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
     s.minimaxCalls++
 
     gameOver := s.p.getGameOver()
     if depth == 0 || gameOver {
-        score, err := s.e.eval()
-        if err != nil {
-            panic(err)
-        }
-
-        return score, FastMove{}, false, nil
+        s.e.eval(s.scores[depth])
+        return
     }
-
-    players := s.p.getPlayers()
-    currentPlayer := s.p.getCurrent()
-    if currentPlayer < 0 || currentPlayer >= players {
-        panic(fmt.Errorf("invalid player"))
-    }
-
-    movesPointer := s.b.MovesOfColor(currentPlayer)
-    if movesPointer == nil {
-        panic(fmt.Errorf("invalid player"))
-    }
-    moves := *movesPointer
-
-    inCheck := s.b.Check(currentPlayer)
 
     found := false
-    var bestMove FastMove
-    var transition PlayerTransition
-    bestScore := make([]int, players)
-    bestScore[currentPlayer] = -1000000
+    transition := PlayerTransition{}
+    currentPlayer := s.p.getCurrent()
+    movesPointer := s.b.MovesOfColor(currentPlayer)
+    moves := *movesPointer
+    
+    for i := 0; i < len(s.scores[depth]); i++ {
+        s.scores[depth][i] = -1000000
+    }
 
     for i := 0; i < moves.count; i++ {
         move := moves.array[i]
@@ -117,43 +95,38 @@ func (s *SimpleSearcher) minimax(depth int) ([]int, FastMove, bool, error) {
 
         transition.execute()
 
-        score, _, _, err := s.minimax(depth-1)
-        if err != nil {
-            panic(err)
-        }
-
-        move.undo()
+        s.minimax(depth-1, nil)
 
         transition.undo()
 
-        if score[currentPlayer] > bestScore[currentPlayer] {
-            bestScore = score
-            bestMove = move
+        move.undo()
+
+        if s.scores[depth-1][currentPlayer] > s.scores[depth][currentPlayer] {
+            for i := 0; i < len(s.scores[depth]); i++ {
+                s.scores[depth][i] = s.scores[depth-1][i]
+            }
+            if moveKey != nil {
+                moveKey.XTo = move.toLocation.x
+                moveKey.YTo = move.toLocation.y
+                moveKey.XFrom = move.fromLocation.x
+                moveKey.YFrom = move.fromLocation.y
+            }
             found = true
         }
     }
 
     if !found {
-        // stalemate
-        if !inCheck {
-            return make([]int, players), FastMove{}, false, nil // TODO this is probably a problem
+        if s.b.Check(currentPlayer) {
+            createPlayerTransition(s.b, s.p, true, false, &transition)
+        } else {
+            createPlayerTransition(s.b, s.p, false, true, &transition)
         }
-
-        // checkmate
-        createPlayerTransition(s.b, s.p, true, false, &transition)
 
         transition.execute()
 
-        score, _, _, err := s.minimax(depth)
-        if err != nil {
-            panic(err)
-        }
+        s.minimax(depth, moveKey)
 
         transition.undo()
-
-        return score, FastMove{}, false, nil
     }
-
-    return bestScore, bestMove, true, nil
 }
 

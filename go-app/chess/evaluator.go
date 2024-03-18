@@ -1,9 +1,5 @@
 package chess
 
-import (
-    "fmt"
-)
-
 /*
 Chess Evaluation:
 Material count
@@ -25,57 +21,50 @@ func newSimpleEvaluator(b *SimpleBoard, p *SimplePlayerCollection) *SimpleEvalua
     return &SimpleEvaluator{
         b: b,
         p: p,
+
+        material: make([]int, p.getPlayers()),
     }
 }
 
 type SimpleEvaluator struct {
     b *SimpleBoard
     p *SimplePlayerCollection
+
+    material []int
 }
 
-func (e *SimpleEvaluator) eval() ([]int, error) {
-    gameOver := e.p.getGameOver()
-    players := e.p.getPlayers()
-    scores := make([]int, players) // TODO this is also probably a problem
+func (e *SimpleEvaluator) eval(score []int) {
+    for player := range score {
+        score[player] = 0
+    }
 
+    gameOver := e.p.getGameOver()
     if gameOver {
         winner := e.p.getWinner()
-
-        if winner < 0 || winner >= players {
-            return scores, nil
-        } else {
-            for player := range scores {
-                scores[player] = -100000
-            }
-            scores[winner] = 100000
-
-            return scores, nil
+        if winner < 0 {
+            return
         }
+
+        for player := range score {
+            score[player] = -100000
+        }
+        score[winner] = 100000
+
+        return
     }
 
     pieceLocations := e.b.getPieceLocations()
-    materialScores, err := e.evalMaterial(pieceLocations)
-    if err != nil {
-        return nil, err
-    }
+    e.evalMaterial(pieceLocations, score)
 
     // Piece position comparison (piece-square tables)
     // we need: the locations of each piece by player
 
     // Mobility comparison
     // we need: the moves each piece can make including attacking ally pieces
-
-    for player := range scores {
-        scores[player] += materialScores[player]
-    }
-
-    return scores, nil
 }
 
-func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[*Point]) ([]int, error) {
-    leadingMaterial := 0
-    material := make([]int, len(pieceLocations))
-    scores := make([]int, len(pieceLocations))
+func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[*Point], score []int) {
+    totalMaterial := 0
 
     for color, locations := range pieceLocations {
         materialCount := 0
@@ -85,25 +74,19 @@ func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[*Point]) ([]int
 
             piece := e.b.getPiece(location)
             if piece == nil {
-                return nil, fmt.Errorf("no piece at location")
+                continue
             }
 
             materialCount += piece.value()
         }
 
-        material[color] = materialCount
-        leadingMaterial = max(leadingMaterial, materialCount)
+        totalMaterial += materialCount
+        e.material[color] = materialCount
     }
 
-    for color, materialCount := range material {
-        scores[color] = materialCount - leadingMaterial
+    for color := range score {
+        percentage := int(float64(e.material[color]) / float64(totalMaterial) * 100)
+        score[color] += percentage
     }
-
-    // if we're leading in material, we incentivize low total material
-    // if we're behind in material, we incentivize high total material
-    // totalMaterialFactor := 1000 * materialDifference / totalMaterial // more + if winning, more - if losing
-    // return materialDifference + totalMaterialFactor, nil
-
-    return scores, nil
 }
 

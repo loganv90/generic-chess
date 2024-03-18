@@ -21,8 +21,8 @@ func Test_Eval_Draw(t *testing.T) {
 
     evaluator := newSimpleEvaluator(b, p)
 
-    score, err := evaluator.eval()
-    assert.Nil(t, err)
+    score := make([]int, 2)
+    evaluator.eval(score)
     assert.Equal(t, 0, score[white])
     assert.Equal(t, 0, score[black])
 }
@@ -41,8 +41,8 @@ func Test_Eval_Win(t *testing.T) {
 
     evaluator := newSimpleEvaluator(b, p)
 
-    score, err := evaluator.eval()
-    assert.Nil(t, err)
+    score := make([]int, 2)
+    evaluator.eval(score)
     assert.Equal(t, 100000, score[white])
     assert.Equal(t, -100000, score[black])
 }
@@ -61,8 +61,8 @@ func Test_Eval_Lose(t *testing.T) {
 
     evaluator := newSimpleEvaluator(b, p)
 
-    score, err := evaluator.eval()
-    assert.Nil(t, err)
+    score := make([]int, 2)
+    evaluator.eval(score)
     assert.Equal(t, -100000, score[white])
     assert.Equal(t, 100000, score[black])
 }
@@ -80,9 +80,9 @@ func Test_EvalMaterial(t *testing.T) {
         redScore int
         blueScore int
     }{
-        {QUEEN, 0, -1200, -1800, -2400},
-        {ROOK, 0, 0, -600, -1200},
-        {KNIGHT, -600, 0, -600, -1200},
+        {QUEEN, 50, 27, 16, 5},
+        {ROOK, 35, 35, 21, 7},
+        {KNIGHT, 25, 41, 25, 8},
     }
 
     for _, test := range tests {
@@ -138,8 +138,8 @@ func Test_EvalMaterial(t *testing.T) {
             pieceLocations[blue].set(b.getIndex(3, 2))
             pieceLocations[blue].next()
 
-            score, err := evaluator.evalMaterial(pieceLocations)
-            assert.Nil(t, err)
+            score := make([]int, 4)
+            evaluator.evalMaterial(pieceLocations, score)
             assert.Equal(t, test.whiteScore, score[white])
             assert.Equal(t, test.blackScore, score[black])
             assert.Equal(t, test.redScore, score[red])
