@@ -21,11 +21,11 @@ Bonus for queen-rook, queen-bishop, bishop-bishop, rook-rook combos
 Responsible for:
 - evaluating a board and returning a score
 */
-func newSimpleEvaluator(b *SimpleBoard, p *SimplePlayerCollection) (*SimpleEvaluator, error) {
+func newSimpleEvaluator(b *SimpleBoard, p *SimplePlayerCollection) *SimpleEvaluator {
     return &SimpleEvaluator{
         b: b,
         p: p,
-    }, nil
+    }
 }
 
 type SimpleEvaluator struct {
@@ -73,8 +73,6 @@ func (e *SimpleEvaluator) eval() ([]int, error) {
 }
 
 func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[*Point]) ([]int, error) {
-    // idea is to compare our material to the leading player's material
-
     leadingMaterial := 0
     material := make([]int, len(pieceLocations))
     scores := make([]int, len(pieceLocations))

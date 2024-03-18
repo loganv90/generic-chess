@@ -24,10 +24,7 @@ func (b *SimpleBot) FindMove() (MoveKey, error) {
         return MoveKey{}, err
     }
 
-    searcher, err := newSimpleSearcher(gameCopy)
-    if err != nil {
-        return MoveKey{}, err
-    }
+    searcher := newSimpleSearcher(gameCopy)
 
     moveKey, err := searcher.search()
 

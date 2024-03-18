@@ -19,8 +19,7 @@ func Test_Eval_Draw(t *testing.T) {
     p.setGameOver(true)
     p.setWinner(-1)
 
-    evaluator, err := newSimpleEvaluator(b, p)
-    assert.Nil(t, err)
+    evaluator := newSimpleEvaluator(b, p)
 
     score, err := evaluator.eval()
     assert.Nil(t, err)
@@ -40,8 +39,7 @@ func Test_Eval_Win(t *testing.T) {
     p.setGameOver(true)
     p.setWinner(white)
 
-    evaluator, err := newSimpleEvaluator(b, p)
-    assert.Nil(t, err)
+    evaluator := newSimpleEvaluator(b, p)
 
     score, err := evaluator.eval()
     assert.Nil(t, err)
@@ -61,8 +59,7 @@ func Test_Eval_Lose(t *testing.T) {
     p.setGameOver(true)
     p.setWinner(black)
 
-    evaluator, err := newSimpleEvaluator(b, p)
-    assert.Nil(t, err)
+    evaluator := newSimpleEvaluator(b, p)
 
     score, err := evaluator.eval()
     assert.Nil(t, err)
@@ -109,8 +106,7 @@ func Test_EvalMaterial(t *testing.T) {
             p, err := newSimplePlayerCollection(4)
             assert.Nil(t, err)
 
-            evaluator, err := newSimpleEvaluator(b, p)
-            assert.Nil(t, err)
+            evaluator := newSimpleEvaluator(b, p)
 
             pieceLocations := make([]Array100[*Point], 4)
 

@@ -20,34 +20,26 @@ q2k2q1/2nqn2b/1n1P1n1b/2rnr2Q/1NQ1QN1Q/3Q3B/2RQR2B/Q2K2Q1 w - - this position ca
 Responsible for:
 - searching for moves given the current state of the game
 */
-func newSimpleSearcher(g Game) (*SimpleSearcher, error) {
-    e, err := newSimpleEvaluator(g.getBoard(), g.getPlayerCollection())
-    if err != nil {
-        return nil, err
-    }
-
+func newSimpleSearcher(g Game) *SimpleSearcher {
     return &SimpleSearcher{
         b: g.getBoard(),
         p: g.getPlayerCollection(),
-        e: e,
+        e: newSimpleEvaluator(g.getBoard(), g.getPlayerCollection()),
         transpositionMap: map[string]MoveKeyAndScore{},
         minimaxCalls: 0,
-    }, nil
+    }
 }
 
 type SimpleSearcher struct {
     b *SimpleBoard
     p *SimplePlayerCollection
     e *SimpleEvaluator
+
     transpositionMap map[string]MoveKeyAndScore
     minimaxCalls int
 }
 
 func (s *SimpleSearcher) search() (MoveKey, error) {
-    // we should start by implementing adapting minimax to an arbitrary number of players
-    // we can just do recursive search and pass around a single game object while execuing and undoing moves
-    // first we need to make a copy of the game object
-
     s.b.CalculateMoves()
 
     _, move, ok, err := s.minimax(4)

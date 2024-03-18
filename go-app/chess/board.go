@@ -124,28 +124,12 @@ type SimpleBoard struct {
     pieces [][]*Piece
 }
 
-func (b *SimpleBoard) pointOutOfBounds(p *Point) bool {
-    if p == nil {
-        return true
-    }
-
-    return p.y < 0 || p.y >= b.y || p.x < 0 || p.x >= b.x || b.disableds[p.y][p.x]
-}
-
-func (b *SimpleBoard) colorOutOfBounds(c int) bool {
-    return c < 0 || c >= b.players
-}
-
 func (b *SimpleBoard) disablePieces(color int, disable bool) {
-    if b.colorOutOfBounds(color) {
-        return
-    }
-
     b.playersDisabled[color] = disable
 }
 
 func (b *SimpleBoard) disableLocation(location *Point) {
-    if b.pointOutOfBounds(location) {
+    if location == nil {
         return
     }
 
@@ -169,14 +153,6 @@ func (b *SimpleBoard) addIndex(index1 *Point, index2 *Point) *Point {
 }
 
 func (b *SimpleBoard) getAllPiece(color int, index int) *Piece {
-    if b.colorOutOfBounds(color) {
-        return nil
-    }
-
-    if index < 0 {
-        return nil
-    }
-
     return &b.allPieces[color][index]
 }
 
@@ -185,7 +161,7 @@ func (b *SimpleBoard) getPieceLocations() []Array100[*Point] {
 }
 
 func (b *SimpleBoard) getPiece(location *Point) *Piece {
-    if b.pointOutOfBounds(location) {
+    if location == nil {
         return nil
     }
 
@@ -197,7 +173,7 @@ func (b *SimpleBoard) movePiece(piece *Piece) *Piece {
 }
 
 func (b *SimpleBoard) setPiece(location *Point, piece *Piece) {
-    if b.pointOutOfBounds(location) {
+    if location == nil {
         return
     }
 
@@ -205,45 +181,25 @@ func (b *SimpleBoard) setPiece(location *Point, piece *Piece) {
 }
 
 func (b *SimpleBoard) getVulnerable(color int) (*Point, *Point) {
-    if b.colorOutOfBounds(color) {
-        return nil, nil
-    }
-
     return b.vulnerableStarts[color], b.vulnerableEnds[color]
 }
 
 func (b *SimpleBoard) getEnPassant(color int) (*Point, *Point) {
-    if b.colorOutOfBounds(color) {
-        return nil, nil
-    }
-
     return b.enPassantTargets[color], b.enPassantRisks[color]
 }
 
 func (b *SimpleBoard) setEnPassant(color int, target *Point, risk *Point) {
-    if b.colorOutOfBounds(color) {
-        return
-    }
-
     b.enPassantTargets[color] = target
     b.enPassantRisks[color] = risk
 }
 
 func (b *SimpleBoard) setVulnerable(color int, start *Point, end *Point) {
-    if b.colorOutOfBounds(color) {
-        return
-    }
-
     b.vulnerableStarts[color] = start
     b.vulnerableEnds[color] = end
 }
 
 func (b *SimpleBoard) possibleEnPassant(color int, target *Point) (*Point, *Point, *Point, *Point) {
-    if b.pointOutOfBounds(target) {
-        return nil, nil, nil, nil
-    }
-
-    if b.colorOutOfBounds(color) {
+    if target == nil {
         return nil, nil, nil, nil
     }
 
@@ -282,15 +238,11 @@ func (b *SimpleBoard) possibleEnPassant(color int, target *Point) (*Point, *Poin
 }
 
 func (b *SimpleBoard) MovesOfColor(color int) *Array1000[FastMove] {
-    if b.colorOutOfBounds(color) {
-        return nil
-    }
-
     return &b.moves[color]
 }
 
 func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
-    if b.pointOutOfBounds(fromLocation) {
+    if fromLocation == nil {
         return nil
     }
 
@@ -303,8 +255,7 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
             move := moves.array[j]
 
             if move.fromLocation == fromLocation {
-                currentMove := res.get()
-                *currentMove = move
+                res.set(move)
                 res.next()
             }
         }
@@ -412,8 +363,7 @@ func (b *SimpleBoard) CalculateMoves() {
 
             index := b.getIndex(x, y)
 
-            p := b.pieceLocations[piece.color].get()
-            *p = index
+            b.pieceLocations[piece.color].set(index)
             b.pieceLocations[piece.color].next()
 
             if piece.isKing() {
@@ -426,13 +376,10 @@ func (b *SimpleBoard) CalculateMoves() {
 }
 
 func (b *SimpleBoard) Check(color int) bool {
-    if b.colorOutOfBounds(color) {
-        return false
-    }
-
     king := b.kingLocations[color]
     start := b.vulnerableStarts[color]
     end := b.vulnerableEnds[color]
+
     for i := 0; i < b.players; i++ {
         if i == color {
             continue
@@ -482,7 +429,7 @@ func (b *SimpleBoard) Print() string {
 		}
 		builder.WriteString("|\n")
 		for x, piece := range row {
-            if b.pointOutOfBounds(b.getIndex(x, y)) {
+            if b.disableds[y][x] {
                 builder.WriteString(fmt.Sprintf("|%s", strings.Repeat("X", cellWidth)))
             } else if piece == nil {
 				builder.WriteString(fmt.Sprintf("|%s", strings.Repeat(" ", cellWidth)))

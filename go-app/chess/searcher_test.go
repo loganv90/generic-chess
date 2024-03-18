@@ -34,8 +34,7 @@ func Test_Minimax(t *testing.T) {
         i: i,
     }
 
-    searcher, err := newSimpleSearcher(game)
-    assert.Nil(t, err)
+    searcher := newSimpleSearcher(game)
 
     score, move, _, err := searcher.minimax(4)
     assert.Nil(t, err)
@@ -94,8 +93,7 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
         i: i,
     }
 
-    searcher, err := newSimpleSearcher(game)
-    assert.Nil(t, err)
+    searcher := newSimpleSearcher(game)
 
     _, move, _, err := searcher.minimax(3)
     assert.Nil(t, err)
@@ -210,10 +208,9 @@ func Benchmark_Minimax(t *testing.B) {
             i: i,
         }
 
-        searcher, err := newSimpleSearcher(game)
-        assert.Nil(t, err)
+        searcher := newSimpleSearcher(game)
 
-        _, _, _, err = searcher.minimax(3)
+        _, _, _, err = searcher.minimax(4)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()
