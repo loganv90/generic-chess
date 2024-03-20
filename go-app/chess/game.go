@@ -180,9 +180,9 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
 }
 
 func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
-    location := Point{x, y}
+    location := s.b.getIndex(x, y)
 
-    piece := s.b.getPiece(&location)
+    piece := s.b.getPiece(location)
     if piece == nil {
         return &PieceState{
             X: x,
@@ -204,7 +204,7 @@ func (s *SimpleGame) View(x int, y int) (*PieceState, error) {
 
     currentPlayer := s.p.getCurrent()
     if currentPlayer == piece.color {
-        moves, err := s.b.LegalMovesOfLocation(&location)
+        moves, err := s.b.LegalMovesOfLocation(location)
         if err != nil {
             return &PieceState{
                 X: x,

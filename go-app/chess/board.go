@@ -503,10 +503,34 @@ func (b *SimpleBoard) Copy() (*SimpleBoard, error) {
 
     for i := 0; i < b.players; i++ {
         simpleBoard.playersDisabled[i] = b.playersDisabled[i]
-        simpleBoard.enPassantTargets[i] = simpleBoard.getIndex(b.enPassantTargets[i].x, b.enPassantTargets[i].y)
-        simpleBoard.enPassantRisks[i] = simpleBoard.getIndex(b.enPassantRisks[i].x, b.enPassantRisks[i].y)
-        simpleBoard.vulnerableStarts[i] = simpleBoard.getIndex(b.vulnerableStarts[i].x, b.vulnerableStarts[i].y)
-        simpleBoard.vulnerableEnds[i] = simpleBoard.getIndex(b.vulnerableEnds[i].x, b.vulnerableEnds[i].y)
+
+        enPassantTarget := b.enPassantTargets[i]
+        if enPassantTarget == nil {
+            simpleBoard.enPassantTargets[i] = nil
+        } else {
+            simpleBoard.enPassantTargets[i] = simpleBoard.getIndex(enPassantTarget.x, enPassantTarget.y)
+        }
+
+        enPassantRisk := b.enPassantRisks[i]
+        if enPassantRisk == nil {
+            simpleBoard.enPassantRisks[i] = nil
+        } else {
+            simpleBoard.enPassantRisks[i] = simpleBoard.getIndex(enPassantRisk.x, enPassantRisk.y)
+        }
+
+        vulnerableStart := b.vulnerableStarts[i]
+        if vulnerableStart == nil {
+            simpleBoard.vulnerableStarts[i] = nil
+        } else {
+            simpleBoard.vulnerableStarts[i] = simpleBoard.getIndex(vulnerableStart.x, vulnerableStart.y)
+        }
+
+        vulnerableEnd := b.vulnerableEnds[i]
+        if vulnerableEnd == nil {
+            simpleBoard.vulnerableEnds[i] = nil
+        } else {
+            simpleBoard.vulnerableEnds[i] = simpleBoard.getIndex(vulnerableEnd.x, vulnerableEnd.y)
+        }
     }
 
     for i := 0; i < b.y; i++ {
