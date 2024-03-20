@@ -377,14 +377,14 @@ func pawnAddCaptures(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, move
     knight := b.getAllPiece(fromPiece.color, KNIGHT)
 
     if to1Location != nil {
-        if t1, t2, r1, r2 := b.possibleEnPassant(fromPiece.color, to1Location); t1 != nil { // if the square is an en passant target
+        if r1, r2 := b.getEnPassantRisks(fromPiece.color, to1Location); r1 != nil { // if the square is an en passant target
             if to3Location == nil {
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, queen, t1, t2, r1, r2, moves)
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, rook_m, t1, t2, r1, r2, moves)
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, bishop, t1, t2, r1, r2, moves)
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, knight, t1, t2, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, queen, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, rook_m, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, bishop, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, knight, r1, r2, moves)
             } else {
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, nil, t1, t2, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece1, to1Location, nil, r1, r2, moves)
             }
         } else if piece1 != nil && piece1.color != fromPiece.color { // if the square is occupied by an enemy piece
             if to3Location == nil {
@@ -401,14 +401,14 @@ func pawnAddCaptures(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, move
     }
 
     if to2Location != nil {
-        if t1, t2, r1, r2 := b.possibleEnPassant(fromPiece.color, to2Location); t1 != nil { // if the square is an en passant target
+        if r1, r2 := b.getEnPassantRisks(fromPiece.color, to2Location); r1 != nil { // if the square is an en passant target
             if to4Location == nil {
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, queen, t1, t2, r1, r2, moves)
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, rook_m, t1, t2, r1, r2, moves)
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, bishop, t1, t2, r1, r2, moves)
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, knight, t1, t2, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, queen, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, rook_m, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, bishop, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, knight, r1, r2, moves)
             } else {
-                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, nil, t1, t2, r1, r2, moves)
+                addMoveCaptureEnPassant(b, fromPiece, fromLocation, piece2, to2Location, nil, r1, r2, moves)
             }
         } else if piece2 != nil && piece2.color != fromPiece.color { // if the square is occupied by an enemy piece
             if to4Location == nil {

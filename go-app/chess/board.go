@@ -198,13 +198,11 @@ func (b *SimpleBoard) setVulnerable(color int, start *Point, end *Point) {
     b.vulnerableEnds[color] = end
 }
 
-func (b *SimpleBoard) possibleEnPassant(color int, target *Point) (*Point, *Point, *Point, *Point) {
+func (b *SimpleBoard) getEnPassantRisks(color int, target *Point) (*Point, *Point) {
     if target == nil {
-        return nil, nil, nil, nil
+        return nil, nil
     }
 
-    var target1 *Point
-    var target2 *Point
     var risk1 *Point
     var risk2 *Point
 
@@ -223,18 +221,16 @@ func (b *SimpleBoard) possibleEnPassant(color int, target *Point) (*Point, *Poin
             continue
         }
 
-        if target1 == nil {
-            target1 = t
+        if risk1 == nil {
             risk1 = r
-        } else if target2 == nil {
-            target2 = t
+        } else if risk2 == nil {
             risk2 = r
         } else {
             panic("too many en passants")
         }
 	}
 
-    return target1, target2, risk1, risk2
+    return risk1, risk2
 }
 
 func (b *SimpleBoard) MovesOfColor(color int) *Array1000[FastMove] {
@@ -330,13 +326,8 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
     return legalMoves, nil
 }
 
-// TODO don't copy so much
-// TODO implement dynamic move calculations based on previous move
-// TODO how about we don't create massive move objects with pieces and stuff
-// stop excessive use of maps
-// stop excessive use of pointers
-// don't store the moves in the board maybe
-// reduce calls to append maybe
+// TODO dynamic move calculations based on previous move
+// TODO spawn go routines for searching
 // TODO add 3 move repetition and 50 move rule
 // TODO add rule to allow checks and only lose on king capture
 // TODO add rule to check for checkmate and stalemate on all players after every move
@@ -348,10 +339,6 @@ func (b *SimpleBoard) CalculateMoves() {
 
     for y := 0; y < b.y; y++ {
         for x := 0; x < b.x; x++ {
-            if b.disableds[y][x] {
-                continue
-            }
-
             piece := b.pieces[y][x]
             if piece == nil {
                 continue

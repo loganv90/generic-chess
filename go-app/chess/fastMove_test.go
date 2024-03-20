@@ -147,8 +147,8 @@ func Test_MoveCaptureEnPassant(t *testing.T) {
     b, err := newSimpleBoard(10, 10, 2)
     assert.Nil(t, err)
 
-    b.setPiece(b.getIndex(8, 8), b.getAllPiece(black, PAWN_D))
-    b.setPiece(b.getIndex(9, 9), b.getAllPiece(black, PAWN_D))
+    b.setPiece(b.getIndex(6, 6), b.getAllPiece(black, PAWN_D))
+    b.setPiece(b.getIndex(7, 7), b.getAllPiece(black, PAWN_D))
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
@@ -163,8 +163,6 @@ func Test_MoveCaptureEnPassant(t *testing.T) {
         nil,
         b.getIndex(6, 6),
         b.getIndex(7, 7),
-        b.getIndex(8, 8),
-        b.getIndex(9, 9),
         &moves,
     )
     assert.Equal(t, move.allyDefense, false)
@@ -172,8 +170,8 @@ func Test_MoveCaptureEnPassant(t *testing.T) {
     move.execute()
     assert.True(t, b.getPiece(b.getIndex(0, 0)) == nil)
     assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(white, PAWN_D_M))
-    assert.True(t, b.getPiece(b.getIndex(8, 8)) == nil)
-    assert.True(t, b.getPiece(b.getIndex(9, 9)) == nil)
+    assert.True(t, b.getPiece(b.getIndex(6, 6)) == nil)
+    assert.True(t, b.getPiece(b.getIndex(7, 7)) == nil)
     target, risk := b.getEnPassant(white)
     start, end := b.getVulnerable(white)
     assert.True(t, target == nil)
@@ -184,8 +182,8 @@ func Test_MoveCaptureEnPassant(t *testing.T) {
     move.undo()
     assert.Equal(t, b.getPiece(b.getIndex(0, 0)), b.getAllPiece(white, PAWN_D))
     assert.Equal(t, b.getPiece(b.getIndex(1, 1)), b.getAllPiece(black, PAWN_D))
-    assert.Equal(t, b.getPiece(b.getIndex(8, 8)), b.getAllPiece(black, PAWN_D))
-    assert.Equal(t, b.getPiece(b.getIndex(9, 9)), b.getAllPiece(black, PAWN_D))
+    assert.Equal(t, b.getPiece(b.getIndex(6, 6)), b.getAllPiece(black, PAWN_D))
+    assert.Equal(t, b.getPiece(b.getIndex(7, 7)), b.getAllPiece(black, PAWN_D))
     target, risk = b.getEnPassant(white)
     start, end = b.getVulnerable(white)
     assert.Equal(t, target, b.getIndex(2, 2))

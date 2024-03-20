@@ -92,8 +92,6 @@ func addMoveCaptureEnPassant(
     toPiece *Piece,
     toLocation *Point,
     newPiece *Piece,
-    target1 *Point,
-    target2 *Point,
     risk1 *Point,
     risk2 *Point,
     moves *Array1000[FastMove],
@@ -101,10 +99,6 @@ func addMoveCaptureEnPassant(
     move := moves.get()
 
     addMoveSimple(b, fromPiece, fromLocation, toPiece, toLocation, newPiece, moves)
-
-    if target1 == nil {
-        return
-    }
 
     capturedPiece := b.getPiece(risk1)
     if capturedPiece == nil {
@@ -122,10 +116,6 @@ func addMoveCaptureEnPassant(
 
     move.oldLocation.set(risk1)
     move.oldLocation.next()
-
-    if target2 == nil {
-        return
-    }
 
     capturedPiece = b.getPiece(risk2)
     if capturedPiece == nil {
