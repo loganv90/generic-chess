@@ -160,7 +160,7 @@ func Test_Rook_Moves(t *testing.T) {
     b.setPiece(b.getIndex(2, 2), rook)
 
     moves := Array1000[FastMove]{}
-	rook.moves(b, &Point{2, 2}, &moves)
+	rook.moves(b, b.getIndex(2, 2), &moves)
 
     Assert_LengthAndToLocations(t, moves, 8, []*Point{
         b.getIndex(2, 0),

@@ -217,7 +217,7 @@ func (b *SimpleBoard) getEnPassantRisks(color int, target *Point) (*Point, *Poin
             continue
         }
 
-        if !target.equals(t) {
+        if target != t {
             continue
         }
 

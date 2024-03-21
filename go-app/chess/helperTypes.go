@@ -70,10 +70,6 @@ type Point struct {
     y int
 }
 
-func (p *Point) equals(other *Point) bool {
-    return p.x == other.x && p.y == other.y
-}
-
 
 
 type PieceLocation struct {
