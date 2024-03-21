@@ -123,6 +123,7 @@ func (a *Array4[T]) get() *T {
 
 func (a *Array4[T]) set(value T) {
     a.array[a.count] = value
+    a.count += 1
 }
 
 func (a *Array4[T]) next() {
@@ -146,6 +147,7 @@ func (a *Array100[T]) get() *T {
 
 func (a *Array100[T]) set(value T) {
     a.array[a.count] = value
+    a.count += 1
 }
 
 func (a *Array100[T]) next() {
@@ -169,6 +171,7 @@ func (a *Array1000[T]) get() *T {
 
 func (a *Array1000[T]) set(value T) {
     a.array[a.count] = value
+    a.count += 1
 }
 
 func (a *Array1000[T]) next() {

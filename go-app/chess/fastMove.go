@@ -29,27 +29,15 @@ func addMoveSimple(
 
     move.newPiece.clear()
     move.newPiece.set(nil)
-    move.newPiece.next()
     move.newPiece.set(newPiece)
-    move.newPiece.next()
-
-    move.newLocation.clear()
-    move.newLocation.set(fromLocation)
-    move.newLocation.next()
-    move.newLocation.set(toLocation)
-    move.newLocation.next()
 
     move.oldPiece.clear()
     move.oldPiece.set(fromPiece)
-    move.oldPiece.next()
     move.oldPiece.set(toPiece)
-    move.oldPiece.next()
 
-    move.oldLocation.clear()
-    move.oldLocation.set(fromLocation)
-    move.oldLocation.next()
-    move.oldLocation.set(toLocation)
-    move.oldLocation.next()
+    move.location.clear()
+    move.location.set(fromLocation)
+    move.location.set(toLocation)
 
     move.newTarget = nil
     move.newRisk = nil
@@ -106,16 +94,10 @@ func addMoveCaptureEnPassant(
     }
 
     move.newPiece.set(nil)
-    move.newPiece.next()
-
-    move.newLocation.set(risk1)
-    move.newLocation.next()
 
     move.oldPiece.set(capturedPiece)
-    move.oldPiece.next()
 
-    move.oldLocation.set(risk1)
-    move.oldLocation.next()
+    move.location.set(risk1)
 
     capturedPiece = b.getPiece(risk2)
     if capturedPiece == nil {
@@ -123,16 +105,10 @@ func addMoveCaptureEnPassant(
     }
 
     move.newPiece.set(nil)
-    move.newPiece.next()
-
-    move.newLocation.set(risk2)
-    move.newLocation.next()
 
     move.oldPiece.set(capturedPiece)
-    move.oldPiece.next()
 
-    move.oldLocation.set(risk2)
-    move.oldLocation.next()
+    move.location.set(risk2)
 }
 
 func addMoveAllyDefense(
@@ -152,9 +128,8 @@ func addMoveAllyDefense(
     move.promotionIndex = -1
 
     move.newPiece.clear()
-    move.newLocation.clear()
     move.oldPiece.clear()
-    move.oldLocation.clear()
+    move.location.clear()
 
     move.newTarget = nil
     move.newRisk = nil
@@ -198,43 +173,21 @@ func addMoveCastle(
 
     move.newPiece.clear()
     move.newPiece.set(nil)
-    move.newPiece.next()
     move.newPiece.set(nil)
-    move.newPiece.next()
     move.newPiece.set(newKing)
-    move.newPiece.next()
     move.newPiece.set(newRook)
-    move.newPiece.next()
-
-    move.newLocation.clear()
-    move.newLocation.set(fromLocation)
-    move.newLocation.next()
-    move.newLocation.set(toLocation)
-    move.newLocation.next()
-    move.newLocation.set(toKingLocation)
-    move.newLocation.next()
-    move.newLocation.set(toRookLocation)
-    move.newLocation.next()
 
     move.oldPiece.clear()
-    move.oldPiece.set(nil)
-    move.oldPiece.next()
-    move.oldPiece.set(nil)
-    move.oldPiece.next()
     move.oldPiece.set(king)
-    move.oldPiece.next()
     move.oldPiece.set(rook)
-    move.oldPiece.next()
+    move.oldPiece.set(nil)
+    move.oldPiece.set(nil)
 
-    move.oldLocation.clear()
-    move.oldLocation.set(toKingLocation)
-    move.oldLocation.next()
-    move.oldLocation.set(toRookLocation)
-    move.oldLocation.next()
-    move.oldLocation.set(fromLocation)
-    move.oldLocation.next()
-    move.oldLocation.set(toLocation)
-    move.oldLocation.next()
+    move.location.clear()
+    move.location.set(fromLocation)
+    move.location.set(toLocation)
+    move.location.set(toKingLocation)
+    move.location.set(toRookLocation)
 
     move.newTarget = nil
     move.newRisk = nil
@@ -261,9 +214,8 @@ type FastMove struct {
 
     // piece changes
     newPiece Array4[*Piece]
-    newLocation Array4[*Point]
     oldPiece Array4[*Piece]
-    oldLocation Array4[*Point]
+    location Array4[*Point]
 
     // enPassant
     newTarget *Point
@@ -280,7 +232,7 @@ type FastMove struct {
 
 func (m *FastMove) execute() {
     for i := 0; i < m.newPiece.count; i++ {
-        m.b.setPiece(m.newLocation.array[i], m.newPiece.array[i])
+        m.b.setPiece(m.location.array[i], m.newPiece.array[i])
     }
 
     m.b.setEnPassant(m.color, m.newTarget, m.newRisk)
@@ -288,8 +240,8 @@ func (m *FastMove) execute() {
 }
 
 func (m *FastMove) undo() {
-    for i := 0; i < m.oldPiece.count; i++ {
-        m.b.setPiece(m.oldLocation.array[i], m.oldPiece.array[i])
+    for i := m.newPiece.count - 1; i >= 0; i-- {
+        m.b.setPiece(m.location.array[i], m.oldPiece.array[i])
     }
 
     m.b.setEnPassant(m.color, m.oldTarget, m.oldRisk)

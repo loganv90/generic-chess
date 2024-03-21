@@ -111,32 +111,20 @@ func Test_EvalMaterial(t *testing.T) {
             pieceLocations := make([]Array100[*Point], 4)
 
             pieceLocations[white].set(b.getIndex(0, 0))
-            pieceLocations[white].next()
             pieceLocations[white].set(b.getIndex(0, 1))
-            pieceLocations[white].next()
             pieceLocations[white].set(b.getIndex(0, 2))
-            pieceLocations[white].next()
 
             pieceLocations[black].set(b.getIndex(1, 0))
-            pieceLocations[black].next()
             pieceLocations[black].set(b.getIndex(1, 1))
-            pieceLocations[black].next()
             pieceLocations[black].set(b.getIndex(1, 2))
-            pieceLocations[black].next()
 
             pieceLocations[red].set(b.getIndex(2, 0))
-            pieceLocations[red].next()
             pieceLocations[red].set(b.getIndex(2, 1))
-            pieceLocations[red].next()
             pieceLocations[red].set(b.getIndex(2, 2))
-            pieceLocations[red].next()
 
             pieceLocations[blue].set(b.getIndex(3, 0))
-            pieceLocations[blue].next()
             pieceLocations[blue].set(b.getIndex(3, 1))
-            pieceLocations[blue].next()
             pieceLocations[blue].set(b.getIndex(3, 2))
-            pieceLocations[blue].next()
 
             score := make([]int, 4)
             evaluator.evalMaterial(pieceLocations, score)

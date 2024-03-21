@@ -252,7 +252,6 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
 
             if move.fromLocation == fromLocation {
                 res.set(move)
-                res.next()
             }
         }
     }
@@ -351,7 +350,6 @@ func (b *SimpleBoard) CalculateMoves() {
             index := b.getIndex(x, y)
 
             b.pieceLocations[piece.color].set(index)
-            b.pieceLocations[piece.color].next()
 
             if piece.isKing() {
                 b.kingLocations[piece.color] = index
