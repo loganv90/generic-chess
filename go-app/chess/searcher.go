@@ -26,9 +26,13 @@ func newSimpleSearcher(g Game) *SimpleSearcher {
         e: newSimpleEvaluator(board, playerCollection),
 
         players: playerCollection.getPlayers(),
-        scores: [][]int{},
-        transpositionMap: map[string]MoveKeyAndScore{},
         minimaxCalls: 0,
+
+        scoreLevels: [][]int{},
+        transitionLevels: []PlayerTransition{},
+        moveLevels: []Array1000[FastMove]{},
+
+        transpositionMap: map[string]MoveKeyAndScore{},
     }
 }
 
@@ -38,15 +42,25 @@ type SimpleSearcher struct {
     e *SimpleEvaluator
 
     players int
-    scores [][]int
-    transpositionMap map[string]MoveKeyAndScore
     minimaxCalls int
+
+    scoreLevels [][]int
+    transitionLevels []PlayerTransition
+    moveLevels []Array1000[FastMove]
+
+    transpositionMap map[string]MoveKeyAndScore
 }
 
 func (s *SimpleSearcher) search(depth int) (MoveKey, error) {
-    s.scores = make([][]int, depth + 1)
-    for i := 0; i < depth + 1; i++ {
-        s.scores[i] = make([]int, s.players)
+    levels := depth + 1
+
+    s.scoreLevels = make([][]int, levels)
+    s.transitionLevels = make([]PlayerTransition, levels)
+    s.moveLevels = make([]Array1000[FastMove], levels)
+    for i := 0; i < levels; i++ {
+        s.scoreLevels[i] = make([]int, s.players)
+        s.transitionLevels[i] = PlayerTransition{}
+        s.moveLevels[i] = Array1000[FastMove]{}
     }
 
     moveKey := MoveKey{}
@@ -62,22 +76,23 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
 
     gameOver := s.p.getGameOver()
     if depth == 0 || gameOver {
-        s.e.eval(s.scores[depth])
+        s.e.eval(s.scoreLevels[depth])
         return
     }
 
     found := false
-    transition := PlayerTransition{}
     currentPlayer := s.p.getCurrent()
-    movesPointer := s.b.MovesOfColor(currentPlayer)
-    moves := *movesPointer
-    
-    for i := 0; i < len(s.scores[depth]); i++ {
-        s.scores[depth][i] = -1000000
-    }
+    transition := &s.transitionLevels[depth]
 
-    for i := 0; i < moves.count; i++ {
-        move := moves.array[i]
+    s.moveLevels[depth].clear()
+    s.b.MovesOfColor(currentPlayer, &s.moveLevels[depth])
+
+    for i := 0; i < len(s.scoreLevels[depth]); i++ {
+        s.scoreLevels[depth][i] = -1000000
+    }
+    
+    for i := 0; i < s.moveLevels[depth].count; i++ {
+        move := &s.moveLevels[depth].array[i]
         if move.allyDefense {
             continue
         }
@@ -91,7 +106,7 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
             continue
         }
 
-        createPlayerTransition(s.b, s.p, false, false, &transition)
+        createPlayerTransition(s.b, s.p, false, false, transition)
 
         transition.execute()
 
@@ -101,9 +116,9 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
 
         move.undo()
 
-        if s.scores[depth-1][currentPlayer] > s.scores[depth][currentPlayer] {
-            for i := 0; i < len(s.scores[depth]); i++ {
-                s.scores[depth][i] = s.scores[depth-1][i]
+        if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
+            for i := 0; i < len(s.scoreLevels[depth]); i++ {
+                s.scoreLevels[depth][i] = s.scoreLevels[depth-1][i]
             }
             if moveKey != nil {
                 moveKey.XTo = move.toLocation.x
@@ -117,9 +132,9 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
 
     if !found {
         if s.b.Check(currentPlayer) {
-            createPlayerTransition(s.b, s.p, true, false, &transition)
+            createPlayerTransition(s.b, s.p, true, false, transition)
         } else {
-            createPlayerTransition(s.b, s.p, false, true, &transition)
+            createPlayerTransition(s.b, s.p, false, true, transition)
         }
 
         transition.execute()

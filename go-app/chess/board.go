@@ -233,8 +233,11 @@ func (b *SimpleBoard) getEnPassantRisks(color int, target *Point) (*Point, *Poin
     return risk1, risk2
 }
 
-func (b *SimpleBoard) MovesOfColor(color int) *Array1000[FastMove] {
-    return &b.moves[color]
+func (b *SimpleBoard) MovesOfColor(color int, moves *Array1000[FastMove]) {
+    colorMoves := &b.moves[color]
+    for i := 0; i < colorMoves.count; i++ {
+        moves.set(colorMoves.array[i])
+    }
 }
 
 func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
@@ -245,7 +248,7 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
     res := Array100[FastMove]{}
 
     for i := 0; i < b.players; i++ {
-        moves := b.MovesOfColor(i)
+        moves := &b.moves[i]
 
         for j := 0; j < moves.count; j++ {
             move := moves.array[j]
@@ -260,11 +263,8 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
 }
 
 func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
-    movesPointer := b.MovesOfColor(color)
-    if movesPointer == nil {
-        return nil, fmt.Errorf("invalid color")
-    }
-    moves := *movesPointer
+    moves := Array1000[FastMove]{}
+    b.MovesOfColor(color, &moves)
 
     legalMoves := []FastMove{}
 
