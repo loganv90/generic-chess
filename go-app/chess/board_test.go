@@ -198,3 +198,40 @@ func Test_MinimumString_Default(t *testing.T) {
     assert.Equal(t, expected, actual)
 }
 
+func Test_CalculateMovesDynamic(t *testing.T) {
+    white := 0
+    black := 1
+
+    b, err := newSimpleBoard(4, 4, 2)
+    assert.Nil(t, err)
+
+    b.setPiece(b.getIndex(0, 0), b.getAllPiece(white, KING_D))
+    b.setPiece(b.getIndex(2, 1), b.getAllPiece(white, ROOK_M))
+    b.setPiece(b.getIndex(3, 2), b.getAllPiece(black, ROOK_M))
+    b.setPiece(b.getIndex(3, 3), b.getAllPiece(black, KING_D))
+    b.CalculateMoves()
+    b.setPiece(b.getIndex(2, 1), nil)
+    b.setPiece(b.getIndex(0, 1), b.getAllPiece(white, ROOK_M))
+
+    move := FastMove{
+        location: Array4[*Point]{
+            array: [4]*Point{
+                {x: 0, y: 1},
+                {x: 3, y: 1},
+                nil,
+                nil,
+            },
+            count: 2,
+        },
+    }
+    b.CalculateMovesDynamic(&move)
+
+    whiteMoves := Array1000[FastMove]{}
+    b.MovesOfColor(white, &whiteMoves)
+    assert.Equal(t, 7, whiteMoves.count)
+
+    blackMoves := Array1000[FastMove]{}
+    b.MovesOfColor(black, &blackMoves)
+    assert.Equal(t, 7, blackMoves.count)
+}
+

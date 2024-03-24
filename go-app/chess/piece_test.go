@@ -15,7 +15,7 @@ func Test_Pawn_Moves_Unmoved(t *testing.T) {
     pawn := b.getAllPiece(white, PAWN_D)
     b.setPiece(b.getIndex(3, 3), pawn)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
 	pawn.moves(b, b.getIndex(3, 3), &moves)
 
     Assert_LengthAndToLocations(t, moves, 2, []*Point{
@@ -33,7 +33,7 @@ func Test_Pawn_Moves_Moved(t *testing.T) {
     pawn := b.getAllPiece(white, PAWN_D_M)
     b.setPiece(b.getIndex(3, 3), pawn)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
 	pawn.moves(b, b.getIndex(3, 3), &moves)
 
     Assert_LengthAndToLocations(t, moves, 1, []*Point{
@@ -53,7 +53,7 @@ func Test_Pawn_Moves_Capturing(t *testing.T) {
     b.setPiece(b.getIndex(3, 3), pawn)
     b.setPiece(b.getIndex(4, 4), blackPawn)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
 	pawn.moves(b, b.getIndex(3, 3), &moves)
 
     Assert_LengthAndToLocations(t, moves, 3, []*Point{
@@ -74,7 +74,7 @@ func Test_Pawn_Moves_CapturingEnPassant(t *testing.T) {
     b.setPiece(b.getIndex(3, 3), pawn)
     b.setEnPassant(black, b.getIndex(4, 4), b.getIndex(3, 4))
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     pawn.moves(b, b.getIndex(3, 3), &moves)
 
     Assert_LengthAndToLocations(t, moves, 3, []*Point{
@@ -93,7 +93,7 @@ func Test_Pawn_Moves_Promotion(t *testing.T) {
     pawn := b.getAllPiece(white, PAWN_D)
     b.setPiece(b.getIndex(2, 2), pawn)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
 	pawn.moves(b, b.getIndex(2, 2), &moves)
 
     Assert_LengthAndToLocations(t, moves, 5, []*Point{
@@ -111,7 +111,7 @@ func Test_Knight_Moves(t *testing.T) {
     knight := b.getAllPiece(white, KNIGHT)
     b.setPiece(b.getIndex(2, 2), knight)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     knight.moves(b, b.getIndex(2, 2), &moves)
 
     Assert_LengthAndToLocations(t, moves, 8, []*Point{
@@ -135,7 +135,7 @@ func Test_Bishop_Moves(t *testing.T) {
     bishop := b.getAllPiece(white, BISHOP)
     b.setPiece(b.getIndex(2, 2), bishop)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
 	bishop.moves(b, b.getIndex(2, 2), &moves)
 
     Assert_LengthAndToLocations(t, moves, 8, []*Point{
@@ -159,7 +159,7 @@ func Test_Rook_Moves(t *testing.T) {
     rook := b.getAllPiece(white, ROOK)
     b.setPiece(b.getIndex(2, 2), rook)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
 	rook.moves(b, b.getIndex(2, 2), &moves)
 
     Assert_LengthAndToLocations(t, moves, 8, []*Point{
@@ -183,7 +183,7 @@ func Test_Queen_Moves(t *testing.T) {
     queen := b.getAllPiece(white, QUEEN)
     b.setPiece(b.getIndex(2, 2), queen)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     queen.moves(b, b.getIndex(2, 2), &moves)
 
     Assert_LengthAndToLocations(t, moves, 16, []*Point{
@@ -218,7 +218,7 @@ func Test_King_Moves_CanCastleAndUnmoved(t *testing.T) {
     b.setPiece(b.getIndex(0, 2), rook)
     b.setPiece(b.getIndex(4, 2), rook)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     king.moves(b, b.getIndex(2, 2), &moves)
 
     Assert_LengthAndToLocations(t, moves, 10, []*Point{
@@ -247,7 +247,7 @@ func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
     b.setPiece(b.getIndex(0, 2), rook)
     b.setPiece(b.getIndex(4, 2), rook)
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     king.moves(b, b.getIndex(2, 2), &moves)
 
     Assert_LengthAndToLocations(t, moves, 8, []*Point{
@@ -262,7 +262,7 @@ func Test_King_Moves_CanCastleAndMoved(t *testing.T) {
     })
 }
 
-func Assert_LengthAndToLocations(t *testing.T, moves Array1000[FastMove], length int, toLocations []*Point) {
+func Assert_LengthAndToLocations(t *testing.T, moves Array100[FastMove], length int, toLocations []*Point) {
     assert.Equal(t, length, moves.count)
 
     moveMap := map[*Point]bool{}

@@ -343,8 +343,13 @@ func (a *Array100[T]) clear() {
 
 
 type Array1000[T any] struct {
-    array [200]T
+    array [1000]T
     count int
+}
+
+func (a *Array1000[T]) remove(index int) {
+    a.array[index] = a.array[a.count-1]
+    a.count -= 1
 }
 
 func (a *Array1000[T]) get() *T {

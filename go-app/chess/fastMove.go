@@ -7,7 +7,7 @@ func addMoveSimple(
     toPiece *Piece,
     toLocation *Point,
     newPiece *Piece,
-    moves *Array1000[FastMove],
+    moves *Array100[FastMove],
 ) {
     move := moves.get()
 
@@ -63,7 +63,7 @@ func addMoveRevealEnPassant(
     newPiece *Piece,
     newTarget *Point,
     newRisk *Point,
-    moves *Array1000[FastMove],
+    moves *Array100[FastMove],
 ) {
     move := moves.get()
 
@@ -82,7 +82,7 @@ func addMoveCaptureEnPassant(
     newPiece *Piece,
     risk1 *Point,
     risk2 *Point,
-    moves *Array1000[FastMove],
+    moves *Array100[FastMove],
 ) {
     move := moves.get()
 
@@ -116,7 +116,7 @@ func addMoveAllyDefense(
     fromPiece *Piece,
     fromLocation *Point,
     toLocation *Point,
-    moves *Array1000[FastMove],
+    moves *Array100[FastMove],
 ) {
     move := moves.get()
 
@@ -154,7 +154,7 @@ func addMoveCastle(
     toRookLocation *Point,
     newStart *Point,
     newEnd *Point,
-    moves *Array1000[FastMove],
+    moves *Array100[FastMove],
 ) {
     move := moves.get()
 

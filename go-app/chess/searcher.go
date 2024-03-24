@@ -1,5 +1,9 @@
 package chess
 
+import (
+    "fmt"
+)
+
 /*
 Chess Search:
 Alpha beta search
@@ -68,6 +72,8 @@ func (s *SimpleSearcher) search(depth int) (MoveKey, error) {
     s.b.CalculateMoves()
     s.minimax(depth, &moveKey)
 
+    fmt.Println(s.b.Print())
+
     return moveKey, nil
 }
 
@@ -82,27 +88,32 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
 
     found := false
     currentPlayer := s.p.getCurrent()
+    moves := &s.moveLevels[depth]
     transition := &s.transitionLevels[depth]
 
-    s.moveLevels[depth].clear()
-    s.b.MovesOfColor(currentPlayer, &s.moveLevels[depth])
+    moves.clear()
+    s.b.MovesOfColor(currentPlayer, moves)
 
     for i := 0; i < len(s.scoreLevels[depth]); i++ {
         s.scoreLevels[depth][i] = -1000000
     }
     
-    for i := 0; i < s.moveLevels[depth].count; i++ {
-        move := &s.moveLevels[depth].array[i]
+    for i := 0; i < moves.count; i++ {
+        move := &moves.array[i]
         if move.allyDefense {
             continue
         }
 
-        move.execute()
 
-        s.b.CalculateMoves()
+        move.execute()
+        s.b.CalculateMovesDynamic(move)
+        //s.b.CalculateMoves()
+
 
         if s.b.Check(currentPlayer) {
             move.undo()
+            s.b.CalculateMovesDynamic(move)
+
             continue
         }
 
@@ -115,6 +126,8 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
         transition.undo()
 
         move.undo()
+        s.b.CalculateMovesDynamic(move)
+
 
         if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
             for i := 0; i < len(s.scoreLevels[depth]); i++ {

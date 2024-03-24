@@ -16,7 +16,7 @@ func Test_MoveSimple(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     move := moves.get()
     addMoveSimple(
         b,
@@ -60,7 +60,7 @@ func Test_MovePromotion(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     move := moves.get()
     addMoveSimple(
         b,
@@ -104,7 +104,7 @@ func Test_MoveRevealEnPassant(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     move := moves.get()
     addMoveRevealEnPassant(
         b,
@@ -152,7 +152,7 @@ func Test_MoveCaptureEnPassant(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     move := moves.get()
     addMoveCaptureEnPassant(
         b,
@@ -201,7 +201,7 @@ func Test_MoveAllyDefense(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     move := moves.get()
     addMoveAllyDefense(
         b,
@@ -242,7 +242,7 @@ func Test_MoveCastle(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
+    moves := Array100[FastMove]{}
     move := moves.get()
     addMoveCastle(
         b,

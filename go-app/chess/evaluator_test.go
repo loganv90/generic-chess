@@ -108,26 +108,8 @@ func Test_EvalMaterial(t *testing.T) {
 
             evaluator := newSimpleEvaluator(b, p)
 
-            pieceLocations := make([]Array100[*Point], 4)
-
-            pieceLocations[white].set(b.getIndex(0, 0))
-            pieceLocations[white].set(b.getIndex(0, 1))
-            pieceLocations[white].set(b.getIndex(0, 2))
-
-            pieceLocations[black].set(b.getIndex(1, 0))
-            pieceLocations[black].set(b.getIndex(1, 1))
-            pieceLocations[black].set(b.getIndex(1, 2))
-
-            pieceLocations[red].set(b.getIndex(2, 0))
-            pieceLocations[red].set(b.getIndex(2, 1))
-            pieceLocations[red].set(b.getIndex(2, 2))
-
-            pieceLocations[blue].set(b.getIndex(3, 0))
-            pieceLocations[blue].set(b.getIndex(3, 1))
-            pieceLocations[blue].set(b.getIndex(3, 2))
-
             score := make([]int, 4)
-            evaluator.evalMaterial(pieceLocations, score)
+            evaluator.evalMaterial(b.getPieces(), score)
             assert.Equal(t, test.whiteScore, score[white])
             assert.Equal(t, test.blackScore, score[black])
             assert.Equal(t, test.redScore, score[red])
