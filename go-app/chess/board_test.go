@@ -2,6 +2,7 @@ package chess
 
 import (
 	"testing"
+    "strings"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -189,12 +190,14 @@ func Assert_CountsAndMatest(
 }
 
 // TODO add en passant stuff to the unique string
-func Test_MinimumString_Default(t *testing.T) {
+func Test_BoardUniqueString_Default(t *testing.T) {
+    builder := strings.Builder{}
+
     b, err := createSimpleBoardWithDefaultPieceLocations()
     assert.Nil(t, err)
 
+    b.UniqueString(&builder)
     expected := "R1N1B1Q1K1B1N1R1P1P1P1P1P1P1P1P132P0P0P0P0P0P0P0P0R0N0B0Q0K0B0N0R0"
-    actual := b.UniqueString()
-    assert.Equal(t, expected, actual)
+    assert.Equal(t, expected, builder.String())
 }
 

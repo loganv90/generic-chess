@@ -2,6 +2,7 @@ package chess
 
 import (
 	"testing"
+    "strings"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -64,5 +65,16 @@ func Test_getNextAndRemaining(t *testing.T) {
     next, remaining = s.getNextAndRemaining()
     assert.Equal(t, red, next)
     assert.Equal(t, 1, remaining)
+}
+
+func Test_PlayerCollectionUniqueString_Default(t *testing.T) {
+    builder := strings.Builder{}
+
+    p, err := createSimplePlayerCollectionWithDefaultPlayers()
+    assert.Nil(t, err)
+
+    p.UniqueString(&builder)
+    expected := "01-0"
+    assert.Equal(t, expected, builder.String())
 }
 

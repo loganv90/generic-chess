@@ -3,6 +3,7 @@ package chess
 import (
 	"fmt"
 	"strings"
+    "strconv"
 )
 
 /*
@@ -528,9 +529,8 @@ func (b *SimpleBoard) Copy() (*SimpleBoard, error) {
     return simpleBoard, nil
 }
 
-func (b *SimpleBoard) UniqueString() string {
-    builder := strings.Builder{}
-
+// TODO do some kind or zorbrist hashing
+func (b *SimpleBoard) UniqueString(builder *strings.Builder) {
     counter := 0
     for y, row := range b.pieces {
         for x := range row {
@@ -542,23 +542,16 @@ func (b *SimpleBoard) UniqueString() string {
             }
 
             if counter > 0 {
-                builder.WriteString(fmt.Sprintf("%d", counter))
+                builder.WriteString(strconv.Itoa(counter))
                 counter = 0
             }
 
-            if b.playersDisabled[piece.color] {
-                builder.WriteString("d")
-                continue
-            }
-
             builder.WriteString(piece.print())
-            builder.WriteString(fmt.Sprintf("%d", piece.color))
+            builder.WriteString(strconv.Itoa(piece.color))
             if piece.moved() {
                 builder.WriteString("m")
             }
         }
     }
-
-    return builder.String()
 }
 

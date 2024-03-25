@@ -1,5 +1,9 @@
 package chess
 
+import (
+    "strings"
+)
+
 /*
 Chess Search:
 Alpha beta search
@@ -62,17 +66,41 @@ func (s *SimpleSearcher) search(depth int) (MoveKey, error) {
         s.transitionLevels[i] = PlayerTransition{}
         s.moveLevels[i] = Array1000[FastMove]{}
     }
-
-    moveKey := MoveKey{}
+    s.transpositionMap = map[string]MoveKeyAndScore{}
 
     s.b.CalculateMoves()
+    moveKey := MoveKey{}
     s.minimax(depth, &moveKey)
-
     return moveKey, nil
 }
 
 func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
     s.minimaxCalls++
+
+    builder := strings.Builder{}
+    s.b.UniqueString(&builder)
+    builder.WriteString("-")
+    s.p.UniqueString(&builder)
+    uniqueString := builder.String()
+
+    if _, ok := s.transpositionMap[uniqueString]; ok {
+        moveKeyAndScore := s.transpositionMap[uniqueString]
+        cachedMoveKey := moveKeyAndScore.moveKey
+        cachedScore := moveKeyAndScore.score
+
+        for i := 0; i < len(s.scoreLevels[depth]); i++ {
+            s.scoreLevels[depth][i] = cachedScore[i]
+        }
+        if moveKey != nil {
+            moveKey.XFrom = cachedMoveKey.XFrom
+            moveKey.YFrom = cachedMoveKey.YFrom
+            moveKey.XTo = cachedMoveKey.XTo
+            moveKey.YTo = cachedMoveKey.YTo
+            moveKey.Promotion = cachedMoveKey.Promotion
+        }
+
+        return
+    }
 
     gameOver := s.p.getGameOver()
     if depth == 0 || gameOver {
@@ -143,5 +171,21 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
 
         transition.undo()
     }
+
+    newMoveKey := MoveKey{}
+    newScore := make([]int, s.players)
+
+    for i := 0; i < len(s.scoreLevels[depth]); i++ {
+        newScore[i] = s.scoreLevels[depth][i]
+    }
+    if moveKey != nil {
+        newMoveKey.XFrom = moveKey.XFrom
+        newMoveKey.YFrom = moveKey.YFrom
+        newMoveKey.XTo = moveKey.XTo
+        newMoveKey.YTo = moveKey.YTo
+        newMoveKey.Promotion = moveKey.Promotion
+    }
+
+    s.transpositionMap[uniqueString] = MoveKeyAndScore{newMoveKey, newScore}
 }
 

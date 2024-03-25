@@ -207,7 +207,7 @@ type Command struct {
 
 type MoveKeyAndScore struct {
     moveKey MoveKey
-    score map[int]int
+    score []int
 }
 
 type PieceData struct {

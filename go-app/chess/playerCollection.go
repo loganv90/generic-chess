@@ -2,6 +2,8 @@ package chess
 
 import (
 	"fmt"
+    "strings"
+    "strconv"
 )
 
 /*
@@ -136,5 +138,16 @@ func (s *SimplePlayerCollection) Copy() (*SimplePlayerCollection, error) {
         winningPlayer: s.winningPlayer,
         gameOver: s.gameOver,
     }, nil
+}
+
+func (s *SimplePlayerCollection) UniqueString(builder *strings.Builder) {
+    for i, alive := range s.playersAlive {
+        if alive {
+            builder.WriteString(strconv.Itoa(i))
+        }
+    }
+
+    builder.WriteString("-")
+    builder.WriteString(strconv.Itoa(s.currentPlayer))
 }
 
