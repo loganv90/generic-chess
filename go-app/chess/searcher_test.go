@@ -9,7 +9,7 @@ import (
     "github.com/stretchr/testify/assert"
 )
 
-func Test_Minimax_depth1(t *testing.T) {
+func Test_Minimax_depthOne(t *testing.T) {
     white := 0
     black := 1
 
@@ -35,7 +35,7 @@ func Test_Minimax_depth1(t *testing.T) {
     }
 
     searcher := newSimpleSearcher(game)
-    moveKey, err := searcher.search(1)
+    moveKey, err := searcher.searchWithMinimax(1)
     assert.Nil(t, err)
     assert.Equal(t, 3, moveKey.XTo)
     assert.Equal(t, 0, moveKey.YTo)
@@ -89,7 +89,7 @@ func Test_Minimax(t *testing.T) {
     }
 
     searcher := newSimpleSearcher(game)
-    moveKey, err := searcher.search(4)
+    moveKey, err := searcher.searchWithMinimax(4)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
     assert.Equal(t, 2, moveKey.YTo)
@@ -144,7 +144,7 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
     }
 
     searcher := newSimpleSearcher(game)
-    moveKey, err := searcher.search(3)
+    moveKey, err := searcher.searchWithMinimax(3)
     assert.Nil(t, err)
     assert.Equal(t, 5, moveKey.XTo)
     assert.Equal(t, 2, moveKey.YTo)
@@ -257,7 +257,7 @@ func Benchmark_Minimax(t *testing.B) {
         }
 
         searcher := newSimpleSearcher(game)
-        _, err = searcher.search(4)
+        _, err = searcher.searchWithMinimax(4)
         assert.Nil(t, err)
 
         actualPrintedBoard := game.Print()

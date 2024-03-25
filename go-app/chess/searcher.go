@@ -36,7 +36,7 @@ func newSimpleSearcher(g Game) *SimpleSearcher {
         transitionLevels: []PlayerTransition{},
         moveLevels: []Array1000[FastMove]{},
 
-        transpositionMap: map[string]MoveKeyAndScore{},
+        transpositionMap: map[string][]int{},
     }
 }
 
@@ -52,10 +52,10 @@ type SimpleSearcher struct {
     transitionLevels []PlayerTransition
     moveLevels []Array1000[FastMove]
 
-    transpositionMap map[string]MoveKeyAndScore
+    transpositionMap map[string][]int
 }
 
-func (s *SimpleSearcher) search(depth int) (MoveKey, error) {
+func (s *SimpleSearcher) searchWithMinimax(depth int) (MoveKey, error) {
     levels := depth + 1
 
     s.scoreLevels = make([][]int, levels)
@@ -66,15 +66,67 @@ func (s *SimpleSearcher) search(depth int) (MoveKey, error) {
         s.transitionLevels[i] = PlayerTransition{}
         s.moveLevels[i] = Array1000[FastMove]{}
     }
-    s.transpositionMap = map[string]MoveKeyAndScore{}
+    s.transpositionMap = map[string][]int{}
 
     s.b.CalculateMoves()
     moveKey := MoveKey{}
-    s.minimax(depth, &moveKey)
+    s.minimaxFirstCall(depth, &moveKey)
     return moveKey, nil
 }
 
-func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
+func (s *SimpleSearcher) minimaxFirstCall(depth int, moveKey *MoveKey) {
+    if depth <= 0 || s.p.getGameOver() {
+        panic("no moves in this position")
+    }
+
+    found := false
+    currentPlayer := s.p.getCurrent()
+    transition := &s.transitionLevels[depth]
+
+    s.moveLevels[depth].clear()
+    s.b.MovesOfColor(currentPlayer, &s.moveLevels[depth])
+
+    for i := 0; i < len(s.scoreLevels[depth]); i++ {
+        s.scoreLevels[depth][i] = -1000000
+    }
+    
+    for i := 0; i < s.moveLevels[depth].count; i++ {
+        move := &s.moveLevels[depth].array[i]
+
+        move.execute()
+
+        s.b.CalculateMoves()
+        if s.b.Check(currentPlayer) {
+            move.undo()
+            continue
+        }
+
+        createPlayerTransition(s.b, s.p, false, false, transition)
+
+        transition.execute()
+        s.minimax(depth-1)
+        transition.undo()
+
+        move.undo()
+
+        if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
+            for i := 0; i < len(s.scoreLevels[depth]); i++ {
+                s.scoreLevels[depth][i] = s.scoreLevels[depth-1][i]
+            }
+            moveKey.XTo = move.toLocation.x
+            moveKey.YTo = move.toLocation.y
+            moveKey.XFrom = move.fromLocation.x
+            moveKey.YFrom = move.fromLocation.y
+            found = true
+        }
+    }
+
+    if !found {
+        panic("no moves in this position")
+    }
+}
+
+func (s *SimpleSearcher) minimax(depth int) {
     s.minimaxCalls++
 
     builder := strings.Builder{}
@@ -84,26 +136,14 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
     uniqueString := builder.String()
 
     if _, ok := s.transpositionMap[uniqueString]; ok {
-        moveKeyAndScore := s.transpositionMap[uniqueString]
-        cachedMoveKey := moveKeyAndScore.moveKey
-        cachedScore := moveKeyAndScore.score
-
+        score := s.transpositionMap[uniqueString]
         for i := 0; i < len(s.scoreLevels[depth]); i++ {
-            s.scoreLevels[depth][i] = cachedScore[i]
+            s.scoreLevels[depth][i] = score[i]
         }
-        if moveKey != nil {
-            moveKey.XFrom = cachedMoveKey.XFrom
-            moveKey.YFrom = cachedMoveKey.YFrom
-            moveKey.XTo = cachedMoveKey.XTo
-            moveKey.YTo = cachedMoveKey.YTo
-            moveKey.Promotion = cachedMoveKey.Promotion
-        }
-
         return
     }
 
-    gameOver := s.p.getGameOver()
-    if depth == 0 || gameOver {
+    if depth <= 0 || s.p.getGameOver() {
         s.e.eval(s.scoreLevels[depth])
         return
     }
@@ -121,14 +161,10 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
     
     for i := 0; i < s.moveLevels[depth].count; i++ {
         move := &s.moveLevels[depth].array[i]
-        if move.allyDefense {
-            continue
-        }
 
         move.execute()
 
         s.b.CalculateMoves()
-
         if s.b.Check(currentPlayer) {
             move.undo()
             continue
@@ -137,9 +173,7 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
         createPlayerTransition(s.b, s.p, false, false, transition)
 
         transition.execute()
-
-        s.minimax(depth-1, nil)
-
+        s.minimax(depth-1)
         transition.undo()
 
         move.undo()
@@ -147,12 +181,6 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
         if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
             for i := 0; i < len(s.scoreLevels[depth]); i++ {
                 s.scoreLevels[depth][i] = s.scoreLevels[depth-1][i]
-            }
-            if moveKey != nil {
-                moveKey.XTo = move.toLocation.x
-                moveKey.YTo = move.toLocation.y
-                moveKey.XFrom = move.fromLocation.x
-                moveKey.YFrom = move.fromLocation.y
             }
             found = true
         }
@@ -166,26 +194,14 @@ func (s *SimpleSearcher) minimax(depth int, moveKey *MoveKey) {
         }
 
         transition.execute()
-
-        s.minimax(depth, moveKey)
-
+        s.minimax(depth)
         transition.undo()
     }
 
-    newMoveKey := MoveKey{}
     newScore := make([]int, s.players)
-
     for i := 0; i < len(s.scoreLevels[depth]); i++ {
         newScore[i] = s.scoreLevels[depth][i]
     }
-    if moveKey != nil {
-        newMoveKey.XFrom = moveKey.XFrom
-        newMoveKey.YFrom = moveKey.YFrom
-        newMoveKey.XTo = moveKey.XTo
-        newMoveKey.YTo = moveKey.YTo
-        newMoveKey.Promotion = moveKey.Promotion
-    }
-
-    s.transpositionMap[uniqueString] = MoveKeyAndScore{newMoveKey, newScore}
+    s.transpositionMap[uniqueString] = newScore
 }
 

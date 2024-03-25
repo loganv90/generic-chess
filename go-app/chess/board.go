@@ -237,6 +237,12 @@ func (b *SimpleBoard) getEnPassantRisks(color int, target *Point) (*Point, *Poin
 func (b *SimpleBoard) MovesOfColor(color int, moves *Array1000[FastMove]) {
     colorMoves := &b.moves[color]
     for i := 0; i < colorMoves.count; i++ {
+        move := &colorMoves.array[i]
+
+        if move.allyDefense {
+            continue
+        }
+
         moves.set(colorMoves.array[i])
     }
 }
@@ -254,9 +260,15 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation *Point) *Array100[FastMove] {
         for j := 0; j < moves.count; j++ {
             move := moves.array[j]
 
-            if move.fromLocation == fromLocation {
-                res.set(move)
+            if move.allyDefense {
+                continue
             }
+
+            if move.fromLocation != fromLocation {
+                continue
+            }
+
+            res.set(move)
         }
     }
 
@@ -271,9 +283,6 @@ func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
 
     for i := 0; i < moves.count; i++ {
         move := moves.array[i]
-        if move.allyDefense {
-            continue
-        }
 
         move.execute()
 
@@ -307,9 +316,6 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
 
     for i := 0; i < moves.count; i++ {
         move := moves.array[i]
-        if move.allyDefense {
-            continue
-        }
 
         move.execute()
 
@@ -326,8 +332,8 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
     return legalMoves, nil
 }
 
-// TODO dynamic move calculations based on previous move
 // TODO spawn go routines for searching
+// TODO only consider certain moves when searching
 // TODO add 3 move repetition and 50 move rule
 // TODO add rule to allow checks and only lose on king capture
 // TODO add rule to check for checkmate and stalemate on all players after every move
