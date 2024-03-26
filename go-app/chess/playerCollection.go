@@ -2,8 +2,7 @@ package chess
 
 import (
 	"fmt"
-    "strings"
-    "strconv"
+    "math/rand"
 )
 
 /*
@@ -20,12 +19,22 @@ func newSimplePlayerCollection(numberOfPlayers int) (*SimplePlayerCollection, er
         playersAlive[i] = true
     }
 
+    zobristCurrentPlayer := make([]uint64, numberOfPlayers)
+    zobristPlayerAlive := make([]uint64, numberOfPlayers)
+    for i := 0; i < numberOfPlayers; i++ {
+        zobristCurrentPlayer[i] = rand.Uint64()
+        zobristPlayerAlive[i] = rand.Uint64()
+    }
+
 	return &SimplePlayerCollection{
         players: numberOfPlayers,
         playersAlive: playersAlive,
         currentPlayer: 0,
         winningPlayer: -1,
         gameOver: false,
+
+        zobristCurrentPlayer: zobristCurrentPlayer,
+        zobristPlayerAlive: zobristPlayerAlive,
 	}, nil
 }
 
@@ -35,6 +44,9 @@ type SimplePlayerCollection struct {
     currentPlayer int
     winningPlayer int
     gameOver bool
+
+    zobristCurrentPlayer []uint64
+    zobristPlayerAlive []uint64
 }
 
 func (s *SimplePlayerCollection) colorOutOfBounds(color int) bool {
@@ -126,28 +138,31 @@ func (s *SimplePlayerCollection) getPlayers() int {
 }
 
 func (s *SimplePlayerCollection) Copy() (*SimplePlayerCollection, error) {
-    playersAlive := make([]bool, s.players)
-    for color, alive := range s.playersAlive {
-        playersAlive[color] = alive
+    simplePlayerCollection, err := newSimplePlayerCollection(s.players)
+    if err != nil {
+        return nil, err
     }
 
-    return &SimplePlayerCollection{
-        players: s.players,
-        playersAlive: playersAlive,
-        currentPlayer: s.currentPlayer,
-        winningPlayer: s.winningPlayer,
-        gameOver: s.gameOver,
-    }, nil
+    for color, alive := range s.playersAlive {
+        simplePlayerCollection.playersAlive[color] = alive
+    }
+    simplePlayerCollection.currentPlayer = s.currentPlayer
+    simplePlayerCollection.winningPlayer = s.winningPlayer
+    simplePlayerCollection.gameOver = s.gameOver
+
+    return simplePlayerCollection, nil
 }
 
-func (s *SimplePlayerCollection) UniqueString(builder *strings.Builder) {
-    for i, alive := range s.playersAlive {
-        if alive {
-            builder.WriteString(strconv.Itoa(i))
+func (s *SimplePlayerCollection) ZobristHash() uint64 {
+    hash := uint64(0)
+
+    hash ^= s.zobristCurrentPlayer[s.currentPlayer]
+    for color := 0; color < s.players; color++ {
+        if s.playersAlive[color] {
+            hash ^= s.zobristPlayerAlive[color]
         }
     }
 
-    builder.WriteString("-")
-    builder.WriteString(strconv.Itoa(s.currentPlayer))
+    return hash
 }
 

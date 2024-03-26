@@ -2,7 +2,6 @@ package chess
 
 import (
 	"testing"
-    "strings"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -187,16 +186,5 @@ func Assert_CountsAndMatest(
     assert.Nil(t, err)
     assert.Equal(t, blackCheckmate, checkmate)
     assert.Equal(t, blackStalemate, stalemate)
-}
-
-func Test_BoardUniqueString_Default(t *testing.T) {
-    builder := strings.Builder{}
-
-    b, err := createSimpleBoardWithDefaultPieceLocations()
-    assert.Nil(t, err)
-
-    b.UniqueString(&builder)
-    expected := "R1N1B1Q1K1B1N1R1P1P1P1P1P1P1P1P132P0P0P0P0P0P0P0P0R0N0B0Q0K0B0N0R0"
-    assert.Equal(t, expected, builder.String())
 }
 

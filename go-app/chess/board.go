@@ -3,7 +3,7 @@ package chess
 import (
 	"fmt"
 	"strings"
-    "strconv"
+    "math/rand"
 )
 
 /*
@@ -80,6 +80,32 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         }
     }
 
+    zobristPieces := make([][][][]uint64, players)
+    zobristEnPassant := make([][][]uint64, players)
+    zobristVulnerable := make([][][]uint64, players)
+    for i := 0; i < players; i++ {
+        zobristPieces[i] = make([][][]uint64, 21)
+        for j := 0; j < 21; j++ {
+            zobristPieces[i][j] = make([][]uint64, y)
+            for yi := 0; yi < y; yi++ {
+                zobristPieces[i][j][yi] = make([]uint64, x)
+                for xi := 0; xi < x; xi++ {
+                    zobristPieces[i][j][yi][xi] = rand.Uint64()
+                }
+            }
+        }
+        zobristEnPassant[i] = make([][]uint64, y)
+        zobristVulnerable[i] = make([][]uint64, y)
+        for yi := 0; yi < y; yi++ {
+            zobristEnPassant[i][yi] = make([]uint64, x)
+            zobristVulnerable[i][yi] = make([]uint64, x)
+            for xi := 0; xi < x; xi++ {
+                zobristEnPassant[i][yi][xi] = rand.Uint64()
+                zobristVulnerable[i][yi][xi] = rand.Uint64()
+            }
+        }
+    }
+    
 	return &SimpleBoard{
         x: x,
         y: y,
@@ -99,6 +125,10 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         disableds: disableds,
         indexes: indexes,
         pieces: pieces,
+
+        zobristPieces: zobristPieces,
+        zobristEnPassant: zobristEnPassant,
+        zobristVulnerable: zobristVulnerable,
 	}, nil
 }
 
@@ -123,6 +153,11 @@ type SimpleBoard struct {
     disableds [][]bool
     indexes [][]Point
     pieces [][]*Piece
+
+    // zobrist random data
+    zobristPieces [][][][]uint64 // [player][piece][y][x]
+    zobristEnPassant [][][]uint64 // [player][y][x] : x any y of target
+    zobristVulnerable [][][]uint64 // [player][y][x] : x any y of start
 }
 
 func (b *SimpleBoard) disablePieces(color int, disable bool) {
@@ -332,7 +367,6 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
     return legalMoves, nil
 }
 
-// TODO do some kind or zorbrist hashing
 // TODO spawn go routines for searching and do iterative deepening so the moves are timed
 // TODO search only consider some moves
 // TODO search do alpha beta searching
@@ -539,29 +573,32 @@ func (b *SimpleBoard) Copy() (*SimpleBoard, error) {
     return simpleBoard, nil
 }
 
-func (b *SimpleBoard) UniqueString(builder *strings.Builder) {
-    // not really unique because we don't consider en passant, castling, ...
-    counter := 0
-    for y, row := range b.pieces {
-        for x := range row {
-            piece := b.pieces[y][x]
+func (b *SimpleBoard) ZobristHash() uint64 {
+    hash := uint64(0)
 
+    for y := 0; y < b.y; y++ {
+        for x := 0; x < b.x; x++ {
+            piece := b.pieces[y][x]
             if piece == nil {
-                counter += 1
                 continue
             }
 
-            if counter > 0 {
-                builder.WriteString(strconv.Itoa(counter))
-                counter = 0
-            }
-
-            builder.WriteString(piece.print())
-            builder.WriteString(strconv.Itoa(piece.color))
-            if piece.moved() {
-                builder.WriteString("m")
-            }
+            hash ^= b.zobristPieces[piece.color][piece.index][y][x]
         }
     }
+
+    for color := 0; color < b.players; color++ {
+        enPassantTarget := b.enPassantTargets[color]
+        if enPassantTarget != nil {
+            hash ^= b.zobristEnPassant[color][enPassantTarget.y][enPassantTarget.x]
+        }
+
+        vulnerableStart := b.vulnerableStarts[color]
+        if vulnerableStart != nil {
+            hash ^= b.zobristVulnerable[color][vulnerableStart.y][vulnerableStart.x]
+        }
+    }
+
+    return hash
 }
 

@@ -1,9 +1,5 @@
 package chess
 
-import (
-    "strings"
-)
-
 /*
 Chess Search:
 Alpha beta search
@@ -36,7 +32,7 @@ func newSimpleSearcher(g Game) *SimpleSearcher {
         transitionLevels: []PlayerTransition{},
         moveLevels: []Array1000[FastMove]{},
 
-        transpositionMap: map[string][]int{},
+        transpositionMap: map[uint64][]int{},
     }
 }
 
@@ -52,7 +48,7 @@ type SimpleSearcher struct {
     transitionLevels []PlayerTransition
     moveLevels []Array1000[FastMove]
 
-    transpositionMap map[string][]int
+    transpositionMap map[uint64][]int
 }
 
 func (s *SimpleSearcher) searchWithMinimax(depth int) (MoveKey, error) {
@@ -66,7 +62,7 @@ func (s *SimpleSearcher) searchWithMinimax(depth int) (MoveKey, error) {
         s.transitionLevels[i] = PlayerTransition{}
         s.moveLevels[i] = Array1000[FastMove]{}
     }
-    s.transpositionMap = map[string][]int{}
+    s.transpositionMap = map[uint64][]int{}
 
     s.b.CalculateMoves()
     moveKey := MoveKey{}
@@ -128,15 +124,10 @@ func (s *SimpleSearcher) minimaxFirstCall(depth int, moveKey *MoveKey) {
 
 func (s *SimpleSearcher) minimax(depth int) {
     s.minimaxCalls++
+    hash := s.b.ZobristHash() ^ s.p.ZobristHash()
 
-    builder := strings.Builder{}
-    s.b.UniqueString(&builder)
-    builder.WriteString("-")
-    s.p.UniqueString(&builder)
-    uniqueString := builder.String()
-
-    if _, ok := s.transpositionMap[uniqueString]; ok {
-        score := s.transpositionMap[uniqueString]
+    if _, ok := s.transpositionMap[hash]; ok {
+        score := s.transpositionMap[hash]
         for i := 0; i < len(s.scoreLevels[depth]); i++ {
             s.scoreLevels[depth][i] = score[i]
         }
@@ -151,7 +142,7 @@ func (s *SimpleSearcher) minimax(depth int) {
         for i := 0; i < len(s.scoreLevels[depth]); i++ {
             newScore[i] = s.scoreLevels[depth][i]
         }
-        s.transpositionMap[uniqueString] = newScore
+        s.transpositionMap[hash] = newScore
 
         return
     }
@@ -210,6 +201,6 @@ func (s *SimpleSearcher) minimax(depth int) {
     for i := 0; i < len(s.scoreLevels[depth]); i++ {
         newScore[i] = s.scoreLevels[depth][i]
     }
-    s.transpositionMap[uniqueString] = newScore
+    s.transpositionMap[hash] = newScore
 }
 
