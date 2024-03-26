@@ -53,8 +53,7 @@ func (e *SimpleEvaluator) eval(score []int) {
         return
     }
 
-    pieceLocations := e.b.getPieceLocations()
-    e.evalMaterial(pieceLocations, score)
+    e.evalMaterial(score)
 
     // Piece position comparison (piece-square tables)
     // we need: the locations of each piece by player
@@ -63,25 +62,24 @@ func (e *SimpleEvaluator) eval(score []int) {
     // we need: the moves each piece can make including attacking ally pieces
 }
 
-func (e *SimpleEvaluator) evalMaterial(pieceLocations []Array100[*Point], score []int) {
+func (e *SimpleEvaluator) evalMaterial(score []int) {
     totalMaterial := 0
+    for color := range score {
+        e.material[color] = 0
+    }
 
-    for color, locations := range pieceLocations {
-        materialCount := 0
-
-        for i := 0; i < locations.count; i++ {
-            location := locations.array[i]
-
-            piece := e.b.getPiece(location)
+    pieces := e.b.pieces
+    for y := 0; y < e.b.y; y++ {
+        for x := 0; x < e.b.x; x++ {
+            piece := pieces[y][x]
             if piece == nil {
                 continue
             }
 
-            materialCount += piece.value()
+            value := piece.value()
+            e.material[piece.color] += value
+            totalMaterial += value
         }
-
-        totalMaterial += materialCount
-        e.material[color] = materialCount
     }
 
     for color := range score {

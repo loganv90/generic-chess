@@ -133,45 +133,45 @@ func createSimpleFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error
     simpleBoard.setPiece(simpleBoard.getIndex(13, 9), simpleBoard.getAllPiece(blue, KNIGHT)) 
     simpleBoard.setPiece(simpleBoard.getIndex(13, 10), simpleBoard.getAllPiece(blue, ROOK)) 
 
-    simpleBoard.disableLocation(&Point{0, 0})
-    simpleBoard.disableLocation(&Point{0, 1})
-    simpleBoard.disableLocation(&Point{0, 2})
-    simpleBoard.disableLocation(&Point{1, 0})
-    simpleBoard.disableLocation(&Point{1, 1})
-    simpleBoard.disableLocation(&Point{1, 2})
-    simpleBoard.disableLocation(&Point{2, 0})
-    simpleBoard.disableLocation(&Point{2, 1})
-    simpleBoard.disableLocation(&Point{2, 2})
+    simpleBoard.disableLocation(simpleBoard.getIndex(0, 0))
+    simpleBoard.disableLocation(simpleBoard.getIndex(0, 1))
+    simpleBoard.disableLocation(simpleBoard.getIndex(0, 2))
+    simpleBoard.disableLocation(simpleBoard.getIndex(1, 0))
+    simpleBoard.disableLocation(simpleBoard.getIndex(1, 1))
+    simpleBoard.disableLocation(simpleBoard.getIndex(1, 2))
+    simpleBoard.disableLocation(simpleBoard.getIndex(2, 0))
+    simpleBoard.disableLocation(simpleBoard.getIndex(2, 1))
+    simpleBoard.disableLocation(simpleBoard.getIndex(2, 2))
 
-    simpleBoard.disableLocation(&Point{0, 11})
-    simpleBoard.disableLocation(&Point{0, 12})
-    simpleBoard.disableLocation(&Point{0, 13})
-    simpleBoard.disableLocation(&Point{1, 11})
-    simpleBoard.disableLocation(&Point{1, 12})
-    simpleBoard.disableLocation(&Point{1, 13})
-    simpleBoard.disableLocation(&Point{2, 11})
-    simpleBoard.disableLocation(&Point{2, 12})
-    simpleBoard.disableLocation(&Point{2, 13})
+    simpleBoard.disableLocation(simpleBoard.getIndex(0, 11))
+    simpleBoard.disableLocation(simpleBoard.getIndex(0, 12))
+    simpleBoard.disableLocation(simpleBoard.getIndex(0, 13))
+    simpleBoard.disableLocation(simpleBoard.getIndex(1, 11))
+    simpleBoard.disableLocation(simpleBoard.getIndex(1, 12))
+    simpleBoard.disableLocation(simpleBoard.getIndex(1, 13))
+    simpleBoard.disableLocation(simpleBoard.getIndex(2, 11))
+    simpleBoard.disableLocation(simpleBoard.getIndex(2, 12))
+    simpleBoard.disableLocation(simpleBoard.getIndex(2, 13))
 
-    simpleBoard.disableLocation(&Point{11, 0})
-    simpleBoard.disableLocation(&Point{11, 1})
-    simpleBoard.disableLocation(&Point{11, 2})
-    simpleBoard.disableLocation(&Point{12, 0})
-    simpleBoard.disableLocation(&Point{12, 1})
-    simpleBoard.disableLocation(&Point{12, 2})
-    simpleBoard.disableLocation(&Point{13, 0})
-    simpleBoard.disableLocation(&Point{13, 1})
-    simpleBoard.disableLocation(&Point{13, 2})
+    simpleBoard.disableLocation(simpleBoard.getIndex(11, 0))
+    simpleBoard.disableLocation(simpleBoard.getIndex(11, 1))
+    simpleBoard.disableLocation(simpleBoard.getIndex(11, 2))
+    simpleBoard.disableLocation(simpleBoard.getIndex(12, 0))
+    simpleBoard.disableLocation(simpleBoard.getIndex(12, 1))
+    simpleBoard.disableLocation(simpleBoard.getIndex(12, 2))
+    simpleBoard.disableLocation(simpleBoard.getIndex(13, 0))
+    simpleBoard.disableLocation(simpleBoard.getIndex(13, 1))
+    simpleBoard.disableLocation(simpleBoard.getIndex(13, 2))
 
-    simpleBoard.disableLocation(&Point{11, 11})
-    simpleBoard.disableLocation(&Point{11, 12})
-    simpleBoard.disableLocation(&Point{11, 13})
-    simpleBoard.disableLocation(&Point{12, 11})
-    simpleBoard.disableLocation(&Point{12, 12})
-    simpleBoard.disableLocation(&Point{12, 13})
-    simpleBoard.disableLocation(&Point{13, 11})
-    simpleBoard.disableLocation(&Point{13, 12})
-    simpleBoard.disableLocation(&Point{13, 13})
+    simpleBoard.disableLocation(simpleBoard.getIndex(11, 11))
+    simpleBoard.disableLocation(simpleBoard.getIndex(11, 12))
+    simpleBoard.disableLocation(simpleBoard.getIndex(11, 13))
+    simpleBoard.disableLocation(simpleBoard.getIndex(12, 11))
+    simpleBoard.disableLocation(simpleBoard.getIndex(12, 12))
+    simpleBoard.disableLocation(simpleBoard.getIndex(12, 13))
+    simpleBoard.disableLocation(simpleBoard.getIndex(13, 11))
+    simpleBoard.disableLocation(simpleBoard.getIndex(13, 12))
+    simpleBoard.disableLocation(simpleBoard.getIndex(13, 13))
 
     simpleBoard.CalculateMoves()
 
@@ -203,11 +203,6 @@ type Command struct {
     m FastMove
     p PlayerTransition
     fullMove bool
-}
-
-type MoveKeyAndScore struct {
-    moveKey MoveKey
-    score []int
 }
 
 type PieceData struct {
@@ -249,47 +244,9 @@ type Player struct {
     alive bool
 }
 
-
-
 type Point struct {
     x int
     y int
-}
-
-
-
-type PieceLocation struct {
-    piece *Piece
-    location *Point
-}
-
-func (p *PieceLocation) set(other *PieceLocation) {
-    p.piece = other.piece
-    p.location = other.location
-}
-
-
-
-type EnPassant struct {
-    target *Point
-    risk *Point
-}
-
-func (e *EnPassant) set(other *EnPassant) {
-    e.target = other.target
-    e.risk = other.risk
-}
-
-
-
-type Vulnerable struct {
-    start *Point
-    end *Point
-}
-
-func (v *Vulnerable) set(other *Vulnerable) {
-    v.start = other.start
-    v.end = other.end
 }
 
 
@@ -313,30 +270,6 @@ func (a *Array4[T]) next() {
 }
 
 func (a *Array4[T]) clear() {
-    a.count = 0
-}
-
-
-
-type Array100[T any] struct {
-    array [100]T
-    count int
-}
-
-func (a *Array100[T]) get() *T {
-    return &a.array[a.count]
-}
-
-func (a *Array100[T]) set(value T) {
-    a.array[a.count] = value
-    a.count += 1
-}
-
-func (a *Array100[T]) next() {
-    a.count += 1
-}
-
-func (a *Array100[T]) clear() {
     a.count = 0
 }
 
