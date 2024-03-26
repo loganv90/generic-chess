@@ -71,6 +71,12 @@ const ClientTest = () => {
     return (
         <>
             <div style={{textAlign: "left"}}>
+                <label htmlFor="two">Two player with bot: </label>
+                <button id="twobot" name="twobot" onClick={() => setCurrentUrlExtension(`${baseUrl}/twobot`)} />
+                <br />
+                <label htmlFor="four">Four player with bot: </label>
+                <button id="fourbot" name="fourbot" onClick={() => setCurrentUrlExtension(`${baseUrl}/fourbot`)} />
+                <br />
                 <label htmlFor="two">Two player: </label>
                 <button id="two" name="two" onClick={() => setCurrentUrlExtension(`${baseUrl}/two`)} />
                 <br />

@@ -140,11 +140,19 @@ func (s *SimpleSearcher) minimax(depth int) {
         for i := 0; i < len(s.scoreLevels[depth]); i++ {
             s.scoreLevels[depth][i] = score[i]
         }
+
         return
     }
 
     if depth <= 0 || s.p.getGameOver() {
         s.e.eval(s.scoreLevels[depth])
+
+        newScore := make([]int, s.players)
+        for i := 0; i < len(s.scoreLevels[depth]); i++ {
+            newScore[i] = s.scoreLevels[depth][i]
+        }
+        s.transpositionMap[uniqueString] = newScore
+
         return
     }
 

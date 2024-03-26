@@ -189,7 +189,6 @@ func Assert_CountsAndMatest(
     assert.Equal(t, blackStalemate, stalemate)
 }
 
-// TODO add en passant stuff to the unique string
 func Test_BoardUniqueString_Default(t *testing.T) {
     builder := strings.Builder{}
 

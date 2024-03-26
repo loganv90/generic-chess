@@ -332,8 +332,12 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
     return legalMoves, nil
 }
 
-// TODO spawn go routines for searching
-// TODO only consider certain moves when searching
+// TODO do some kind or zorbrist hashing
+// TODO spawn go routines for searching and do iterative deepening so the moves are timed
+// TODO search only consider some moves
+// TODO search do alpha beta searching
+// TODO eval do piece mobility
+// TODO eval do piece location
 // TODO add 3 move repetition and 50 move rule
 // TODO add rule to allow checks and only lose on king capture
 // TODO add rule to check for checkmate and stalemate on all players after every move
@@ -535,8 +539,8 @@ func (b *SimpleBoard) Copy() (*SimpleBoard, error) {
     return simpleBoard, nil
 }
 
-// TODO do some kind or zorbrist hashing
 func (b *SimpleBoard) UniqueString(builder *strings.Builder) {
+    // not really unique because we don't consider en passant, castling, ...
     counter := 0
     for y, row := range b.pieces {
         for x := range row {

@@ -33,7 +33,9 @@ type Hub struct {
     game chess.Game
 }
 
-func newTwoPlayerHub() *Hub {
+// TODO assign the player the colors that the bot does not have
+// TODO make undo/redo work with bots by undoing/redoing until the player's turn
+func newTwoPlayerHubWithBot() *Hub {
     black := 1
 
     game, err := chess.NewSimpleGame()
@@ -50,9 +52,6 @@ func newTwoPlayerHub() *Hub {
         game:       game,
     }
 
-    // TODO create another function for hubs with bots
-    // TODO assign the player the colors that the bot does not have
-    // TODO make undo/redo work with bots by undoing/redoing until the player's turn
     botClient, err := newBotClient(hub, game, []int{black})
     if err != nil {
         panic(err)
@@ -63,6 +62,53 @@ func newTwoPlayerHub() *Hub {
     go botClient.run()
 
     return hub
+}
+
+func newFourPlayerHubWithBot() *Hub {
+    black := 1
+    red := 2
+    blue := 3
+
+    game, err := chess.NewSimpleFourPlayerGame()
+    if err != nil {
+        panic(err)
+    }
+
+    hub := &Hub{
+        clients:    make(map[Client]bool),
+        register:   make(chan Client),
+        unregister: make(chan Client),
+        send:       make(chan *ClientMessage),
+        capacity:   4,
+        game:       game,
+    }
+
+    botClient, err := newBotClient(hub, game, []int{black, red, blue})
+    if err != nil {
+        panic(err)
+    }
+
+    hub.handleClientJoin(botClient)
+
+    go botClient.run()
+
+    return hub
+}
+
+func newTwoPlayerHub() *Hub {
+    game, err := chess.NewSimpleGame()
+    if err != nil {
+        panic(err)
+    }
+
+    return &Hub{
+        clients:    make(map[Client]bool),
+        register:   make(chan Client),
+        unregister: make(chan Client),
+        send:       make(chan *ClientMessage),
+        capacity:   2,
+        game:       game,
+    }
 }
 
 func newFourPlayerHub() *Hub {
@@ -98,7 +144,6 @@ func (h *Hub) run() {
             }
         case clientMessage := <-h.send:
             h.handleMessage(
-                clientMessage.client,
                 clientMessage.message,
             )
         }
@@ -157,7 +202,7 @@ func (h *Hub) handleClientLeave(c Client) {
     }
 }
 
-func (h *Hub) handleMessage(c Client, unmarshalledMessage []byte) {
+func (h *Hub) handleMessage(unmarshalledMessage []byte) {
     var message *Message
     err := json.Unmarshal(unmarshalledMessage, &message)
     if err != nil {
