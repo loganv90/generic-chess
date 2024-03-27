@@ -80,9 +80,9 @@ func Test_EvalMaterial(t *testing.T) {
         redScore int
         blueScore int
     }{
-        {QUEEN, 50, 27, 16, 5},
-        {ROOK, 35, 35, 21, 7},
-        {KNIGHT, 25, 41, 25, 8},
+        {QUEEN, 500, 270, 160, 50},
+        {ROOK, 350, 350, 210, 70},
+        {KNIGHT, 250, 410, 250, 80},
     }
 
     for _, test := range tests {
@@ -110,6 +110,54 @@ func Test_EvalMaterial(t *testing.T) {
 
             score := make([]int, 4)
             evaluator.evalMaterial(score)
+            assert.Equal(t, test.whiteScore, score[white])
+            assert.Equal(t, test.blackScore, score[black])
+            assert.Equal(t, test.redScore, score[red])
+            assert.Equal(t, test.blueScore, score[blue])
+        })
+    }
+}
+
+func Test_EvalMobility(t *testing.T) {
+    white := 0
+    black := 1
+    red := 2
+    blue := 3
+
+    tests := []struct {
+        whiteIndex int
+        whiteScore int
+        blackScore int
+        redScore int
+        blueScore int
+    }{
+        {QUEEN, 0, 75, 13, 11},
+        {ROOK, 43, 43, 7, 6},
+        {KNIGHT, 11, 66, 11, 9},
+    }
+
+    for _, test := range tests {
+        testname := fmt.Sprintf("%d", test.whiteIndex)
+        t.Run(testname, func(t *testing.T) {
+            b, err := newSimpleBoard(10, 10, 4)
+            assert.Nil(t, err)
+            b.setPiece(b.getIndex(0, 0), b.getAllPiece(white, test.whiteIndex))
+            b.setPiece(b.getIndex(1, 1), b.getAllPiece(white, test.whiteIndex))
+            b.setPiece(b.getIndex(0, 9), b.getAllPiece(black, ROOK))
+            b.setPiece(b.getIndex(1, 8), b.getAllPiece(black, ROOK))
+            b.setPiece(b.getIndex(9, 9), b.getAllPiece(red, KNIGHT))
+            b.setPiece(b.getIndex(8, 8), b.getAllPiece(red, KNIGHT))
+            b.setPiece(b.getIndex(9, 0), b.getAllPiece(blue, PAWN_D))
+            b.setPiece(b.getIndex(8, 1), b.getAllPiece(blue, PAWN_D))
+            b.CalculateMoves()
+
+            p, err := newSimplePlayerCollection(4)
+            assert.Nil(t, err)
+
+            evaluator := newSimpleEvaluator(b, p)
+
+            score := make([]int, 4)
+            evaluator.evalMobility(score)
             assert.Equal(t, test.whiteScore, score[white])
             assert.Equal(t, test.blackScore, score[black])
             assert.Equal(t, test.redScore, score[red])

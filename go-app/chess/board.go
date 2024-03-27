@@ -28,6 +28,8 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
     vulnerableStarts := make([]*Point, players)
     vulnerableEnds := make([]*Point, players)
     kingLocations := make([]*Point, players)
+    kingMoveCount := make([]int, players)
+    queenMoveCount := make([]int, players)
     moves := make([]Array1000[FastMove], players)
     allPieces := make([][]Piece, players)
     for i := 0; i < players; i++ {
@@ -37,6 +39,8 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         vulnerableStarts[i] = nil
         vulnerableEnds[i] = nil
         kingLocations[i] = nil
+        kingMoveCount[i] = 0
+        queenMoveCount[i] = 0
         moves[i] = Array1000[FastMove]{}
         allPieces[i] = []Piece{
             {i, PAWN_R},
@@ -116,6 +120,8 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         vulnerableStarts: vulnerableStarts,
         vulnerableEnds: vulnerableEnds,
         kingLocations: kingLocations,
+        kingMoveCount: kingMoveCount,
+        queenMoveCount: queenMoveCount,
         moves: moves,
         allPieces: allPieces,
 
@@ -142,6 +148,8 @@ type SimpleBoard struct {
     vulnerableStarts []*Point
     vulnerableEnds []*Point
     kingLocations []*Point
+    kingMoveCount []int
+    queenMoveCount []int
     moves []Array1000[FastMove]
     allPieces [][]Piece
 
@@ -349,16 +357,16 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
 }
 
 // TODO spawn go routines for searching and do iterative deepening so the moves are timed
-// TODO search only consider some moves
-// TODO search do alpha beta searching
-// TODO eval do piece mobility
-// TODO eval do piece location
+// TODO limit search space when there are lots of moves
+// TODO do piece location eval (king likes corner at start and doesn't care at end, pawn likes center at start and likes to promote at end)
 // TODO add 3 move repetition and 50 move rule
 // TODO add rule to allow checks and only lose on king capture
 // TODO add rule to check for checkmate and stalemate on all players after every move
 func (b *SimpleBoard) CalculateMoves() {
     for i := 0; i < b.players; i++ {
         b.moves[i].clear()
+        b.queenMoveCount[i] = 0
+        b.kingMoveCount[i] = 0
     }
 
     for y := 0; y < b.y; y++ {
@@ -373,12 +381,21 @@ func (b *SimpleBoard) CalculateMoves() {
             }
 
             index := b.getIndex(x, y)
-
+            moves := &b.moves[piece.color]
             if piece.isKing() {
-                b.kingLocations[piece.color] = index
-            }
+                before := moves.count
+                piece.moves(b, index, moves)
 
-            piece.moves(b, index, &b.moves[piece.color])
+                b.kingLocations[piece.color] = index
+                b.kingMoveCount[piece.color] += moves.count - before
+            } else if piece.index == QUEEN {
+                before := moves.count
+                piece.moves(b, index, moves)
+
+                b.queenMoveCount[piece.color] += moves.count - before
+            } else {
+                piece.moves(b, index, moves)
+            }
         }
     }
 }

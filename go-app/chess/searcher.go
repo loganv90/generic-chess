@@ -2,12 +2,12 @@ package chess
 
 /*
 Chess Search:
-Alpha beta search
+Alpha beta search (only works for 2 player games)
 Iterative deepening
 Transposition table (repeated and colour flipped positions)
 Keep track of killer moves (moves that caused cut off) either by [piece][to] or [from][to]
 Quiescence search (do all captures on last capture/promotion square)
-Move ordering (Hashed moves, winning captures/promotions, equal captures, killer moves, non-captures, losing captures)
+Move ordering (Hashed moves, winning captures/promotions, equal captures, killer moves, non-captures, losing captures) (only works with alpha beta)
 Create a hash function to uniquely identify the chess position
 q2k2q1/2nqn2b/1n1P1n1b/2rnr2Q/1NQ1QN1Q/3Q3B/2RQR2B/Q2K2Q1 w - - this position causes engines to explode
 */

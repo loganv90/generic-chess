@@ -23,6 +23,7 @@ func newSimpleEvaluator(b *SimpleBoard, p *SimplePlayerCollection) *SimpleEvalua
         p: p,
 
         material: make([]int, p.getPlayers()),
+        mobility: make([]int, p.getPlayers()),
     }
 }
 
@@ -31,6 +32,7 @@ type SimpleEvaluator struct {
     p *SimplePlayerCollection
 
     material []int
+    mobility []int
 }
 
 func (e *SimpleEvaluator) eval(score []int) {
@@ -54,6 +56,7 @@ func (e *SimpleEvaluator) eval(score []int) {
     }
 
     e.evalMaterial(score)
+    e.evalMobility(score)
 
     // Piece position comparison (piece-square tables)
     // we need: the locations of each piece by player
@@ -83,7 +86,25 @@ func (e *SimpleEvaluator) evalMaterial(score []int) {
     }
 
     for color := range score {
-        percentage := int(float64(e.material[color]) / float64(totalMaterial) * 100)
+        percentage := int(float64(e.material[color]) / float64(totalMaterial) * 100) * 10 // weighted 10 times
+        score[color] += percentage
+    }
+}
+
+func (e *SimpleEvaluator) evalMobility(score []int) {
+    totalMobility := 0
+    for color := range score {
+        e.mobility[color] = 0
+    }
+
+    for color := range score {
+        value := e.b.moves[color].count - e.b.queenMoveCount[color] - e.b.kingMoveCount[color]
+        e.mobility[color] = value
+        totalMobility += value
+    }
+
+    for color := range score {
+        percentage := int(float64(e.mobility[color]) / float64(totalMobility) * 100) // weighted 1 time
         score[color] += percentage
     }
 }
