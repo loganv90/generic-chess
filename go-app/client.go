@@ -186,7 +186,7 @@ func (c *BotClient) run() {
 
             for _, color := range c.colors {
                 if !boardData.GameOver && color == boardData.CurrentPlayer {
-                    moveKey, err := c.bot.FindMove()
+                    moveKey, err := c.bot.FindMoveIterativeDeepening()
                     if err != nil {
                         fmt.Println("error finding move")
                         break

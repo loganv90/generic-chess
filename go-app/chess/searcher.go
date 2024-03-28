@@ -16,7 +16,7 @@ q2k2q1/2nqn2b/1n1P1n1b/2rnr2Q/1NQ1QN1Q/3Q3B/2RQR2B/Q2K2Q1 w - - this position ca
 Responsible for:
 - searching for moves given the current state of the game
 */
-func newSimpleSearcher(g Game) *SimpleSearcher {
+func newSimpleSearcher(g Game, stop chan bool) *SimpleSearcher {
     board := g.getBoard()
     playerCollection := g.getPlayerCollection()
 
@@ -33,6 +33,9 @@ func newSimpleSearcher(g Game) *SimpleSearcher {
         moveLevels: []Array1000[FastMove]{},
 
         transpositionMap: map[uint64][]int{},
+
+        stop: stop,
+        stopReached: false,
     }
 }
 
@@ -49,6 +52,9 @@ type SimpleSearcher struct {
     moveLevels []Array1000[FastMove]
 
     transpositionMap map[uint64][]int
+
+    stop chan bool
+    stopReached bool
 }
 
 func (s *SimpleSearcher) searchWithMinimax(depth int) (MoveKey, error) {
@@ -123,6 +129,15 @@ func (s *SimpleSearcher) minimaxFirstCall(depth int, moveKey *MoveKey) {
 }
 
 func (s *SimpleSearcher) minimax(depth int) {
+    select {
+    case <-s.stop:
+        s.stopReached = true
+    default:
+    }
+    if s.stopReached {
+        return
+    }
+
     s.minimaxCalls++
     hash := s.b.ZobristHash() ^ s.p.ZobristHash()
 

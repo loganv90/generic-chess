@@ -160,8 +160,8 @@ type SimpleBoard struct {
 
     // zobrist random data
     zobristPieces [][][][]uint64 // [player][piece][y][x]
-    zobristEnPassant [][][]uint64 // [player][y][x] : x and y of target
-    zobristVulnerable [][][]uint64 // [player][y][x] : x and y of start
+    zobristEnPassant [][][]uint64 // [player][y][x] (x and y of target)
+    zobristVulnerable [][][]uint64 // [player][y][x] (x and y of start)
 }
 
 func (b *SimpleBoard) disablePieces(color int, disable bool) {
@@ -356,6 +356,7 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
     return legalMoves, nil
 }
 
+// TODO some king of quiescence search (or just end the search right before own move)
 // TODO spawn go routines for searching and do iterative deepening so the moves are timed
 // TODO limit search space when there are lots of moves
 // TODO do piece location eval (king likes corner at start and doesn't care at end, pawn likes center at start and likes to promote at end)

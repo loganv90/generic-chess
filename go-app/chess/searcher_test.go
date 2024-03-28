@@ -33,8 +33,9 @@ func Test_Minimax_depthOne(t *testing.T) {
         p: p,
         i: i,
     }
+    stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game)
+    searcher := newSimpleSearcher(game, stop)
     moveKey, err := searcher.searchWithMinimax(1)
     assert.Nil(t, err)
     assert.Equal(t, 3, moveKey.XTo)
@@ -87,8 +88,9 @@ func Test_Minimax(t *testing.T) {
         p: p,
         i: i,
     }
+    stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game)
+    searcher := newSimpleSearcher(game, stop)
     moveKey, err := searcher.searchWithMinimax(4)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
@@ -142,8 +144,9 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
         p: p,
         i: i,
     }
+    stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game)
+    searcher := newSimpleSearcher(game, stop)
     moveKey, err := searcher.searchWithMinimax(3)
     assert.Nil(t, err)
     assert.Equal(t, 5, moveKey.XTo)
@@ -255,8 +258,9 @@ func Benchmark_Minimax(t *testing.B) {
             p: p,
             i: i,
         }
+        stop := make(chan bool)
 
-        searcher := newSimpleSearcher(game)
+        searcher := newSimpleSearcher(game, stop)
         _, err = searcher.searchWithMinimax(4)
         assert.Nil(t, err)
 
