@@ -357,7 +357,8 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
 }
 
 // TODO some king of quiescence search (or just end the search right before own move)
-// TODO spawn go routines for searching and do iterative deepening so the moves are timed
+// TODO test iterative deepening stuff
+// TODO spawn go routines for searching
 // TODO limit search space when there are lots of moves
 // TODO do piece location eval (king likes corner at start and doesn't care at end, pawn likes center at start and likes to promote at end)
 // TODO add 3 move repetition and 50 move rule
