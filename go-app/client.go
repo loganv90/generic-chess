@@ -119,7 +119,7 @@ func (c *PlayerClient) writeLoop() {
     }
 }
 
-func newBotClient(hub *Hub, game chess.Game, colors []int) (*BotClient, error) {
+func newBotClient(hub *Hub, game chess.Game) (*BotClient, error) {
     bot, err := chess.NewSimpleBot(game)
     if err != nil {
         return nil, err
@@ -129,7 +129,6 @@ func newBotClient(hub *Hub, game chess.Game, colors []int) (*BotClient, error) {
         hub: hub,
         bot: bot,
         send: make(chan []byte, 256),
-        colors: colors,
     }
 
     return botClient, nil
@@ -139,7 +138,6 @@ type BotClient struct {
     hub *Hub
     bot chess.Bot
     send chan []byte
-    colors []int
 }
 
 func (c *BotClient) sendMessage(message []byte) error {
@@ -184,7 +182,7 @@ func (c *BotClient) run() {
                 continue
             }
 
-            for _, color := range c.colors {
+            for _, color := range c.hub.botColors {
                 if !boardData.GameOver && color == boardData.CurrentPlayer {
                     moveKey, err := c.bot.FindMoveIterativeDeepening()
                     if err != nil {

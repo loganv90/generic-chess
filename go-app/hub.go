@@ -25,6 +25,7 @@ type ViewData struct {
 }
 
 type Hub struct {
+    botColors []int
     clients map[Client]bool
     register chan Client
     unregister chan Client
@@ -33,8 +34,6 @@ type Hub struct {
     game chess.Game
 }
 
-// TODO assign the player the colors that the bot does not have
-// TODO make undo/redo work with bots by undoing/redoing until the player's turn
 func newTwoPlayerHubWithBot() *Hub {
     black := 1
 
@@ -44,6 +43,7 @@ func newTwoPlayerHubWithBot() *Hub {
     }
 
     hub := &Hub{
+        botColors:  []int{black},
         clients:    make(map[Client]bool),
         register:   make(chan Client),
         unregister: make(chan Client),
@@ -52,7 +52,7 @@ func newTwoPlayerHubWithBot() *Hub {
         game:       game,
     }
 
-    botClient, err := newBotClient(hub, game, []int{black})
+    botClient, err := newBotClient(hub, game)
     if err != nil {
         panic(err)
     }
@@ -75,6 +75,7 @@ func newFourPlayerHubWithBot() *Hub {
     }
 
     hub := &Hub{
+        botColors:  []int{black, red, blue},
         clients:    make(map[Client]bool),
         register:   make(chan Client),
         unregister: make(chan Client),
@@ -83,7 +84,7 @@ func newFourPlayerHubWithBot() *Hub {
         game:       game,
     }
 
-    botClient, err := newBotClient(hub, game, []int{black, red, blue})
+    botClient, err := newBotClient(hub, game)
     if err != nil {
         panic(err)
     }
@@ -102,6 +103,7 @@ func newTwoPlayerHub() *Hub {
     }
 
     return &Hub{
+        botColors:  []int{},
         clients:    make(map[Client]bool),
         register:   make(chan Client),
         unregister: make(chan Client),
@@ -118,6 +120,7 @@ func newFourPlayerHub() *Hub {
     }
 
     return &Hub{
+        botColors:  []int{},
         clients:    make(map[Client]bool),
         register:   make(chan Client),
         unregister: make(chan Client),
@@ -279,12 +282,22 @@ func (h *Hub) handleViewMessage(messageData json.RawMessage) {
 }
 
 func (h *Hub) handleUndoMessage() {
-    err := h.game.Undo()
-    if err != nil {
-        fmt.Println(err)
+    if !h.playerTurn() {
         return
     }
-        
+
+    for {
+        err := h.game.Undo()
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+
+        if h.playerTurn() {
+            break
+        }
+    }
+
     message, err := h.createBoardStateMessage()
     if err != nil {
         fmt.Println("error creating state message")
@@ -295,12 +308,22 @@ func (h *Hub) handleUndoMessage() {
 }
 
 func (h *Hub) handleRedoMessage() {
-    err := h.game.Redo()
-    if err != nil {
-        fmt.Println(err)
+    if !h.playerTurn() {
         return
     }
-        
+
+    for {
+        err := h.game.Redo()
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+
+        if h.playerTurn() {
+            break
+        }
+    }
+
     message, err := h.createBoardStateMessage()
     if err != nil {
         fmt.Println("error creating state message")
@@ -308,6 +331,24 @@ func (h *Hub) handleRedoMessage() {
     }
 
     h.broadcastMessage(message)
+}
+
+func (h *Hub) playerTurn() bool {
+    state, err := h.game.State()
+    if err != nil {
+        fmt.Println(err)
+        return false
+    }
+
+    playerTurn := true
+    for _, color := range h.botColors {
+        if color == state.CurrentPlayer {
+            playerTurn = false
+            break
+        }
+    }
+
+    return playerTurn
 }
 
 func (h *Hub) createBoardStateMessage() ([]byte, error) {
