@@ -458,6 +458,10 @@ var king_lr_moves = func(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, 
         return
     }
 
+    if b.Check(fromPiece.color) {
+        return
+    }
+
     addCastle(b, fromPiece, fromLocation, moves, king_lr_directions[0], king_lr_directions[2], king_lr_directions[4])
     addCastle(b, fromPiece, fromLocation, moves, king_lr_directions[1], king_lr_directions[3], king_lr_directions[5])
 }
@@ -468,6 +472,10 @@ var king_ud_moves = func(b *SimpleBoard, fromPiece *Piece, fromLocation *Point, 
     }
 
     if fromPiece.moved() {
+        return
+    }
+
+    if b.Check(fromPiece.color) {
         return
     }
 
