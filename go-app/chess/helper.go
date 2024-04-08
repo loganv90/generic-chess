@@ -257,15 +257,13 @@ type Array4[T any] struct {
 }
 
 func (a *Array4[T]) get() *T {
-    return &a.array[a.count]
+    res := &a.array[a.count]
+    a.count += 1
+    return res
 }
 
 func (a *Array4[T]) set(value T) {
     a.array[a.count] = value
-    a.count += 1
-}
-
-func (a *Array4[T]) next() {
     a.count += 1
 }
 
@@ -281,15 +279,13 @@ type Array1000[T any] struct {
 }
 
 func (a *Array1000[T]) get() *T {
-    return &a.array[a.count]
+    res := &a.array[a.count]
+    a.count += 1
+    return res
 }
 
 func (a *Array1000[T]) set(value T) {
     a.array[a.count] = value
-    a.count += 1
-}
-
-func (a *Array1000[T]) next() {
     a.count += 1
 }
 

@@ -7,9 +7,17 @@ func addMoveSimple(
     toPiece *Piece,
     toLocation *Point,
     newPiece *Piece,
-    moves *Array1000[FastMove],
 ) {
-    move := moves.get()
+    var move *FastMove
+    color := fromPiece.color
+
+    if toPiece != nil { // capture
+        move = b.captureMoves[color].get()
+        move.captureValue = toPiece.value()
+    } else { // no capture
+        move = b.moves[color].get()
+        move.captureValue = 0
+    }
 
     move.b = b
     move.fromLocation = fromLocation
@@ -50,8 +58,6 @@ func addMoveSimple(
 
     move.oldStart = start
     move.oldEnd = end
-
-    moves.next()
 }
 
 func addMoveRevealEnPassant(
@@ -63,14 +69,57 @@ func addMoveRevealEnPassant(
     newPiece *Piece,
     newTarget *Point,
     newRisk *Point,
-    moves *Array1000[FastMove],
 ) {
-    move := moves.get()
+    var move *FastMove
+    color := fromPiece.color
 
-    addMoveSimple(b, fromPiece, fromLocation, toPiece, toLocation, newPiece, moves)
+    if toPiece != nil { // capture
+        move = b.captureMoves[color].get()
+        move.captureValue = toPiece.value()
+    } else { // no capture
+        move = b.moves[color].get()
+        move.captureValue = 0
+    }
+
+    move.b = b
+    move.fromLocation = fromLocation
+    move.toLocation = toLocation
+    move.color = fromPiece.color
+    move.allyDefense = false
+
+	target, risk := b.getEnPassant(fromPiece.color)
+    start, end := b.getVulnerable(fromPiece.color)
+
+    if newPiece != nil { // promotion
+        move.promotionIndex = newPiece.index
+    } else { // no promotion
+        move.promotionIndex = -1
+        newPiece = b.movePiece(fromPiece)
+    }
+
+    move.newPiece.clear()
+    move.newPiece.set(nil)
+    move.newPiece.set(newPiece)
+
+    move.oldPiece.clear()
+    move.oldPiece.set(fromPiece)
+    move.oldPiece.set(toPiece)
+
+    move.location.clear()
+    move.location.set(fromLocation)
+    move.location.set(toLocation)
 
     move.newTarget = newTarget
     move.newRisk = newRisk
+
+    move.oldTarget = target
+    move.oldRisk = risk
+
+    move.newStart = nil
+    move.newEnd = nil
+
+    move.oldStart = start
+    move.oldEnd = end
 }
 
 func addMoveCaptureEnPassant(
@@ -82,33 +131,74 @@ func addMoveCaptureEnPassant(
     newPiece *Piece,
     risk1 *Point,
     risk2 *Point,
-    moves *Array1000[FastMove],
 ) {
-    move := moves.get()
+    var move *FastMove
+    color := fromPiece.color
+    capturedPiece1 := b.getPiece(risk1)
+    capturedPiece2 := b.getPiece(risk2)
 
-    addMoveSimple(b, fromPiece, fromLocation, toPiece, toLocation, newPiece, moves)
-
-    capturedPiece := b.getPiece(risk1)
-    if capturedPiece == nil {
-        return
+    if toPiece != nil || capturedPiece1 == nil || capturedPiece2 == nil { // capture
+        move = b.captureMoves[color].get()
+    } else {
+        move = b.moves[color].get()
     }
 
-    move.newPiece.set(nil)
+    move.b = b
+    move.fromLocation = fromLocation
+    move.toLocation = toLocation
+    move.color = fromPiece.color
+    move.allyDefense = false
+    move.captureValue = 0
 
-    move.oldPiece.set(capturedPiece)
+	target, risk := b.getEnPassant(fromPiece.color)
+    start, end := b.getVulnerable(fromPiece.color)
 
-    move.location.set(risk1)
-
-    capturedPiece = b.getPiece(risk2)
-    if capturedPiece == nil {
-        return
+    if newPiece != nil { // promotion
+        move.promotionIndex = newPiece.index
+    } else { // no promotion
+        move.promotionIndex = -1
+        newPiece = b.movePiece(fromPiece)
     }
 
+    move.newPiece.clear()
     move.newPiece.set(nil)
+    move.newPiece.set(newPiece)
 
-    move.oldPiece.set(capturedPiece)
+    move.oldPiece.clear()
+    move.oldPiece.set(fromPiece)
+    move.oldPiece.set(toPiece)
 
-    move.location.set(risk2)
+    move.location.clear()
+    move.location.set(fromLocation)
+    move.location.set(toLocation)
+
+    move.newTarget = nil
+    move.newRisk = nil
+
+    move.oldTarget = target
+    move.oldRisk = risk
+
+    move.newStart = nil
+    move.newEnd = nil
+
+    move.oldStart = start
+    move.oldEnd = end
+
+    if toPiece != nil {
+        move.captureValue += toPiece.value()
+    }
+    if capturedPiece1 != nil {
+        move.newPiece.set(nil)
+        move.oldPiece.set(capturedPiece1)
+        move.location.set(risk1)
+        move.captureValue += capturedPiece1.value()
+    }
+    if capturedPiece2 != nil {
+        move.newPiece.set(nil)
+        move.oldPiece.set(capturedPiece2)
+        move.location.set(risk2)
+        move.captureValue += capturedPiece2.value()
+    }
 }
 
 func addMoveAllyDefense(
@@ -116,9 +206,11 @@ func addMoveAllyDefense(
     fromPiece *Piece,
     fromLocation *Point,
     toLocation *Point,
-    moves *Array1000[FastMove],
 ) {
-    move := moves.get()
+    var move *FastMove
+    color := fromPiece.color
+
+    move = b.defenseMoves[color].get()
 
     move.b = b
     move.fromLocation = fromLocation
@@ -126,22 +218,7 @@ func addMoveAllyDefense(
     move.color = fromPiece.color
     move.allyDefense = true
     move.promotionIndex = -1
-
-    move.newPiece.clear()
-    move.oldPiece.clear()
-    move.location.clear()
-
-    move.newTarget = nil
-    move.newRisk = nil
-    move.oldTarget = nil
-    move.oldRisk = nil
-
-    move.newStart = nil
-    move.newEnd = nil
-    move.oldStart = nil
-    move.oldEnd = nil
-
-    moves.next()
+    move.captureValue = 0
 }
 
 func addMoveCastle(
@@ -154,9 +231,11 @@ func addMoveCastle(
     toRookLocation *Point,
     newStart *Point,
     newEnd *Point,
-    moves *Array1000[FastMove],
 ) {
-    move := moves.get()
+    var move *FastMove
+    color := king.color
+
+    move = b.moves[color].get()
 
     move.b = b
     move.fromLocation = fromLocation
@@ -164,6 +243,7 @@ func addMoveCastle(
     move.color = king.color
     move.allyDefense = false
     move.promotionIndex = -1
+    move.captureValue = 0
 
     target, risk := b.getEnPassant(king.color)
     start, end := b.getVulnerable(king.color)
@@ -200,8 +280,6 @@ func addMoveCastle(
 
     move.oldStart = start
     move.oldEnd = end
-
-    moves.next()
 }
 
 type FastMove struct {
@@ -211,6 +289,7 @@ type FastMove struct {
     color int
     allyDefense bool
     promotionIndex int
+    captureValue int
 
     // piece changes
     newPiece Array4[*Piece]

@@ -60,9 +60,6 @@ func (e *SimpleEvaluator) eval(score []int) {
 
     // Piece position comparison (piece-square tables)
     // we need: the locations of each piece by player
-
-    // Mobility comparison
-    // we need: the moves each piece can make including attacking ally pieces
 }
 
 func (e *SimpleEvaluator) evalMaterial(score []int) {
@@ -98,7 +95,7 @@ func (e *SimpleEvaluator) evalMobility(score []int) {
     }
 
     for color := range score {
-        value := e.b.moves[color].count - e.b.queenMoveCount[color] - e.b.kingMoveCount[color]
+        value := e.b.moves[color].count + e.b.captureMoves[color].count + e.b.defenseMoves[color].count - e.b.queenMoveCount[color] - e.b.kingMoveCount[color]
         e.mobility[color] = value
         totalMobility += value
     }

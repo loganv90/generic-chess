@@ -1,5 +1,9 @@
 package chess
 
+import (
+    "errors"
+)
+
 /*
 Chess Search:
 Alpha beta search (only works for 2 player games)
@@ -26,11 +30,11 @@ func newSimpleSearcher(g Game, stop chan bool) *SimpleSearcher {
         e: newSimpleEvaluator(board, playerCollection),
 
         players: playerCollection.getPlayers(),
-        minimaxCalls: 0,
 
         scoreLevels: [][]int{},
         transitionLevels: []PlayerTransition{},
         moveLevels: []Array1000[FastMove]{},
+        captureMoveLevels: []Array1000[FastMove]{},
 
         transpositionMap: map[uint64][]int{},
 
@@ -45,11 +49,14 @@ type SimpleSearcher struct {
     e *SimpleEvaluator
 
     players int
-    minimaxCalls int
 
     scoreLevels [][]int
     transitionLevels []PlayerTransition
     moveLevels []Array1000[FastMove]
+    captureMoveLevels []Array1000[FastMove]
+
+    depth int
+    moveKey MoveKey
 
     transpositionMap map[uint64][]int
 
@@ -58,73 +65,29 @@ type SimpleSearcher struct {
 }
 
 func (s *SimpleSearcher) searchWithMinimax(depth int) (MoveKey, error) {
+    s.depth = depth
+    s.moveKey = MoveKey{-1, -1, -1, -1, ""}
     levels := depth + 1
 
     s.scoreLevels = make([][]int, levels)
     s.transitionLevels = make([]PlayerTransition, levels)
     s.moveLevels = make([]Array1000[FastMove], levels)
+    s.captureMoveLevels = make([]Array1000[FastMove], levels)
     for i := 0; i < levels; i++ {
         s.scoreLevels[i] = make([]int, s.players)
         s.transitionLevels[i] = PlayerTransition{}
         s.moveLevels[i] = Array1000[FastMove]{}
+        s.captureMoveLevels[i] = Array1000[FastMove]{}
     }
     s.transpositionMap = map[uint64][]int{}
 
     s.b.CalculateMoves()
-    moveKey := MoveKey{}
-    s.minimaxFirstCall(depth, &moveKey)
-    return moveKey, nil
-}
+    s.minimax(depth)
 
-func (s *SimpleSearcher) minimaxFirstCall(depth int, moveKey *MoveKey) {
-    if depth <= 0 || s.p.getGameOver() {
-        panic("no moves in this position")
-    }
-
-    found := false
-    currentPlayer := s.p.getCurrent()
-    transition := &s.transitionLevels[depth]
-
-    s.moveLevels[depth].clear()
-    s.b.MovesOfColor(currentPlayer, &s.moveLevels[depth])
-
-    for i := 0; i < len(s.scoreLevels[depth]); i++ {
-        s.scoreLevels[depth][i] = -1000000
-    }
-    
-    for i := 0; i < s.moveLevels[depth].count; i++ {
-        move := &s.moveLevels[depth].array[i]
-
-        move.execute()
-
-        s.b.CalculateMoves()
-        if s.b.Check(currentPlayer) {
-            move.undo()
-            continue
-        }
-
-        createPlayerTransition(s.b, s.p, false, false, transition)
-
-        transition.execute()
-        s.minimax(depth-1)
-        transition.undo()
-
-        move.undo()
-
-        if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
-            for i := 0; i < len(s.scoreLevels[depth]); i++ {
-                s.scoreLevels[depth][i] = s.scoreLevels[depth-1][i]
-            }
-            moveKey.XTo = move.toLocation.x
-            moveKey.YTo = move.toLocation.y
-            moveKey.XFrom = move.fromLocation.x
-            moveKey.YFrom = move.fromLocation.y
-            found = true
-        }
-    }
-
-    if !found {
-        panic("no moves in this position")
+    if s.moveKey.XTo == -1 || s.moveKey.YTo == -1 || s.moveKey.XFrom == -1 || s.moveKey.YFrom == -1 {
+        return MoveKey{}, errors.New("no moves in this position")
+    } else {
+        return s.moveKey, nil
     }
 }
 
@@ -138,7 +101,6 @@ func (s *SimpleSearcher) minimax(depth int) {
         return
     }
 
-    s.minimaxCalls++
     hash := s.b.ZobristHash() ^ s.p.ZobristHash()
 
     if _, ok := s.transpositionMap[hash]; ok {
@@ -166,11 +128,44 @@ func (s *SimpleSearcher) minimax(depth int) {
     currentPlayer := s.p.getCurrent()
     transition := &s.transitionLevels[depth]
 
-    s.moveLevels[depth].clear()
-    s.b.MovesOfColor(currentPlayer, &s.moveLevels[depth])
+    s.copyMoves(depth, currentPlayer)
 
     for i := 0; i < len(s.scoreLevels[depth]); i++ {
         s.scoreLevels[depth][i] = -1000000
+    }
+
+    for i := 0; i < s.captureMoveLevels[depth].count; i++ {
+        move := &s.captureMoveLevels[depth].array[i]
+
+        move.execute()
+
+        s.b.CalculateMoves()
+        if s.b.Check(currentPlayer) {
+            move.undo()
+            continue
+        }
+
+        createPlayerTransition(s.b, s.p, false, false, transition)
+
+        transition.execute()
+        s.minimax(depth-1)
+        transition.undo()
+
+        move.undo()
+
+        if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
+            found = true
+            for i := 0; i < len(s.scoreLevels[depth]); i++ {
+                s.scoreLevels[depth][i] = s.scoreLevels[depth-1][i]
+            }
+
+            if depth == s.depth {
+                s.moveKey.XTo = move.toLocation.x
+                s.moveKey.YTo = move.toLocation.y
+                s.moveKey.XFrom = move.fromLocation.x
+                s.moveKey.YFrom = move.fromLocation.y
+            }
+        }
     }
     
     for i := 0; i < s.moveLevels[depth].count; i++ {
@@ -193,14 +188,25 @@ func (s *SimpleSearcher) minimax(depth int) {
         move.undo()
 
         if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
+            found = true
             for i := 0; i < len(s.scoreLevels[depth]); i++ {
                 s.scoreLevels[depth][i] = s.scoreLevels[depth-1][i]
             }
-            found = true
+
+            if depth == s.depth {
+                s.moveKey.XTo = move.toLocation.x
+                s.moveKey.YTo = move.toLocation.y
+                s.moveKey.XFrom = move.fromLocation.x
+                s.moveKey.YFrom = move.fromLocation.y
+            }
         }
     }
 
     if !found {
+        if depth == s.depth {
+            panic("no moves in this position")
+        }
+
         if s.b.Check(currentPlayer) {
             createPlayerTransition(s.b, s.p, true, false, transition)
         } else {
@@ -217,5 +223,23 @@ func (s *SimpleSearcher) minimax(depth int) {
         newScore[i] = s.scoreLevels[depth][i]
     }
     s.transpositionMap[hash] = newScore
+}
+
+func (s *SimpleSearcher) copyMoves(depth int, color int) {
+    moves := &s.b.moves[color]
+    captureMoves := &s.b.captureMoves[color]
+
+    s.moveLevels[depth].clear()
+    s.captureMoveLevels[depth].clear()
+
+    s.moveLevels[depth].count = moves.count
+    for i := 0; i < moves.count; i++ {
+        s.moveLevels[depth].array[i] = moves.array[i]
+    }
+
+    s.captureMoveLevels[depth].count = captureMoves.count
+    for i := 0; i < captureMoves.count; i++ {
+        s.captureMoveLevels[depth].array[i] = captureMoves.array[i]
+    }
 }
 

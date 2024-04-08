@@ -16,8 +16,7 @@ func Test_MoveSimple(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
-    move := moves.get()
+    move := &b.captureMoves[white].array[0]
     addMoveSimple(
         b,
         b.getAllPiece(white, PAWN_D),
@@ -25,7 +24,6 @@ func Test_MoveSimple(t *testing.T) {
         b.getAllPiece(black, PAWN_D),
         b.getIndex(1, 1),
         nil,
-        &moves,
     )
     assert.Equal(t, move.allyDefense, false)
 
@@ -60,8 +58,7 @@ func Test_MovePromotion(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
-    move := moves.get()
+    move := &b.captureMoves[white].array[0]
     addMoveSimple(
         b,
         b.getAllPiece(white, PAWN_D),
@@ -69,7 +66,6 @@ func Test_MovePromotion(t *testing.T) {
         b.getAllPiece(black, PAWN_D),
         b.getIndex(1, 1),
         b.getAllPiece(white, QUEEN),
-        &moves,
     )
     assert.Equal(t, move.allyDefense, false)
 
@@ -104,8 +100,7 @@ func Test_MoveRevealEnPassant(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
-    move := moves.get()
+    move := &b.captureMoves[white].array[0]
     addMoveRevealEnPassant(
         b,
         b.getAllPiece(white, PAWN_D),
@@ -115,7 +110,6 @@ func Test_MoveRevealEnPassant(t *testing.T) {
         nil,
         b.getIndex(6, 6),
         b.getIndex(7, 7),
-        &moves,
     )
     assert.Equal(t, move.allyDefense, false)
 
@@ -152,8 +146,7 @@ func Test_MoveCaptureEnPassant(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
-    move := moves.get()
+    move := &b.captureMoves[white].array[0]
     addMoveCaptureEnPassant(
         b,
         b.getAllPiece(white, PAWN_D),
@@ -163,7 +156,6 @@ func Test_MoveCaptureEnPassant(t *testing.T) {
         nil,
         b.getIndex(6, 6),
         b.getIndex(7, 7),
-        &moves,
     )
     assert.Equal(t, move.allyDefense, false)
 
@@ -201,14 +193,12 @@ func Test_MoveAllyDefense(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
-    move := moves.get()
+    move := &b.defenseMoves[white].array[0]
     addMoveAllyDefense(
         b,
         b.getAllPiece(white, PAWN_D),
         b.getIndex(0, 0),
         b.getIndex(1, 1),
-        &moves,
     )
     assert.Equal(t, move.allyDefense, true)
 
@@ -242,8 +232,7 @@ func Test_MoveCastle(t *testing.T) {
     b.setEnPassant(white, b.getIndex(2, 2), b.getIndex(3, 3))
     b.setVulnerable(white, b.getIndex(4, 4), b.getIndex(5, 5))
 
-    moves := Array1000[FastMove]{}
-    move := moves.get()
+    move := &b.moves[white].array[0]
     addMoveCastle(
         b,
         b.getAllPiece(white, KING_D),
@@ -254,7 +243,6 @@ func Test_MoveCastle(t *testing.T) {
         b.getIndex(7, 7),
         b.getIndex(8, 8),
         b.getIndex(9, 9),
-        &moves,
     )
     assert.Equal(t, move.allyDefense, false)
 

@@ -113,6 +113,9 @@ func (s *SimpleGame) Execute(xFrom int, yFrom int, xTo int, yTo int, promotion s
     var move FastMove
     for _, m := range moves {
         promotionString := ""
+        // TODO remove the promotion index and just check FastMove.newPiece[1].array.index
+        // TODO use the same transposition map while iterative deepening
+        // TODO try to remove unneeded items from FastMove
         if m.promotionIndex >= 0 {
             promotionString = piece_names[m.promotionIndex]
         }

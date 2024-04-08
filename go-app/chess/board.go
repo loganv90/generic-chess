@@ -31,6 +31,8 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
     kingMoveCount := make([]int, players)
     queenMoveCount := make([]int, players)
     moves := make([]Array1000[FastMove], players)
+    captureMoves := make([]Array1000[FastMove], players)
+    defenseMoves := make([]Array1000[FastMove], players)
     allPieces := make([][]Piece, players)
     for i := 0; i < players; i++ {
         playersDisabled[i] = false
@@ -42,6 +44,8 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         kingMoveCount[i] = 0
         queenMoveCount[i] = 0
         moves[i] = Array1000[FastMove]{}
+        captureMoves[i] = Array1000[FastMove]{}
+        defenseMoves[i] = Array1000[FastMove]{}
         allPieces[i] = []Piece{
             {i, PAWN_R},
             {i, PAWN_L},
@@ -123,6 +127,8 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         kingMoveCount: kingMoveCount,
         queenMoveCount: queenMoveCount,
         moves: moves,
+        captureMoves: captureMoves,
+        defenseMoves: defenseMoves,
         allPieces: allPieces,
 
         disableds: disableds,
@@ -151,6 +157,8 @@ type SimpleBoard struct {
     kingMoveCount []int
     queenMoveCount []int
     moves []Array1000[FastMove]
+    captureMoves []Array1000[FastMove]
+    defenseMoves []Array1000[FastMove]
     allPieces [][]Piece
 
     // arrays of size X * Y
@@ -265,16 +273,19 @@ func (b *SimpleBoard) getEnPassantRisks(color int, target *Point) (*Point, *Poin
     return risk1, risk2
 }
 
-func (b *SimpleBoard) MovesOfColor(color int, moves *Array1000[FastMove]) {
+func (b *SimpleBoard) MovesOfColor(color int, moves *[]FastMove) {
     colorMoves := &b.moves[color]
     for i := 0; i < colorMoves.count; i++ {
-        move := &colorMoves.array[i]
+        move := colorMoves.array[i]
 
-        if move.allyDefense {
-            continue
-        }
+        *moves = append(*moves, move)
+    }
 
-        moves.set(colorMoves.array[i])
+    colorCaptureMoves := &b.captureMoves[color]
+    for i := 0; i < colorCaptureMoves.count; i++ {
+        move := colorCaptureMoves.array[i]
+
+        *moves = append(*moves, move)
     }
 }
 
@@ -284,14 +295,20 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation *Point, moves *[]FastMove) {
     }
 
     for i := 0; i < b.players; i++ {
-        ms := &b.moves[i]
+        locationMoves := &b.moves[i]
+        for j := 0; j < locationMoves.count; j++ {
+            move := locationMoves.array[j]
 
-        for j := 0; j < ms.count; j++ {
-            move := ms.array[j]
-
-            if move.allyDefense {
+            if move.fromLocation != fromLocation {
                 continue
             }
+
+            *moves = append(*moves, move)
+        }
+
+        locationCaptureMoves := &b.captureMoves[i]
+        for j := 0; j < locationCaptureMoves.count; j++ {
+            move := locationCaptureMoves.array[j]
 
             if move.fromLocation != fromLocation {
                 continue
@@ -303,13 +320,13 @@ func (b *SimpleBoard) MovesOfLocation(fromLocation *Point, moves *[]FastMove) {
 }
 
 func (b *SimpleBoard) LegalMovesOfColor(color int) ([]FastMove, error) {
-    moves := Array1000[FastMove]{}
+    moves := []FastMove{}
     b.MovesOfColor(color, &moves)
 
     legalMoves := []FastMove{}
 
-    for i := 0; i < moves.count; i++ {
-        move := moves.array[i]
+    for i := 0; i < len(moves); i++ {
+        move := moves[i]
 
         move.execute()
 
@@ -364,6 +381,8 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
 func (b *SimpleBoard) CalculateMoves() {
     for i := 0; i < b.players; i++ {
         b.moves[i].clear()
+        b.captureMoves[i].clear()
+        b.defenseMoves[i].clear()
         b.queenMoveCount[i] = 0
         b.kingMoveCount[i] = 0
     }
@@ -380,20 +399,20 @@ func (b *SimpleBoard) CalculateMoves() {
             }
 
             index := b.getIndex(x, y)
-            moves := &b.moves[piece.color]
+            color := piece.color
             if piece.isKing() {
-                before := moves.count
-                piece.moves(b, index, moves)
+                before := b.moves[color].count + b.captureMoves[color].count + b.defenseMoves[color].count
+                piece.moves(b, index)
 
+                b.kingMoveCount[piece.color] += b.moves[color].count + b.captureMoves[color].count + b.defenseMoves[color].count - before
                 b.kingLocations[piece.color] = index
-                b.kingMoveCount[piece.color] += moves.count - before
             } else if piece.index == QUEEN {
-                before := moves.count
-                piece.moves(b, index, moves)
+                before := b.moves[color].count + b.captureMoves[color].count + b.defenseMoves[color].count
+                piece.moves(b, index)
 
-                b.queenMoveCount[piece.color] += moves.count - before
+                b.queenMoveCount[piece.color] += b.moves[color].count + b.captureMoves[color].count + b.defenseMoves[color].count - before
             } else {
-                piece.moves(b, index, moves)
+                piece.moves(b, index)
             }
         }
     }
@@ -408,10 +427,10 @@ func (b *SimpleBoard) Check(color int) bool {
         if i == color {
             continue
         }
-        moves := &b.moves[i]
+        captureMoves := &b.captureMoves[i]
 
-        for j := 0; j < moves.count; j++ {
-            to := moves.array[j].toLocation
+        for j := 0; j < captureMoves.count; j++ {
+            to := captureMoves.array[j].toLocation
 
             if to == king {
                 return true

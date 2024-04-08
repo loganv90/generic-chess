@@ -194,6 +194,7 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
 // This is a problem with quiescence search and transposition maps
 // We're evaluating positions where there's about to be a significant capture which makes the evaluation inaccurate
 // Then we're storing that evaluation and retrieving it early in the search
+// Evaluating the captures first seems to make this better but I don't think it solves it completely
 func Test_Minimax_BotSacrifice(t *testing.T) {
     white := 0
     black := 1
@@ -408,8 +409,6 @@ func Benchmark_Minimax(t *testing.B) {
 +-------------------------------------------------------------------------------------------------------+
         `, " \t\n") + "\n"
         assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
-
-        fmt.Println("minimaxCalls", searcher.minimaxCalls)
     }
 }
 
