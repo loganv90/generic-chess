@@ -191,10 +191,12 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
-// This is a problem with quiescence search and transposition maps
-// We're evaluating positions where there's about to be a significant capture which makes the evaluation inaccurate
-// Then we're storing that evaluation and retrieving it early in the search
-// Evaluating the captures first seems to make this better but I don't think it solves it completely
+// This is a problem with quiescence search and transposition maps:
+// - a position is evaluated inaccurately without quiescence and stored in the transposition map
+// - the position is retrieved at a much shallower depth and it's evaluation is retrieved from the map
+// To solve this problem:
+// - we could do a quiescence search or approximate a quiescence search by finding attackers/defenders of each square
+// - we could evaluate captures first which should reduce the chance of getting a capture's evaluation from the map
 func Test_Minimax_BotSacrifice(t *testing.T) {
     white := 0
     black := 1
@@ -257,8 +259,8 @@ func Test_Minimax_BotSacrifice(t *testing.T) {
     searcher := newSimpleSearcher(game, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
-    assert.Equal(t, -1, moveKey.XTo)
-    assert.Equal(t, -1, moveKey.YTo)
+    assert.Equal(t, 1, moveKey.XTo)
+    assert.Equal(t, 1, moveKey.YTo)
 
     actualPrintedBoard := game.Print()
     expectedPrintedBoard := strings.Trim(`
