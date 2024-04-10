@@ -2,6 +2,7 @@ package chess
 
 import (
     "errors"
+    "math"
 )
 
 /*
@@ -131,7 +132,7 @@ func (s *SimpleSearcher) minimax(depth int) {
     s.copyMoves(depth, currentPlayer)
 
     for i := 0; i < len(s.scoreLevels[depth]); i++ {
-        s.scoreLevels[depth][i] = -1000000
+        s.scoreLevels[depth][i] = math.MinInt
     }
 
     for i := 0; i < s.captureMoveLevels[depth].count; i++ {

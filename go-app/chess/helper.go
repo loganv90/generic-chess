@@ -45,6 +45,7 @@ func createSimpleBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
     simpleBoard.setPiece(simpleBoard.getIndex(6, 7), simpleBoard.getAllPiece(white, KNIGHT))
     simpleBoard.setPiece(simpleBoard.getIndex(7, 7), simpleBoard.getAllPiece(white, ROOK))
 
+    simpleBoard.populatePieceSquareTables()
     simpleBoard.CalculateMoves()
     
     return simpleBoard, nil
@@ -173,6 +174,7 @@ func createSimpleFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error
     simpleBoard.disableLocation(simpleBoard.getIndex(13, 12))
     simpleBoard.disableLocation(simpleBoard.getIndex(13, 13))
 
+    simpleBoard.populatePieceSquareTables()
     simpleBoard.CalculateMoves()
 
     return simpleBoard, nil

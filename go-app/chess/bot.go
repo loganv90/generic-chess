@@ -17,7 +17,7 @@ func NewSimpleBot(game Game) (Bot, error) {
     return &SimpleBot{
         game: game,
         depthStart: 2,
-        depthLimit: 10,
+        depthLimit: 20,
         timeLimitSeconds: 5,
     }, nil
 }

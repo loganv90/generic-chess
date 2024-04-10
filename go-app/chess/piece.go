@@ -22,6 +22,7 @@ const (
     KING_L_M = 18
     KING_D_M = 19
     KING_U_M = 20
+    TOTAL_PIECES = 21
 )
 
 var piece_moved_indexes = []int{
@@ -62,14 +63,14 @@ var piece_values = []int{
     500,
     500,
     900,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
 }
 
 var piece_names = []string{

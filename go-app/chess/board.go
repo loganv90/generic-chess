@@ -90,8 +90,8 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
     zobristEnPassant := make([][][]uint64, players)
     zobristVulnerable := make([][][]uint64, players)
     for i := 0; i < players; i++ {
-        zobristPieces[i] = make([][][]uint64, 21)
-        for j := 0; j < 21; j++ {
+        zobristPieces[i] = make([][][]uint64, TOTAL_PIECES)
+        for j := 0; j < TOTAL_PIECES; j++ {
             zobristPieces[i][j] = make([][]uint64, y)
             for yi := 0; yi < y; yi++ {
                 zobristPieces[i][j][yi] = make([]uint64, x)
@@ -108,6 +108,17 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
             for xi := 0; xi < x; xi++ {
                 zobristEnPassant[i][yi][xi] = rand.Uint64()
                 zobristVulnerable[i][yi][xi] = rand.Uint64()
+            }
+        }
+    }
+
+    pieceSquareTables := make([][][]int, TOTAL_PIECES)
+    for i := 0; i < TOTAL_PIECES; i++ {
+        pieceSquareTables[i] = make([][]int, y)
+        for yi := 0; yi < y; yi++ {
+            pieceSquareTables[i][yi] = make([]int, x)
+            for xi := 0; xi < x; xi++ {
+                pieceSquareTables[i][yi][xi] = 0
             }
         }
     }
@@ -134,6 +145,8 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         disableds: disableds,
         indexes: indexes,
         pieces: pieces,
+
+        pieceSquareTables: pieceSquareTables,
 
         zobristPieces: zobristPieces,
         zobristEnPassant: zobristEnPassant,
@@ -165,6 +178,9 @@ type SimpleBoard struct {
     disableds [][]bool
     indexes [][]Point
     pieces [][]*Piece
+
+    // piece-square tables
+    pieceSquareTables [][][]int // [piece][y][x]
 
     // zobrist random data
     zobristPieces [][][][]uint64 // [player][piece][y][x]
@@ -375,8 +391,7 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
 
 // TODO some kind of quiescence search
 // TODO spawn go routines for searching
-// TODO limit search space when there are lots of moves
-// TODO do piece location eval (king likes corner at start and doesn't care at end, pawn likes center at start and likes to promote at end)
+// TODO make sure to take longest path to defeat
 // TODO add 3 move repetition and 50 move rule
 func (b *SimpleBoard) CalculateMoves() {
     for i := 0; i < b.players; i++ {
@@ -583,6 +598,7 @@ func (b *SimpleBoard) Copy() (*SimpleBoard, error) {
         }
     }
 
+    simpleBoard.populatePieceSquareTables()
     return simpleBoard, nil
 }
 
@@ -615,3 +631,99 @@ func (b *SimpleBoard) ZobristHash() uint64 {
     return hash
 }
 
+func (b *SimpleBoard) populatePieceSquareTables() {
+    queueMax := b.x * b.y
+    upIndexQueue := make(chan *Point, queueMax)
+    downIndexQueue := make(chan *Point, queueMax)
+    leftIndexQueue := make(chan *Point, queueMax)
+    rightIndexQueue := make(chan *Point, queueMax)
+
+    for y := 0; y < b.y; y++ {
+        for x := 0; x < b.x; x++ {
+            current := b.getIndex(x, y)
+            if current == nil {
+                continue
+            }
+
+            upIndex := b.getIndex(x, y-1)
+            downIndex := b.getIndex(x, y+1)
+            leftIndex := b.getIndex(x-1, y)
+            rightIndex := b.getIndex(x+1, y)
+
+            if upIndex == nil {
+                upIndexQueue <- current
+            }
+            if downIndex == nil {
+                downIndexQueue <- current
+            }
+            if leftIndex == nil {
+                leftIndexQueue <- current
+            }
+            if rightIndex == nil {
+                rightIndexQueue <- current
+            }
+        }
+    }
+
+    for _, value := range []int{100, 20, 10, 10, 10} {
+        for i := 0; i < len(upIndexQueue); i++ {
+            current := <-upIndexQueue
+            downIndex := b.getIndex(current.x, current.y+1)
+
+            if downIndex != nil {
+                b.pieceSquareTables[PAWN_U][downIndex.y][downIndex.x] = value
+                b.pieceSquareTables[PAWN_U_M][downIndex.y][downIndex.x] = value
+                upIndexQueue <- downIndex
+            }
+        }
+
+        for i := 0; i < len(downIndexQueue); i++ {
+            current := <-downIndexQueue
+            upIndex := b.getIndex(current.x, current.y-1)
+
+            if upIndex != nil {
+                b.pieceSquareTables[PAWN_D][upIndex.y][upIndex.x] = value
+                b.pieceSquareTables[PAWN_D_M][upIndex.y][upIndex.x] = value
+                downIndexQueue <- upIndex
+            }
+        }
+
+        for i := 0; i < len(leftIndexQueue); i++ {
+            current := <-leftIndexQueue
+            rightIndex := b.getIndex(current.x+1, current.y)
+
+            if rightIndex != nil {
+                b.pieceSquareTables[PAWN_L][rightIndex.y][rightIndex.x] = value
+                b.pieceSquareTables[PAWN_L_M][rightIndex.y][rightIndex.x] = value
+                leftIndexQueue <- rightIndex
+            }
+        }
+
+        for i := 0; i < len(rightIndexQueue); i++ {
+            current := <-rightIndexQueue
+            leftIndex := b.getIndex(current.x-1, current.y)
+
+            if leftIndex != nil {
+                b.pieceSquareTables[PAWN_R][leftIndex.y][leftIndex.x] = value
+                b.pieceSquareTables[PAWN_R_M][leftIndex.y][leftIndex.x] = value
+                rightIndexQueue <- leftIndex
+            }
+        }
+    }
+}
+
+func (b *SimpleBoard) printPieceSquareTables() {
+	var builder strings.Builder
+
+    for piece, table := range b.pieceSquareTables {
+        builder.WriteString(fmt.Sprintf("Piece %d\n", piece))
+        for _, row := range table {
+            for _, value := range row {
+                builder.WriteString(fmt.Sprintf("%d ", value))
+            }
+            builder.WriteString("\n")
+        }
+    }
+    
+    fmt.Println(builder.String())
+}
