@@ -1,7 +1,6 @@
 package chess
 
 import (
-    "errors"
     "math"
 )
 
@@ -56,7 +55,7 @@ type SimpleSearcher struct {
     moveLevels []Array1000[FastMove]
     captureMoveLevels []Array1000[FastMove]
 
-    depth int
+    maxDepth int
     moveKey MoveKey
 
     transpositionMap map[uint64][]int
@@ -65,16 +64,14 @@ type SimpleSearcher struct {
     stopReached bool
 }
 
-func (s *SimpleSearcher) searchWithMinimax(depth int) (MoveKey, error) {
-    s.depth = depth
-    s.moveKey = MoveKey{-1, -1, -1, -1, ""}
-    levels := depth + 1
+func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
+    s.maxDepth = maxDepth
 
-    s.scoreLevels = make([][]int, levels)
-    s.transitionLevels = make([]PlayerTransition, levels)
-    s.moveLevels = make([]Array1000[FastMove], levels)
-    s.captureMoveLevels = make([]Array1000[FastMove], levels)
-    for i := 0; i < levels; i++ {
+    s.scoreLevels = make([][]int, maxDepth+1)
+    s.transitionLevels = make([]PlayerTransition, maxDepth+1)
+    s.moveLevels = make([]Array1000[FastMove], maxDepth+1)
+    s.captureMoveLevels = make([]Array1000[FastMove], maxDepth+1)
+    for i := 0; i < maxDepth+1; i++ {
         s.scoreLevels[i] = make([]int, s.players)
         s.transitionLevels[i] = PlayerTransition{}
         s.moveLevels[i] = Array1000[FastMove]{}
@@ -83,13 +80,9 @@ func (s *SimpleSearcher) searchWithMinimax(depth int) (MoveKey, error) {
     s.transpositionMap = map[uint64][]int{}
 
     s.b.CalculateMoves()
-    s.minimax(depth)
+    s.minimax(0)
 
-    if s.moveKey.XTo == -1 || s.moveKey.YTo == -1 || s.moveKey.XFrom == -1 || s.moveKey.YFrom == -1 {
-        return MoveKey{}, errors.New("no moves in this position")
-    } else {
-        return s.moveKey, nil
-    }
+    return s.moveKey, nil
 }
 
 func (s *SimpleSearcher) minimax(depth int) {
@@ -113,7 +106,7 @@ func (s *SimpleSearcher) minimax(depth int) {
         return
     }
 
-    if depth <= 0 || s.p.getGameOver() {
+    if depth >= s.maxDepth || s.p.getGameOver() {
         s.e.eval(s.scoreLevels[depth])
 
         newScore := make([]int, s.players)
@@ -149,18 +142,18 @@ func (s *SimpleSearcher) minimax(depth int) {
         createPlayerTransition(s.b, s.p, false, false, transition)
 
         transition.execute()
-        s.minimax(depth-1)
+        s.minimax(depth+1)
         transition.undo()
 
         move.undo()
 
-        if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
+        if s.scoreLevels[depth+1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
             found = true
             for i := 0; i < len(s.scoreLevels[depth]); i++ {
-                s.scoreLevels[depth][i] = s.scoreLevels[depth-1][i]
+                s.scoreLevels[depth][i] = s.scoreLevels[depth+1][i]
             }
 
-            if depth == s.depth {
+            if depth <= 0 {
                 s.moveKey.XTo = move.toLocation.x
                 s.moveKey.YTo = move.toLocation.y
                 s.moveKey.XFrom = move.fromLocation.x
@@ -183,18 +176,18 @@ func (s *SimpleSearcher) minimax(depth int) {
         createPlayerTransition(s.b, s.p, false, false, transition)
 
         transition.execute()
-        s.minimax(depth-1)
+        s.minimax(depth+1)
         transition.undo()
 
         move.undo()
 
-        if s.scoreLevels[depth-1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
+        if s.scoreLevels[depth+1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
             found = true
             for i := 0; i < len(s.scoreLevels[depth]); i++ {
-                s.scoreLevels[depth][i] = s.scoreLevels[depth-1][i]
+                s.scoreLevels[depth][i] = s.scoreLevels[depth+1][i]
             }
 
-            if depth == s.depth {
+            if depth <= 0 {
                 s.moveKey.XTo = move.toLocation.x
                 s.moveKey.YTo = move.toLocation.y
                 s.moveKey.XFrom = move.fromLocation.x
@@ -204,7 +197,7 @@ func (s *SimpleSearcher) minimax(depth int) {
     }
 
     if !found {
-        if depth == s.depth {
+        if depth <= 0 {
             panic("no moves in this position")
         }
 
