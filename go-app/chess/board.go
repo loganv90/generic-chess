@@ -391,7 +391,6 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
 
 // TODO some kind of quiescence search
 // TODO spawn go routines for searching
-// TODO make sure to take longest path to defeat
 // TODO add 3 move repetition and 50 move rule
 func (b *SimpleBoard) CalculateMoves() {
     for i := 0; i < b.players; i++ {

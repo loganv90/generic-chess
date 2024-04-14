@@ -57,7 +57,6 @@ type SimpleSearcher struct {
 
     maxDepth int
     moveKey MoveKey
-    eliminated []bool
 
     transpositionMap map[uint64][]int
 
@@ -79,7 +78,6 @@ func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
         s.captureMoveLevels[i] = Array1000[FastMove]{}
     }
 
-    s.eliminated = make([]bool, s.players)
     s.transpositionMap = map[uint64][]int{}
 
     s.b.CalculateMoves()
@@ -102,21 +100,23 @@ func (s *SimpleSearcher) minimax(depth int) {
 
     if _, ok := s.transpositionMap[hash]; ok {
         score := s.transpositionMap[hash]
+
         for i := 0; i < s.players; i++ {
-            s.scoreLevels[depth][i] = score[i]
+            s.scoreLevels[depth][i] = s.mapScoreToLevelScore(score[i], depth)
         }
 
         return
     }
 
-    // the problem is that we don't check whether or not they're in check here
-    // we can also save moves to the transpositionMap with unknown depth
     if depth >= s.maxDepth || s.p.getGameOver() {
-        s.evaluate(depth)
+        s.e.eval(s.scoreLevels[depth])
+        for i := 0; i < s.players; i++ {
+            s.scoreLevels[depth][i] = s.mapScoreToLevelScore(s.scoreLevels[depth][i], depth)
+        }
 
         newScore := make([]int, s.players)
         for i := 0; i < s.players; i++ {
-            newScore[i] = s.scoreLevels[depth][i]
+            newScore[i] = s.levelScoreToMapScore(s.scoreLevels[depth][i], depth)
         }
         s.transpositionMap[hash] = newScore
 
@@ -152,7 +152,7 @@ func (s *SimpleSearcher) minimax(depth int) {
 
     newScore := make([]int, s.players)
     for i := 0; i < s.players; i++ {
-        newScore[i] = s.scoreLevels[depth][i]
+        newScore[i] = s.levelScoreToMapScore(s.scoreLevels[depth][i], depth)
     }
     s.transpositionMap[hash] = newScore
 }
@@ -197,10 +197,10 @@ func (s *SimpleSearcher) recurse(depth int, color int, moves *Array1000[FastMove
 
         move.undo()
 
-        if s.scoreLevels[depth+1][color] > s.scoreLevels[depth][color] {
+        if s.liftScore(s.scoreLevels[depth+1][color]) > s.scoreLevels[depth][color] {
             found = true
             for i := 0; i < len(s.scoreLevels[depth]); i++ {
-                s.scoreLevels[depth][i] = s.scoreLevels[depth+1][i]
+                s.scoreLevels[depth][i] = s.liftScore(s.scoreLevels[depth+1][i])
             }
 
             if depth <= 0 {
@@ -215,80 +215,33 @@ func (s *SimpleSearcher) recurse(depth int, color int, moves *Array1000[FastMove
     return found
 }
 
-func (s *SimpleSearcher) canMove(color int, moves *Array1000[FastMove]) bool {
-    found := false
-
-    for i := 0; i < moves.count; i++ {
-        move := &moves.array[i]
-
-        move.execute()
-
-        s.b.CalculateMoves()
-        if s.b.Check(color) {
-            move.undo()
-            continue
-        }
-
-        found = true
-        move.undo()
+func (s *SimpleSearcher) levelScoreToMapScore(score int, depth int) int {
+    if score > 0 {
+        return score + depth
+    } else if score < 0 {
+        return score - depth
     }
 
-    return found
+    return score
 }
 
-func (s *SimpleSearcher) evaluate(depth int) {
-    /*
-    for i := 0; i < s.players; i++ {
-        s.eliminated[i] = false
-        if !s.p.playersAlive[i] {
-            continue
-        }
-        if !s.b.Check(i) {
-            continue
-        }
-
-        s.copyMoves(depth, i)
-        if s.canMove(i, &s.captureMoveLevels[i]) {
-            continue
-        }
-        if s.canMove(i, &s.moveLevels[i]) {
-            continue
-        }
-
-        s.eliminated[i] = true
-        s.p.eliminate(i)
+func (s *SimpleSearcher) mapScoreToLevelScore(score int, depth int) int {
+    if score > 0 {
+        return score - depth
+    } else if score < 0 {
+        return score + depth
     }
 
-    lastAlive := -1
-    numAlive := 0
-    prevGameOver := s.p.getGameOver()
-    prevWinner := s.p.getWinner()
-    for i := 0; i < s.players; i++ {
-        if s.p.playersAlive[i] {
-            lastAlive = i
-            numAlive++
-        }
+    return score
+}
+
+func (s *SimpleSearcher) liftScore(score int) int {
+    if score > 0 {
+        return score - 1
+    } else if score < 0 {
+        return score + 1
     }
 
-    if numAlive == 1 {
-        s.p.setGameOver(true)
-        s.p.setWinner(lastAlive)
-    }
-    */
-
-    s.e.eval(s.scoreLevels[depth])
-
-    /*
-    if numAlive == 1 {
-        s.p.setGameOver(prevGameOver)
-        s.p.setWinner(prevWinner)
-    }
-
-    for i := 0; i < s.players; i++ {
-        if s.eliminated[i] {
-            s.p.restore(i)
-        }
-    }
-    */
+    return score
 }
 

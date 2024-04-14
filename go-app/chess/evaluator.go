@@ -2,7 +2,7 @@ package chess
 
 import (
     "math"
-    "fmt"
+    // "fmt"
 )
 
 /*
@@ -65,10 +65,14 @@ func (e *SimpleEvaluator) eval(score []int) {
             score[winner] = math.MaxInt
         }
 
-        if e.b.getPiece(e.b.getIndex(1, 1)) == e.b.getAllPiece(0, KING_U_M) && e.b.getPiece(e.b.getIndex(3, 3)) == e.b.getAllPiece(1, KING_U_M) {
-            fmt.Println(e.b.Print())
+        /*
+        if e.b.getPiece(e.b.getIndex(0, 3)) == e.b.getAllPiece(1, QUEEN) && e.b.getPiece(e.b.getIndex(0, 0)) == e.b.getAllPiece(0, KING_U_M) {
+            fmt.Println(e.p.getCurrent())
             fmt.Println(score)
+            fmt.Println(e.b.Print())
         }
+        */
+
         return
     }
 
@@ -92,7 +96,13 @@ func (e *SimpleEvaluator) eval(score []int) {
             continue
         }
 
-        percentage := int(
+        percentage := 0
+
+        if !e.b.Check(color) {
+            percentage += 10000 * 4 // weighted 2 times, bonus for not being in check
+        }
+
+        percentage += int(
             float64(e.material[color] + e.position[color]) / 
             float64(e.totalMaterial + e.totalPosition) * 10000,
         ) * 10 // weighted 10 times
@@ -100,14 +110,18 @@ func (e *SimpleEvaluator) eval(score []int) {
         percentage += int(
             float64(e.mobility[color]) /
             float64(e.totalMobility) * 10000,
-        ) * 1 // weighted 1 time
+        ) * 2 // weighted 2 times
+
         score[color] = percentage
     }
 
-    if e.b.getPiece(e.b.getIndex(1, 1)) == e.b.getAllPiece(0, KING_U_M) && e.b.getPiece(e.b.getIndex(3, 3)) == e.b.getAllPiece(1, KING_U_M) {
-        fmt.Println(e.b.Print())
+    /*
+    if e.b.getPiece(e.b.getIndex(0, 3)) == e.b.getAllPiece(1, QUEEN) && e.b.getPiece(e.b.getIndex(0, 0)) == e.b.getAllPiece(0, KING_U_M) {
+        fmt.Println(e.p.getCurrent())
         fmt.Println(score)
+        fmt.Println(e.b.Print())
     }
+    */
 }
 
 func (e *SimpleEvaluator) evalMaterial() {
