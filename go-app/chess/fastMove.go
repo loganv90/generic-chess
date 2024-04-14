@@ -137,11 +137,7 @@ func addMoveCaptureEnPassant(
     capturedPiece1 := b.getPiece(risk1)
     capturedPiece2 := b.getPiece(risk2)
 
-    if toPiece != nil || capturedPiece1 == nil || capturedPiece2 == nil { // capture
-        move = b.captureMoves[color].get()
-    } else {
-        move = b.moves[color].get()
-    }
+    move = b.captureMoves[color].get()
 
     move.b = b
     move.fromLocation = fromLocation

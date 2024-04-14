@@ -197,7 +197,7 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
 // To solve this problem:
 // - we could do a quiescence search or approximate a quiescence search by finding attackers/defenders of each square
 // - we could evaluate captures first which should reduce the chance of getting a capture's evaluation from the map
-func Test_Minimax_BotSacrifice(t *testing.T) {
+func Test_Minimax_BotSacrifice1(t *testing.T) {
     white := 0
     black := 1
 
@@ -295,6 +295,80 @@ func Test_Minimax_BotSacrifice(t *testing.T) {
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
 | R 0        |            | B 0        | Q 0        | K 0        |            |            | R 0        |
+|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
++-------------------------------------------------------------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
+// This one is also caused by lack of quiescence. Can resolve by removing transposition table.
+func Test_Minimax_BotSacrifice2(t *testing.T) {
+    white := 0
+    black := 1
+
+    b, err := createSimpleBoardWithDefaultPieceLocations()
+    assert.Nil(t, err)
+
+    b.setPiece(b.getIndex(6, 0), nil)
+    b.setPiece(b.getIndex(5, 2), b.getAllPiece(black, KNIGHT))
+    b.setPiece(b.getIndex(4, 6), nil)
+    b.setPiece(b.getIndex(4, 3), b.getAllPiece(white, PAWN_U_M))
+
+    b.CalculateMoves()
+
+    p, err := createSimplePlayerCollectionWithDefaultPlayers()
+    assert.Nil(t, err)
+    p.setCurrent(black)
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+    stop := make(chan bool)
+
+    searcher := newSimpleSearcher(game, stop)
+    moveKey, err := searcher.searchWithMinimax(5)
+    assert.Nil(t, err)
+    assert.Equal(t, 1, moveKey.XTo)
+    assert.Equal(t, 1, moveKey.YTo)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R 1        | N 1        | B 1        | Q 1        | K 1        | B 1        |            | R 1        |
+|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P 1        | P 1        | P 1        | P 1        | P 1        | P 1        | P 1        | P 1        |
+|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            | N 1        |            |            |
+|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            | P 0        |            |            |            |
+|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            |            |            |
+|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P 0        | P 0        | P 0        | P 0        |            | P 0        | P 0        | P 0        |
+|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R 0        | N 0        | B 0        | Q 0        | K 0        | B 0        | N 0        | R 0        |
 |         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
 +-------------------------------------------------------------------------------------------------------+
 	`, " \t\n") + "\n"

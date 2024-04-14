@@ -2,7 +2,6 @@ package chess
 
 import (
     "math"
-    // "fmt"
 )
 
 /*
@@ -23,6 +22,16 @@ Responsible for:
 - evaluating a board and returning a score
 */
 func newSimpleEvaluator(b *SimpleBoard, p *SimplePlayerCollection) *SimpleEvaluator {
+    players := p.getPlayers()
+
+    attackedSquares := make([][][]bool, players)
+    for color := 0; color < players; color++ {
+        attackedSquares[color] = make([][]bool, b.y)
+        for y := 0; y < b.y; y++ {
+            attackedSquares[color][y] = make([]bool, b.x)
+        }
+    }
+
     return &SimpleEvaluator{
         b: b,
         p: p,
@@ -30,10 +39,16 @@ func newSimpleEvaluator(b *SimpleBoard, p *SimplePlayerCollection) *SimpleEvalua
         totalMaterial: 0,
         totalMobility: 0,
         totalPosition: 0,
+        totalKingSafety: 0,
 
-        material: make([]int, p.getPlayers()),
-        mobility: make([]int, p.getPlayers()),
-        position: make([]int, p.getPlayers()),
+        material: make([]int, players),
+        mobility: make([]int, players),
+        position: make([]int, players),
+        kingSafety: make([]int, players),
+        pressure: make([]int, players),
+
+        players: players,
+        attackedSquares: attackedSquares,
     }
 }
 
@@ -44,10 +59,17 @@ type SimpleEvaluator struct {
     totalMaterial int
     totalMobility int
     totalPosition int
+    totalKingSafety int
+    totalPressure int
 
     material []int
     mobility []int
     position []int
+    kingSafety []int
+    pressure []int
+
+    players int
+    attackedSquares [][][]bool // [color][y][x]
 }
 
 func (e *SimpleEvaluator) eval(score []int) {
@@ -55,52 +77,43 @@ func (e *SimpleEvaluator) eval(score []int) {
         winner := e.p.getWinner()
 
         if winner < 0 {
-            for player := range score {
-                score[player] = 0
+            for color := range score {
+                score[color] = 0
             }
         } else {
-            for player := range score {
-                score[player] = math.MinInt
+            for color := range score {
+                score[color] = math.MinInt
             }
             score[winner] = math.MaxInt
         }
 
-        /*
-        if e.b.getPiece(e.b.getIndex(0, 3)) == e.b.getAllPiece(1, QUEEN) && e.b.getPiece(e.b.getIndex(0, 0)) == e.b.getAllPiece(0, KING_U_M) {
-            fmt.Println(e.p.getCurrent())
-            fmt.Println(score)
-            fmt.Println(e.b.Print())
-        }
-        */
-
         return
     }
 
-    for player := range score {
-        score[player] = 0
+    for color := 0; color < e.players; color++ {
+        score[color] = 0
         e.totalMaterial = 0
         e.totalMobility = 0
         e.totalPosition = 0
-        e.material[player] = 0
-        e.mobility[player] = 0
-        e.position[player] = 0
+        e.material[color] = 0
+        e.mobility[color] = 0
+        e.position[color] = 0
+        e.kingSafety[color] = 0
+        e.pressure[color] = 0
     }
 
     e.evalMaterial()
     e.evalPosition()
     e.evalMobility()
+    e.evalKingSafety()
 
-    for color := range score {
+    for color := 0; color < e.players; color++ {
         if !e.p.playersAlive[color] {
             score[color] = math.MinInt
             continue
         }
 
         percentage := 0
-
-        if !e.b.Check(color) {
-            percentage += 10000 * 4 // weighted 2 times, bonus for not being in check
-        }
 
         percentage += int(
             float64(e.material[color] + e.position[color]) / 
@@ -110,18 +123,20 @@ func (e *SimpleEvaluator) eval(score []int) {
         percentage += int(
             float64(e.mobility[color]) /
             float64(e.totalMobility) * 10000,
+        ) * 1 // weighted 1 times
+
+        percentage += int(
+            float64(e.kingSafety[color]) /
+            float64(e.totalKingSafety) * 10000,
+        ) * 1 // weighted 1 times
+
+        percentage -= int(
+            float64(e.pressure[color]) /
+            float64(e.totalPressure) * 10000,
         ) * 2 // weighted 2 times
 
         score[color] = percentage
     }
-
-    /*
-    if e.b.getPiece(e.b.getIndex(0, 3)) == e.b.getAllPiece(1, QUEEN) && e.b.getPiece(e.b.getIndex(0, 0)) == e.b.getAllPiece(0, KING_U_M) {
-        fmt.Println(e.p.getCurrent())
-        fmt.Println(score)
-        fmt.Println(e.b.Print())
-    }
-    */
 }
 
 func (e *SimpleEvaluator) evalMaterial() {
@@ -159,10 +174,79 @@ func (e *SimpleEvaluator) evalPosition() {
 }
 
 func (e *SimpleEvaluator) evalMobility() {
-    for color := range e.mobility {
+    for color := 0; color < e.players; color++ {
         value := e.b.moves[color].count + e.b.captureMoves[color].count + e.b.defenseMoves[color].count - e.b.queenMoveCount[color] - e.b.kingMoveCount[color]
         e.mobility[color] = value
         e.totalMobility += value
+    }
+}
+
+func (e *SimpleEvaluator) evalKingSafety() {
+    e.totalKingSafety = e.players
+    e.totalPressure = 0
+
+    for color := 0; color < e.players; color++ {
+        e.kingSafety[color] = 1
+        e.pressure[color] = 0
+        for y := 0; y < e.b.y; y++ {
+            for x := 0; x < e.b.x; x++ {
+                e.attackedSquares[color][y][x] = false
+            }
+        }
+    }
+
+    for color := 0; color < e.players; color++ {
+        captureMoves := e.b.captureMoves[color]
+        for i := 0; i < captureMoves.count; i++ {
+            to := captureMoves.array[i].toLocation
+            for c := 0; c < e.players; c++ {
+                if c != color {
+                    e.attackedSquares[c][to.y][to.x] = true
+                }
+            }
+
+            capturedPiece := captureMoves.array[i].oldPiece.array[1]
+            if capturedPiece != nil {
+                e.pressure[capturedPiece.color] += capturedPiece.value()
+                e.totalPressure += capturedPiece.value()
+            }
+        }
+
+        moves := e.b.moves[color]
+        for i := 0; i < moves.count; i++ {
+            to := moves.array[i].toLocation
+            for c := 0; c < e.players; c++ {
+                if c != color {
+                    e.attackedSquares[c][to.y][to.x] = true
+                }
+            }
+        }
+    }
+
+    for color := 0; color < e.players; color++ {
+        king := e.b.kingLocations[color]
+
+        if e.attackedSquares[color][king.y][king.x] {
+            e.kingSafety[color] -= 1
+            e.totalKingSafety -= 1
+        } else {
+            e.kingSafety[color] += 1
+            e.totalKingSafety += 1
+            continue
+        }
+
+        for _, direction := range queen_directions {
+            to := e.b.addIndex(direction, king)
+            if to == nil {
+                continue
+            }
+
+            if !e.attackedSquares[color][to.y][to.x] {
+                e.kingSafety[color] += 1
+                e.totalKingSafety += 1
+                break
+            }
+        }
     }
 }
 
