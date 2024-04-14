@@ -301,6 +301,122 @@ func Test_Minimax_BotSacrifice(t *testing.T) {
 	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
+func Test_Minimax_LongestPathToDefeat(t *testing.T) {
+    white := 0
+    black := 1
+
+    b, err := newSimpleBoard(4, 4, 2)
+    assert.Nil(t, err)
+
+    b.setPiece(b.getIndex(3, 3), b.getAllPiece(black, KING_U_M))
+    b.setPiece(b.getIndex(2, 3), b.getAllPiece(black, ROOK_M))
+    b.setPiece(b.getIndex(0, 3), b.getAllPiece(black, ROOK_M))
+    b.setPiece(b.getIndex(0, 2), b.getAllPiece(black, ROOK_M))
+    b.setPiece(b.getIndex(0, 0), b.getAllPiece(white, KING_U_M))
+    b.disableLocation(b.getIndex(1, 3))
+
+    b.CalculateMoves()
+
+    p, err := createSimplePlayerCollectionWithDefaultPlayers()
+    assert.Nil(t, err)
+    p.setCurrent(white)
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+    stop := make(chan bool)
+
+    searcher := newSimpleSearcher(game, stop)
+    moveKey, err := searcher.searchWithMinimax(5)
+    assert.Nil(t, err)
+    assert.Equal(t, 1, moveKey.XTo)
+    assert.Equal(t, 1, moveKey.YTo)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+| K 0        |            |            |            |
+|         0y |         0y |         0y |         0y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            |            |            |
+|         1y |         1y |         1y |         1y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+| R 1        |            |            |            |
+|         2y |         2y |         2y |         2y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+| R 1        |XXXXXXXXXXXX| R 1        | K 1        |
+|         3y |         3y |         3y |         3y |
++---------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
+func Test_Minimax_ShortestPathToVictory(t *testing.T) {
+    white := 0
+    black := 1
+
+    b, err := newSimpleBoard(4, 4, 2)
+    assert.Nil(t, err)
+
+    b.setPiece(b.getIndex(3, 3), b.getAllPiece(black, KING_U_M))
+    b.setPiece(b.getIndex(2, 3), b.getAllPiece(black, QUEEN))
+    b.setPiece(b.getIndex(1, 2), b.getAllPiece(black, ROOK_M))
+    b.setPiece(b.getIndex(0, 0), b.getAllPiece(white, KING_U_M))
+
+    b.CalculateMoves()
+
+    p, err := createSimplePlayerCollectionWithDefaultPlayers()
+    assert.Nil(t, err)
+    p.setCurrent(black)
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    assert.Nil(t, err)
+
+    game := &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }
+    stop := make(chan bool)
+
+    searcher := newSimpleSearcher(game, stop)
+    moveKey, err := searcher.searchWithMinimax(5)
+    assert.Nil(t, err)
+    assert.Equal(t, 0, moveKey.XTo)
+    assert.Equal(t, 3, moveKey.YTo)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+| K 0        |            |            |            |
+|         0y |         0y |         0y |         0y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            |            |            |
+|         1y |         1y |         1y |         1y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            | R 1        |            |            |
+|         2y |         2y |         2y |         2y |
++---------------------------------------------------+
+|         0x |         1x |         2x |         3x |
+|            |            | Q 1        | K 1        |
+|         3y |         3y |         3y |         3y |
++---------------------------------------------------+
+	`, " \t\n") + "\n"
+	assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
 // go test ./chess -bench='Benchmark_Minimax' -cpuprofile='cpu.prof' -memprofile='mem.prof' -trace='trace.out' -run NONE
 // go tool pprof cpu.prof
 // go tool trace trace.out

@@ -2,6 +2,7 @@ package chess
 
 import (
     "math"
+    "fmt"
 )
 
 /*
@@ -64,6 +65,10 @@ func (e *SimpleEvaluator) eval(score []int) {
             score[winner] = math.MaxInt
         }
 
+        if e.b.getPiece(e.b.getIndex(1, 1)) == e.b.getAllPiece(0, KING_U_M) && e.b.getPiece(e.b.getIndex(3, 3)) == e.b.getAllPiece(1, KING_U_M) {
+            fmt.Println(e.b.Print())
+            fmt.Println(score)
+        }
         return
     }
 
@@ -87,9 +92,21 @@ func (e *SimpleEvaluator) eval(score []int) {
             continue
         }
 
-        percentage := int(float64(e.material[color] + e.position[color]) / float64(e.totalMaterial + e.totalPosition) * 10000) * 10 // weighted 10 times
-        percentage += int(float64(e.mobility[color]) / float64(e.totalMobility) * 10000) * 1 // weighted 1 time
+        percentage := int(
+            float64(e.material[color] + e.position[color]) / 
+            float64(e.totalMaterial + e.totalPosition) * 10000,
+        ) * 10 // weighted 10 times
+
+        percentage += int(
+            float64(e.mobility[color]) /
+            float64(e.totalMobility) * 10000,
+        ) * 1 // weighted 1 time
         score[color] = percentage
+    }
+
+    if e.b.getPiece(e.b.getIndex(1, 1)) == e.b.getAllPiece(0, KING_U_M) && e.b.getPiece(e.b.getIndex(3, 3)) == e.b.getAllPiece(1, KING_U_M) {
+        fmt.Println(e.b.Print())
+        fmt.Println(score)
     }
 }
 

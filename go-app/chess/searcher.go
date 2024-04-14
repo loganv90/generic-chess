@@ -57,6 +57,7 @@ type SimpleSearcher struct {
 
     maxDepth int
     moveKey MoveKey
+    eliminated []bool
 
     transpositionMap map[uint64][]int
 
@@ -77,6 +78,8 @@ func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
         s.moveLevels[i] = Array1000[FastMove]{}
         s.captureMoveLevels[i] = Array1000[FastMove]{}
     }
+
+    s.eliminated = make([]bool, s.players)
     s.transpositionMap = map[uint64][]int{}
 
     s.b.CalculateMoves()
@@ -99,18 +102,20 @@ func (s *SimpleSearcher) minimax(depth int) {
 
     if _, ok := s.transpositionMap[hash]; ok {
         score := s.transpositionMap[hash]
-        for i := 0; i < len(s.scoreLevels[depth]); i++ {
+        for i := 0; i < s.players; i++ {
             s.scoreLevels[depth][i] = score[i]
         }
 
         return
     }
 
+    // the problem is that we don't check whether or not they're in check here
+    // we can also save moves to the transpositionMap with unknown depth
     if depth >= s.maxDepth || s.p.getGameOver() {
-        s.e.eval(s.scoreLevels[depth])
+        s.evaluate(depth)
 
         newScore := make([]int, s.players)
-        for i := 0; i < len(s.scoreLevels[depth]); i++ {
+        for i := 0; i < s.players; i++ {
             newScore[i] = s.scoreLevels[depth][i]
         }
         s.transpositionMap[hash] = newScore
@@ -118,85 +123,18 @@ func (s *SimpleSearcher) minimax(depth int) {
         return
     }
 
-    found := false
     currentPlayer := s.p.getCurrent()
-    transition := &s.transitionLevels[depth]
-
     s.copyMoves(depth, currentPlayer)
 
-    for i := 0; i < len(s.scoreLevels[depth]); i++ {
+    for i := 0; i < s.players; i++ {
         s.scoreLevels[depth][i] = math.MinInt
     }
 
-    for i := 0; i < s.captureMoveLevels[depth].count; i++ {
-        move := &s.captureMoveLevels[depth].array[i]
+    transition := &s.transitionLevels[depth]
+    found1 := s.recurse(depth, currentPlayer, &s.captureMoveLevels[depth], transition)
+    found2 := s.recurse(depth, currentPlayer, &s.moveLevels[depth], transition)
 
-        move.execute()
-
-        s.b.CalculateMoves()
-        if s.b.Check(currentPlayer) {
-            move.undo()
-            continue
-        }
-
-        createPlayerTransition(s.b, s.p, false, false, transition)
-
-        transition.execute()
-        s.minimax(depth+1)
-        transition.undo()
-
-        move.undo()
-
-        if s.scoreLevels[depth+1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
-            found = true
-            for i := 0; i < len(s.scoreLevels[depth]); i++ {
-                s.scoreLevels[depth][i] = s.scoreLevels[depth+1][i]
-            }
-
-            if depth <= 0 {
-                s.moveKey.XTo = move.toLocation.x
-                s.moveKey.YTo = move.toLocation.y
-                s.moveKey.XFrom = move.fromLocation.x
-                s.moveKey.YFrom = move.fromLocation.y
-            }
-        }
-    }
-    
-    for i := 0; i < s.moveLevels[depth].count; i++ {
-        move := &s.moveLevels[depth].array[i]
-
-        move.execute()
-
-        s.b.CalculateMoves()
-        if s.b.Check(currentPlayer) {
-            move.undo()
-            continue
-        }
-
-        createPlayerTransition(s.b, s.p, false, false, transition)
-
-        transition.execute()
-        s.minimax(depth+1)
-        transition.undo()
-
-        move.undo()
-
-        if s.scoreLevels[depth+1][currentPlayer] > s.scoreLevels[depth][currentPlayer] {
-            found = true
-            for i := 0; i < len(s.scoreLevels[depth]); i++ {
-                s.scoreLevels[depth][i] = s.scoreLevels[depth+1][i]
-            }
-
-            if depth <= 0 {
-                s.moveKey.XTo = move.toLocation.x
-                s.moveKey.YTo = move.toLocation.y
-                s.moveKey.XFrom = move.fromLocation.x
-                s.moveKey.YFrom = move.fromLocation.y
-            }
-        }
-    }
-
-    if !found {
+    if !found1 && !found2 {
         if depth <= 0 {
             panic("no moves in this position")
         }
@@ -213,7 +151,7 @@ func (s *SimpleSearcher) minimax(depth int) {
     }
 
     newScore := make([]int, s.players)
-    for i := 0; i < len(s.scoreLevels[depth]); i++ {
+    for i := 0; i < s.players; i++ {
         newScore[i] = s.scoreLevels[depth][i]
     }
     s.transpositionMap[hash] = newScore
@@ -235,5 +173,122 @@ func (s *SimpleSearcher) copyMoves(depth int, color int) {
     for i := 0; i < captureMoves.count; i++ {
         s.captureMoveLevels[depth].array[i] = captureMoves.array[i]
     }
+}
+
+func (s *SimpleSearcher) recurse(depth int, color int, moves *Array1000[FastMove], transition *PlayerTransition) bool {
+    found := false
+
+    for i := 0; i < moves.count; i++ {
+        move := &moves.array[i]
+
+        move.execute()
+
+        s.b.CalculateMoves()
+        if s.b.Check(color) {
+            move.undo()
+            continue
+        }
+
+        createPlayerTransition(s.b, s.p, false, false, transition)
+
+        transition.execute()
+        s.minimax(depth+1)
+        transition.undo()
+
+        move.undo()
+
+        if s.scoreLevels[depth+1][color] > s.scoreLevels[depth][color] {
+            found = true
+            for i := 0; i < len(s.scoreLevels[depth]); i++ {
+                s.scoreLevels[depth][i] = s.scoreLevels[depth+1][i]
+            }
+
+            if depth <= 0 {
+                s.moveKey.XTo = move.toLocation.x
+                s.moveKey.YTo = move.toLocation.y
+                s.moveKey.XFrom = move.fromLocation.x
+                s.moveKey.YFrom = move.fromLocation.y
+            }
+        }
+    }
+
+    return found
+}
+
+func (s *SimpleSearcher) canMove(color int, moves *Array1000[FastMove]) bool {
+    found := false
+
+    for i := 0; i < moves.count; i++ {
+        move := &moves.array[i]
+
+        move.execute()
+
+        s.b.CalculateMoves()
+        if s.b.Check(color) {
+            move.undo()
+            continue
+        }
+
+        found = true
+        move.undo()
+    }
+
+    return found
+}
+
+func (s *SimpleSearcher) evaluate(depth int) {
+    /*
+    for i := 0; i < s.players; i++ {
+        s.eliminated[i] = false
+        if !s.p.playersAlive[i] {
+            continue
+        }
+        if !s.b.Check(i) {
+            continue
+        }
+
+        s.copyMoves(depth, i)
+        if s.canMove(i, &s.captureMoveLevels[i]) {
+            continue
+        }
+        if s.canMove(i, &s.moveLevels[i]) {
+            continue
+        }
+
+        s.eliminated[i] = true
+        s.p.eliminate(i)
+    }
+
+    lastAlive := -1
+    numAlive := 0
+    prevGameOver := s.p.getGameOver()
+    prevWinner := s.p.getWinner()
+    for i := 0; i < s.players; i++ {
+        if s.p.playersAlive[i] {
+            lastAlive = i
+            numAlive++
+        }
+    }
+
+    if numAlive == 1 {
+        s.p.setGameOver(true)
+        s.p.setWinner(lastAlive)
+    }
+    */
+
+    s.e.eval(s.scoreLevels[depth])
+
+    /*
+    if numAlive == 1 {
+        s.p.setGameOver(prevGameOver)
+        s.p.setWinner(prevWinner)
+    }
+
+    for i := 0; i < s.players; i++ {
+        if s.eliminated[i] {
+            s.p.restore(i)
+        }
+    }
+    */
 }
 
