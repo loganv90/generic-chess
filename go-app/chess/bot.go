@@ -69,7 +69,7 @@ func (b *SimpleBot) findMove(depth int, result chan *MoveKey, stop chan bool) {
         return
     }
 
-    searcher := newSimpleSearcher(boardCopy, playerCollectionCopy, stop)
+    searcher := newParallelSearcher(boardCopy, playerCollectionCopy, stop)
 
     moveKey, err := searcher.searchWithMinimax(depth)
     if err != nil {

@@ -46,16 +46,16 @@ type SimpleSearcher struct {
     transpositionMapLevels []map[uint64][]int
 
     maxDepth int
-    moveKey MoveKeyWithScore
+    moveKey MoveKey
 
     stop chan bool
     stopReached bool
 }
 
-func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKeyWithScore, error) {
+func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
     s.players = s.p.getPlayers()
     s.maxDepth = maxDepth
-    s.moveKey = MoveKeyWithScore{-1, -1, -1, -1, "", math.MinInt}
+    s.moveKey = MoveKey{-1, -1, -1, -1, ""}
 
     s.scoreLevels = make([][]int, maxDepth+1)
     s.transitionLevels = make([]PlayerTransition, maxDepth+1)
@@ -200,7 +200,6 @@ func (s *SimpleSearcher) recurse(depth int, color int, moves *Array1000[FastMove
                 s.moveKey.XFrom = move.fromLocation.x
                 s.moveKey.YFrom = move.fromLocation.y
                 s.moveKey.Promotion = ""
-                s.moveKey.Score = s.scoreLevels[depth][color]
             }
         }
     }
@@ -269,7 +268,7 @@ func (s *ParallelSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
             return s.moveKey, err
         }
 
-        go minimaxWrapper(boardCopy, playerCollectionCopy, s.stops[i], s.result, s.maxDepth)
+        go minimaxWrapper(boardCopy, playerCollectionCopy, s.stops[i], s.result, s.maxDepth-1, i)
     }
 
     counter := 0
@@ -308,15 +307,45 @@ func (s *ParallelSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
     return s.moveKey, nil
 }
 
-func minimaxWrapper(b *SimpleBoard, p *SimplePlayerCollection, stop chan bool, result chan *MoveKeyWithScore, maxDepth int) {
+func minimaxWrapper(b *SimpleBoard, p *SimplePlayerCollection, stop chan bool, result chan *MoveKeyWithScore, depth int, i int) {
+    b.CalculateMoves()
+    currentPlayer := p.getCurrent()
+
+    var transition PlayerTransition
+    var move FastMove
+    captureMoves := &b.captureMoves[currentPlayer]
+    moves := &b.moves[currentPlayer]
+
+    if i >= captureMoves.count {
+        move = moves.array[i-captureMoves.count]
+    } else {
+        move = captureMoves.array[i]
+    }
+
+    move.execute()
+    b.CalculateMoves()
+    if b.Check(currentPlayer) {
+        result <- nil
+        return
+    }
+    createPlayerTransition(b, p, false, false, &transition)
+    transition.execute()
+
     searcher := newSimpleSearcher(b, p, stop)
 
-    moveKeyWithScore, err := searcher.searchWithMinimax(maxDepth)
+    _, err := searcher.searchWithMinimax(depth)
     if err != nil {
         result <- nil
         return
     }
 
-    result <- &moveKeyWithScore
+    result <- &MoveKeyWithScore{
+        XTo: move.toLocation.x,
+        YTo: move.toLocation.y,
+        XFrom: move.fromLocation.x,
+        YFrom: move.fromLocation.y,
+        Promotion: "",
+        Score: searcher.scoreLevels[0][currentPlayer],
+    }
 }
 
