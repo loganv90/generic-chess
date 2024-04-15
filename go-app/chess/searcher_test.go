@@ -260,7 +260,7 @@ func Test_Minimax_BotSacrifice1(t *testing.T) {
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
-    assert.Equal(t, 1, moveKey.YTo)
+    assert.Equal(t, 4, moveKey.YTo)
 
     actualPrintedBoard := game.Print()
     expectedPrintedBoard := strings.Trim(`
@@ -333,8 +333,8 @@ func Test_Minimax_BotSacrifice2(t *testing.T) {
     searcher := newSimpleSearcher(game, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
-    assert.Equal(t, 1, moveKey.XTo)
-    assert.Equal(t, 1, moveKey.YTo)
+    assert.Equal(t, 6, moveKey.XTo)
+    assert.Equal(t, 0, moveKey.YTo)
 
     actualPrintedBoard := game.Print()
     expectedPrintedBoard := strings.Trim(`

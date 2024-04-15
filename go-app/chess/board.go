@@ -389,7 +389,6 @@ func (b *SimpleBoard) LegalMovesOfLocation(fromLocation *Point) ([]FastMove, err
     return legalMoves, nil
 }
 
-// TODO some kind of quiescence search
 // TODO spawn go routines for searching
 // TODO add 3 move repetition and 50 move rule
 func (b *SimpleBoard) CalculateMoves() {

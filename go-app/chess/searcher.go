@@ -35,8 +35,7 @@ func newSimpleSearcher(g Game, stop chan bool) *SimpleSearcher {
         transitionLevels: []PlayerTransition{},
         moveLevels: []Array1000[FastMove]{},
         captureMoveLevels: []Array1000[FastMove]{},
-
-        transpositionMap: map[uint64][]int{},
+        transpositionMapLevels: []map[uint64][]int{},
 
         stop: stop,
         stopReached: false,
@@ -54,11 +53,10 @@ type SimpleSearcher struct {
     transitionLevels []PlayerTransition
     moveLevels []Array1000[FastMove]
     captureMoveLevels []Array1000[FastMove]
+    transpositionMapLevels []map[uint64][]int
 
     maxDepth int
     moveKey MoveKey
-
-    transpositionMap map[uint64][]int
 
     stop chan bool
     stopReached bool
@@ -71,14 +69,14 @@ func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
     s.transitionLevels = make([]PlayerTransition, maxDepth+1)
     s.moveLevels = make([]Array1000[FastMove], maxDepth+1)
     s.captureMoveLevels = make([]Array1000[FastMove], maxDepth+1)
+    s.transpositionMapLevels = make([]map[uint64][]int, maxDepth+1)
     for i := 0; i < maxDepth+1; i++ {
         s.scoreLevels[i] = make([]int, s.players)
         s.transitionLevels[i] = PlayerTransition{}
         s.moveLevels[i] = Array1000[FastMove]{}
         s.captureMoveLevels[i] = Array1000[FastMove]{}
+        s.transpositionMapLevels[i] = map[uint64][]int{}
     }
-
-    s.transpositionMap = map[uint64][]int{}
 
     s.b.CalculateMoves()
     s.minimax(0)
@@ -98,11 +96,11 @@ func (s *SimpleSearcher) minimax(depth int) {
 
     hash := s.b.ZobristHash() ^ s.p.ZobristHash()
 
-    if _, ok := s.transpositionMap[hash]; ok {
-        score := s.transpositionMap[hash]
+    if _, ok := s.transpositionMapLevels[depth][hash]; ok {
+        score := s.transpositionMapLevels[depth][hash]
 
         for i := 0; i < s.players; i++ {
-            s.scoreLevels[depth][i] = s.mapScoreToLevelScore(score[i], depth)
+            s.scoreLevels[depth][i] = score[i]
         }
 
         return
@@ -110,15 +108,12 @@ func (s *SimpleSearcher) minimax(depth int) {
 
     if depth >= s.maxDepth || s.p.getGameOver() {
         s.e.eval(s.scoreLevels[depth])
-        for i := 0; i < s.players; i++ {
-            s.scoreLevels[depth][i] = s.mapScoreToLevelScore(s.scoreLevels[depth][i], depth)
-        }
 
         newScore := make([]int, s.players)
         for i := 0; i < s.players; i++ {
-            newScore[i] = s.levelScoreToMapScore(s.scoreLevels[depth][i], depth)
+            newScore[i] = s.scoreLevels[depth][i]
         }
-        s.transpositionMap[hash] = newScore
+        s.transpositionMapLevels[depth][hash] = newScore
 
         return
     }
@@ -139,6 +134,7 @@ func (s *SimpleSearcher) minimax(depth int) {
             panic("no moves in this position")
         }
 
+        s.b.CalculateMoves()
         if s.b.Check(currentPlayer) {
             createPlayerTransition(s.b, s.p, true, false, transition)
         } else {
@@ -152,9 +148,9 @@ func (s *SimpleSearcher) minimax(depth int) {
 
     newScore := make([]int, s.players)
     for i := 0; i < s.players; i++ {
-        newScore[i] = s.levelScoreToMapScore(s.scoreLevels[depth][i], depth)
+        newScore[i] = s.scoreLevels[depth][i]
     }
-    s.transpositionMap[hash] = newScore
+    s.transpositionMapLevels[depth][hash] = newScore
 }
 
 func (s *SimpleSearcher) copyMoves(depth int, color int) {
@@ -213,26 +209,6 @@ func (s *SimpleSearcher) recurse(depth int, color int, moves *Array1000[FastMove
     }
 
     return found
-}
-
-func (s *SimpleSearcher) levelScoreToMapScore(score int, depth int) int {
-    if score > 0 {
-        return score + depth
-    } else if score < 0 {
-        return score - depth
-    }
-
-    return score
-}
-
-func (s *SimpleSearcher) mapScoreToLevelScore(score int, depth int) int {
-    if score > 0 {
-        return score - depth
-    } else if score < 0 {
-        return score + depth
-    }
-
-    return score
 }
 
 func (s *SimpleSearcher) liftScore(score int) int {
