@@ -86,6 +86,23 @@ func main() {
 
         startClient(c, hub, nil)
     })
+    router.GET("/ws/smalltwobot", func(c *gin.Context) {
+        roomId, err := createRoomId(hubs)
+        if err != nil {
+            fmt.Println("couldn't create game")
+            return
+        }
+        hub := newSmallTwoPlayerHubWithBot()
+        hubs[roomId] = hub
+        go func() {
+            hub.run()
+            fmt.Println("shutting down hub")
+            delete(hubs, roomId)
+        }()
+        fmt.Println("new connection, new game, gameId: ", roomId)
+
+        startClient(c, hub, nil)
+    })
     router.GET("/ws/fourbot", func(c *gin.Context) {
         roomId, err := createRoomId(hubs)
         if err != nil {
@@ -93,6 +110,23 @@ func main() {
             return
         }
         hub := newFourPlayerHubWithBot()
+        hubs[roomId] = hub
+        go func() {
+            hub.run()
+            fmt.Println("shutting down hub")
+            delete(hubs, roomId)
+        }()
+        fmt.Println("new connection, new game, gameId: ", roomId)
+
+        startClient(c, hub, nil)
+    })
+    router.GET("/ws/smallfourbot", func(c *gin.Context) {
+        roomId, err := createRoomId(hubs)
+        if err != nil {
+            fmt.Println("couldn't create game")
+            return
+        }
+        hub := newSmallFourPlayerHubWithBot()
         hubs[roomId] = hub
         go func() {
             hub.run()
@@ -120,6 +154,23 @@ func main() {
 
         startClient(c, hub, nil)
     })
+    router.GET("/ws/smalltwo", func(c *gin.Context) {
+        roomId, err := createRoomId(hubs)
+        if err != nil {
+            fmt.Println("couldn't create game")
+            return
+        }
+        hub := newSmallTwoPlayerHub()
+        hubs[roomId] = hub
+        go func() {
+            hub.run()
+            fmt.Println("shutting down hub")
+            delete(hubs, roomId)
+        }()
+        fmt.Println("new connection, new game, gameId: ", roomId)
+
+        startClient(c, hub, nil)
+    })
     router.GET("/ws/four", func(c *gin.Context) {
         roomId, err := createRoomId(hubs)
         if err != nil {
@@ -127,6 +178,23 @@ func main() {
             return
         }
         hub := newFourPlayerHub()
+        hubs[roomId] = hub
+        go func() {
+            hub.run()
+            fmt.Println("shutting down hub")
+            delete(hubs, roomId)
+        }()
+        fmt.Println("new connection, new game, gameId: ", roomId)
+
+        startClient(c, hub, nil)
+    })
+    router.GET("/ws/smallfour", func(c *gin.Context) {
+        roomId, err := createRoomId(hubs)
+        if err != nil {
+            fmt.Println("couldn't create game")
+            return
+        }
+        hub := newSmallFourPlayerHub()
         hubs[roomId] = hub
         go func() {
             hub.run()

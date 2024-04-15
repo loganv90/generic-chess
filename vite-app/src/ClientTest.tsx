@@ -77,11 +77,23 @@ const ClientTest = () => {
                 <label htmlFor="fourbot">Four player with bot: </label>
                 <button id="fourbot" name="fourbot" onClick={() => setCurrentUrlExtension(`${baseUrl}/fourbot`)} />
                 <br />
+                <label htmlFor="smalltwobot">Small two player with bot: </label>
+                <button id="smalltwobot" name="twobot" onClick={() => setCurrentUrlExtension(`${baseUrl}/smalltwobot`)} />
+                <br />
+                <label htmlFor="smallfourbot">Small four player with bot: </label>
+                <button id="smallfourbot" name="fourbot" onClick={() => setCurrentUrlExtension(`${baseUrl}/smallfourbot`)} />
+                <br />
                 <label htmlFor="two">Two player: </label>
                 <button id="two" name="two" onClick={() => setCurrentUrlExtension(`${baseUrl}/two`)} />
                 <br />
                 <label htmlFor="four">Four player: </label>
                 <button id="four" name="four" onClick={() => setCurrentUrlExtension(`${baseUrl}/four`)} />
+                <br />
+                <label htmlFor="smalltwo">Small two player: </label>
+                <button id="smalltwo" name="two" onClick={() => setCurrentUrlExtension(`${baseUrl}/smalltwo`)} />
+                <br />
+                <label htmlFor="smallfour">Small four player: </label>
+                <button id="smallfour" name="four" onClick={() => setCurrentUrlExtension(`${baseUrl}/smallfour`)} />
                 <br />
                 <label htmlFor="code">Game code: </label>
                 <input type="text" id="code" name="code" onChange={(e) => setUrlExtension(e.target.value)} />

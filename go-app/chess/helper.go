@@ -51,6 +51,45 @@ func createSimpleBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
     return simpleBoard, nil
 }
 
+func createSimpleSmallBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
+    black := 1
+    white := 0
+
+    simpleBoard, err := newSimpleBoard(5, 5, 2)
+    if err != nil {
+        return nil, err
+    }
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 0), simpleBoard.getAllPiece(black, ROOK))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 0), simpleBoard.getAllPiece(black, KNIGHT))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 0), simpleBoard.getAllPiece(black, BISHOP))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 0), simpleBoard.getAllPiece(black, QUEEN))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 0), simpleBoard.getAllPiece(black, KING_D))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 1), simpleBoard.getAllPiece(black, PAWN_D))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 3), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 3), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 3), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 3), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 3), simpleBoard.getAllPiece(white, PAWN_U))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 4), simpleBoard.getAllPiece(white, ROOK))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 4), simpleBoard.getAllPiece(white, KNIGHT))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 4), simpleBoard.getAllPiece(white, BISHOP))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 4), simpleBoard.getAllPiece(white, QUEEN))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 4), simpleBoard.getAllPiece(white, KING_U))
+
+    simpleBoard.populatePieceSquareTables()
+    simpleBoard.CalculateMoves()
+    
+    return simpleBoard, nil
+}
+
 func createSimpleFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
     black := 2
     white := 0
@@ -173,6 +212,59 @@ func createSimpleFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error
     simpleBoard.disableLocation(simpleBoard.getIndex(13, 11))
     simpleBoard.disableLocation(simpleBoard.getIndex(13, 12))
     simpleBoard.disableLocation(simpleBoard.getIndex(13, 13))
+
+    simpleBoard.populatePieceSquareTables()
+    simpleBoard.CalculateMoves()
+
+    return simpleBoard, nil
+}
+
+func createSimpleSmallFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
+    black := 2
+    white := 0
+    red := 1
+    blue := 3
+
+    simpleBoard, err := newSimpleBoard(8, 8, 4)
+    if err != nil {
+        return nil, err
+    }
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 7), simpleBoard.getAllPiece(white, BISHOP))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 7), simpleBoard.getAllPiece(white, KNIGHT))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 7), simpleBoard.getAllPiece(white, ROOK_M))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 7), simpleBoard.getAllPiece(white, KING_U_M))
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 6), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 6), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 6), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 6), simpleBoard.getAllPiece(white, PAWN_U))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 0), simpleBoard.getAllPiece(red, BISHOP))
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 1), simpleBoard.getAllPiece(red, KNIGHT))
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 2), simpleBoard.getAllPiece(red, ROOK_M))
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 3), simpleBoard.getAllPiece(red, KING_R_M))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 0), simpleBoard.getAllPiece(red, PAWN_R))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 1), simpleBoard.getAllPiece(red, PAWN_R))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 2), simpleBoard.getAllPiece(red, PAWN_R))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 3), simpleBoard.getAllPiece(red, PAWN_R))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(7, 0), simpleBoard.getAllPiece(black, BISHOP))
+    simpleBoard.setPiece(simpleBoard.getIndex(6, 0), simpleBoard.getAllPiece(black, KNIGHT))
+    simpleBoard.setPiece(simpleBoard.getIndex(5, 0), simpleBoard.getAllPiece(black, ROOK_M))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 0), simpleBoard.getAllPiece(black, KING_D_M))
+    simpleBoard.setPiece(simpleBoard.getIndex(7, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(6, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(5, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 1), simpleBoard.getAllPiece(black, PAWN_D))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(7, 7), simpleBoard.getAllPiece(blue, BISHOP))
+    simpleBoard.setPiece(simpleBoard.getIndex(7, 6), simpleBoard.getAllPiece(blue, KNIGHT))
+    simpleBoard.setPiece(simpleBoard.getIndex(7, 5), simpleBoard.getAllPiece(blue, ROOK_M))
+    simpleBoard.setPiece(simpleBoard.getIndex(7, 4), simpleBoard.getAllPiece(blue, KING_L_M))
+    simpleBoard.setPiece(simpleBoard.getIndex(6, 7), simpleBoard.getAllPiece(blue, PAWN_L))
+    simpleBoard.setPiece(simpleBoard.getIndex(6, 6), simpleBoard.getAllPiece(blue, PAWN_L))
+    simpleBoard.setPiece(simpleBoard.getIndex(6, 5), simpleBoard.getAllPiece(blue, PAWN_L))
+    simpleBoard.setPiece(simpleBoard.getIndex(6, 4), simpleBoard.getAllPiece(blue, PAWN_L))
 
     simpleBoard.populatePieceSquareTables()
     simpleBoard.CalculateMoves()

@@ -120,7 +120,7 @@ func (c *PlayerClient) writeLoop() {
 }
 
 func newBotClient(hub *Hub, game chess.Game) (*BotClient, error) {
-    bot, err := chess.NewSimpleBot(game)
+    bot, err := chess.NewSimpleBot(game, 20, 5)
     if err != nil {
         return nil, err
     }

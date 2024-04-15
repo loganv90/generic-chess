@@ -13,11 +13,11 @@ type Bot interface {
     FindMoveIterativeDeepening() (MoveKey, error)
 }
 
-func NewSimpleBot(game Game) (Bot, error) {
+func NewSimpleBot(game Game, depthLimit int, timeLimitSeconds int) (Bot, error) {
     return &SimpleBot{
         game: game,
         depthStart: 2,
-        depthLimit: 20,
+        depthLimit: depthLimit,
         timeLimitSeconds: 5,
     }, nil
 }

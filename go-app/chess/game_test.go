@@ -737,3 +737,108 @@ func Test_NewSimpleFourPlayerGame(t *testing.T) {
     assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
 }
 
+func Test_NewSimpleSmallFourPlayerGame(t *testing.T) {
+	game, err := NewSimpleSmallFourPlayerGame()
+	assert.Nil(t, err)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| B 1        | P 1        |            |            | K 2        | R 2        | N 2        | B 2        |
+|         0y |         0y |         0y |         0y |         0y |         0y |         0y |         0y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| N 1        | P 1        |            |            | P 2        | P 2        | P 2        | P 2        |
+|         1y |         1y |         1y |         1y |         1y |         1y |         1y |         1y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| R 1        | P 1        |            |            |            |            |            |            |
+|         2y |         2y |         2y |         2y |         2y |         2y |         2y |         2y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| K 1        | P 1        |            |            |            |            |            |            |
+|         3y |         3y |         3y |         3y |         3y |         3y |         3y |         3y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            | P 3        | K 3        |
+|         4y |         4y |         4y |         4y |         4y |         4y |         4y |         4y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+|            |            |            |            |            |            | P 3        | R 3        |
+|         5y |         5y |         5y |         5y |         5y |         5y |         5y |         5y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| P 0        | P 0        | P 0        | P 0        |            |            | P 3        | N 3        |
+|         6y |         6y |         6y |         6y |         6y |         6y |         6y |         6y |
++-------------------------------------------------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
+| B 0        | N 0        | R 0        | K 0        |            |            | P 3        | B 3        |
+|         7y |         7y |         7y |         7y |         7y |         7y |         7y |         7y |
++-------------------------------------------------------------------------------------------------------+
+    `, " \t\n") + "\n"
+    assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
+func Test_NewSimpleSmallGame(t *testing.T) {
+	game, err := NewSimpleSmallGame()
+	assert.Nil(t, err)
+
+    actualPrintedBoard := game.Print()
+    expectedPrintedBoard := strings.Trim(`
++----------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |
+| R 1        | N 1        | B 1        | Q 1        | K 1        |
+|         0y |         0y |         0y |         0y |         0y |
++----------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |
+| P 1        | P 1        | P 1        | P 1        | P 1        |
+|         1y |         1y |         1y |         1y |         1y |
++----------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |
+|            |            |            |            |            |
+|         2y |         2y |         2y |         2y |         2y |
++----------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |
+| P 0        | P 0        | P 0        | P 0        | P 0        |
+|         3y |         3y |         3y |         3y |         3y |
++----------------------------------------------------------------+
+|         0x |         1x |         2x |         3x |         4x |
+| R 0        | N 0        | B 0        | Q 0        | K 0        |
+|         4y |         4y |         4y |         4y |         4y |
++----------------------------------------------------------------+
+    `, " \t\n") + "\n"
+    assert.Equal(t, expectedPrintedBoard, actualPrintedBoard)
+}
+
+func Test_Copy(t *testing.T) {
+	game, err := NewSimpleGame()
+	assert.Nil(t, err)
+
+    gameCopy, err := game.Copy()
+    assert.Nil(t, err)
+
+    board := game.getBoard()
+    boardCopy := gameCopy.getBoard()
+    assert.NotEqual(t, board, boardCopy)
+    assert.Equal(t, board.Print(), boardCopy.Print())
+
+    playerCollection := game.getPlayerCollection()
+    playerCollectionCopy := gameCopy.getPlayerCollection()
+    assert.NotEqual(t, playerCollection, playerCollectionCopy)
+    assert.Equal(t, playerCollection.playersAlive, playerCollectionCopy.playersAlive)
+}
+
+func Test_View(t *testing.T) {
+	game, err := NewSimpleGame()
+	assert.Nil(t, err)
+
+    pieceState, err := game.View(1, 0)
+    assert.Equal(t, len(pieceState.Moves), 0)
+    assert.Equal(t, pieceState.Turn, false)
+
+    pieceState, err = game.View(1, 7)
+    assert.Equal(t, len(pieceState.Moves), 2)
+    assert.Equal(t, pieceState.Turn, true)
+}
+

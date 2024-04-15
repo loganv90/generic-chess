@@ -44,8 +44,54 @@ func NewSimpleGame() (Game, error) {
 	}, nil
 }
 
+func NewSimpleSmallGame() (Game, error) {
+    b, err := createSimpleSmallBoardWithDefaultPieceLocations()
+	if err != nil {
+		return nil, err
+	}
+
+    p, err := createSimplePlayerCollectionWithDefaultPlayers()
+    if err != nil {
+        return nil, err
+    }
+
+	i, err := invokerFactoryInstance.newSimpleInvoker()
+	if err != nil {
+		return nil, err
+	}
+
+	return &SimpleGame{
+		b: b,
+        p: p,
+		i: i,
+	}, nil
+}
+
 func NewSimpleFourPlayerGame() (Game, error) {
     b, err := createSimpleFourPlayerBoardWithDefaultPieceLocations()
+    if err != nil {
+        return nil, err
+    }
+
+    p, err := createSimpleFourPlayerPlayerCollectionWithDefaultPlayers()
+    if err != nil {
+        return nil, err
+    }
+
+    i, err := invokerFactoryInstance.newSimpleInvoker()
+    if err != nil {
+        return nil, err
+    }
+
+    return &SimpleGame{
+        b: b,
+        p: p,
+        i: i,
+    }, nil
+}
+
+func NewSimpleSmallFourPlayerGame() (Game, error) {
+    b, err := createSimpleSmallFourPlayerBoardWithDefaultPieceLocations()
     if err != nil {
         return nil, err
     }
@@ -322,5 +368,9 @@ func (s *SimpleGame) getBoard() *SimpleBoard {
 
 func (s *SimpleGame) getPlayerCollection() *SimplePlayerCollection {
     return s.p
+}
+
+func (s *SimpleGame) getInvoker() Invoker {
+    return s.i
 }
 
