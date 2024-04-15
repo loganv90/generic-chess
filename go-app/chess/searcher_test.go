@@ -27,7 +27,7 @@ func Test_Minimax_depthOne(t *testing.T) {
 
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(b, p, stop)
+    searcher := newParallelSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(1)
     assert.Nil(t, err)
     assert.Equal(t, 3, moveKey.XTo)
@@ -74,7 +74,7 @@ func Test_Minimax(t *testing.T) {
 
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(b, p, stop)
+    searcher := newParallelSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(4)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
@@ -122,7 +122,7 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
 
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(b, p, stop)
+    searcher := newParallelSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(3)
     assert.Nil(t, err)
     assert.Equal(t, 5, moveKey.XTo)
@@ -224,7 +224,7 @@ func Test_Minimax_BotSacrifice1(t *testing.T) {
 
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(b, p, stop)
+    searcher := newParallelSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
@@ -290,7 +290,7 @@ func Test_Minimax_BotSacrifice2(t *testing.T) {
 
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(b, p, stop)
+    searcher := newParallelSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 6, moveKey.XTo)
@@ -357,7 +357,7 @@ func Test_Minimax_LongestPathToDefeat(t *testing.T) {
 
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(b, p, stop)
+    searcher := newParallelSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
@@ -406,7 +406,7 @@ func Test_Minimax_ShortestPathToVictory(t *testing.T) {
 
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(b, p, stop)
+    searcher := newParallelSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 0, moveKey.XTo)
@@ -496,7 +496,7 @@ func Benchmark_Minimax(t *testing.B) {
 
         stop := make(chan bool)
 
-        searcher := newSimpleSearcher(b, p, stop)
+        searcher := newParallelSearcher(b, p, stop)
         _, err = searcher.searchWithMinimax(4)
         assert.Nil(t, err)
 

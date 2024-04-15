@@ -28,7 +28,6 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
     vulnerableStarts := make([]*Point, players)
     vulnerableEnds := make([]*Point, players)
     kingLocations := make([]*Point, players)
-    kingMoveCount := make([]int, players)
     queenMoveCount := make([]int, players)
     moves := make([]Array1000[FastMove], players)
     captureMoves := make([]Array1000[FastMove], players)
@@ -41,7 +40,6 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         vulnerableStarts[i] = nil
         vulnerableEnds[i] = nil
         kingLocations[i] = nil
-        kingMoveCount[i] = 0
         queenMoveCount[i] = 0
         moves[i] = Array1000[FastMove]{}
         captureMoves[i] = Array1000[FastMove]{}
@@ -135,7 +133,6 @@ func newSimpleBoard(x int, y int, players int) (*SimpleBoard, error) {
         vulnerableStarts: vulnerableStarts,
         vulnerableEnds: vulnerableEnds,
         kingLocations: kingLocations,
-        kingMoveCount: kingMoveCount,
         queenMoveCount: queenMoveCount,
         moves: moves,
         captureMoves: captureMoves,
@@ -167,7 +164,6 @@ type SimpleBoard struct {
     vulnerableStarts []*Point
     vulnerableEnds []*Point
     kingLocations []*Point
-    kingMoveCount []int
     queenMoveCount []int
     moves []Array1000[FastMove]
     captureMoves []Array1000[FastMove]
@@ -396,7 +392,6 @@ func (b *SimpleBoard) CalculateMoves() {
         b.captureMoves[i].clear()
         b.defenseMoves[i].clear()
         b.queenMoveCount[i] = 0
-        b.kingMoveCount[i] = 0
     }
 
     for y := 0; y < b.y; y++ {
@@ -413,10 +408,8 @@ func (b *SimpleBoard) CalculateMoves() {
             index := b.getIndex(x, y)
             color := piece.color
             if piece.isKing() {
-                before := b.moves[color].count + b.captureMoves[color].count + b.defenseMoves[color].count
                 piece.moves(b, index)
 
-                b.kingMoveCount[piece.color] += b.moves[color].count + b.captureMoves[color].count + b.defenseMoves[color].count - before
                 b.kingLocations[piece.color] = index
             } else if piece.index == QUEEN {
                 before := b.moves[color].count + b.captureMoves[color].count + b.defenseMoves[color].count

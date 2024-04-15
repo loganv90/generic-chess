@@ -125,10 +125,6 @@ func (s *SimpleSearcher) minimax(depth int) {
     found2 := s.recurse(depth, currentPlayer, &s.moveLevels[depth], transition)
 
     if !found1 && !found2 {
-        if depth <= 0 {
-            return
-        }
-
         s.b.CalculateMoves()
         if s.b.Check(currentPlayer) {
             createPlayerTransition(s.b, s.p, true, false, transition)
@@ -333,12 +329,7 @@ func minimaxWrapper(b *SimpleBoard, p *SimplePlayerCollection, stop chan bool, r
 
     searcher := newSimpleSearcher(b, p, stop)
 
-    _, err := searcher.searchWithMinimax(depth)
-    if err != nil {
-        result <- nil
-        return
-    }
-
+    searcher.searchWithMinimax(depth)
     result <- &MoveKeyWithScore{
         XTo: move.toLocation.x,
         YTo: move.toLocation.y,

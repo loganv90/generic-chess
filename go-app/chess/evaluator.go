@@ -145,7 +145,7 @@ func (e *SimpleEvaluator) evalPosition() {
 
 func (e *SimpleEvaluator) evalMobility() {
     for color := 0; color < e.players; color++ {
-        value := e.b.moves[color].count + e.b.captureMoves[color].count + e.b.defenseMoves[color].count - e.b.queenMoveCount[color] - e.b.kingMoveCount[color]
+        value := e.b.moves[color].count + e.b.captureMoves[color].count + e.b.defenseMoves[color].count - e.b.queenMoveCount[color]
         e.mobility[color] = value
         e.totalMobility += value
     }
