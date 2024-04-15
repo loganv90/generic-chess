@@ -57,13 +57,19 @@ func (b *SimpleBot) FindMoveIterativeDeepening() (MoveKey, error) {
 }
 
 func (b *SimpleBot) findMove(depth int, result chan *MoveKey, stop chan bool) {
-    gameCopy, err := b.game.Copy()
+    boardCopy, err := b.game.getBoard().Copy()
     if err != nil {
         result <- nil
         return
     }
 
-    searcher := newSimpleSearcher(gameCopy, stop)
+    playerCollectionCopy, err := b.game.getPlayerCollection().Copy()
+    if err != nil {
+        result <- nil
+        return
+    }
+
+    searcher := newSimpleSearcher(boardCopy, playerCollectionCopy, stop)
 
     moveKey, err := searcher.searchWithMinimax(depth)
     if err != nil {
@@ -71,6 +77,12 @@ func (b *SimpleBot) findMove(depth int, result chan *MoveKey, stop chan bool) {
         return
     }
 
-    result <- &moveKey
+    result <- &MoveKey{
+        XTo: moveKey.XTo,
+        YTo: moveKey.YTo,
+        XFrom: moveKey.XFrom,
+        YFrom: moveKey.YFrom,
+        Promotion: moveKey.Promotion,
+    }
 }
 

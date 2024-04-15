@@ -19,29 +19,21 @@ func Test_Minimax_depthOne(t *testing.T) {
     p, err := newSimplePlayerCollection(2)
     assert.Nil(t, err)
 
-    i, err := invokerFactoryInstance.newSimpleInvoker()
-    assert.Nil(t, err)
-
     b.setPiece(b.getIndex(2, 0), b.getAllPiece(black, KING_U))
     b.setPiece(b.getIndex(3, 0), b.getAllPiece(black, ROOK_M))
     b.setPiece(b.getIndex(2, 3), b.getAllPiece(white, KING_U))
     b.setPiece(b.getIndex(3, 3), b.getAllPiece(white, ROOK_M))
     b.CalculateMoves()
 
-    game := &SimpleGame{
-        b: b,
-        p: p,
-        i: i,
-    }
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game, stop)
+    searcher := newSimpleSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(1)
     assert.Nil(t, err)
     assert.Equal(t, 3, moveKey.XTo)
     assert.Equal(t, 0, moveKey.YTo)
 
-    actualPrintedBoard := game.Print()
+    actualPrintedBoard := b.Print()
     expectedPrintedBoard := strings.Trim(`
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
@@ -80,23 +72,15 @@ func Test_Minimax(t *testing.T) {
     p, err := newSimplePlayerCollection(2)
     assert.Nil(t, err)
 
-    i, err := invokerFactoryInstance.newSimpleInvoker()
-    assert.Nil(t, err)
-
-    game := &SimpleGame{
-        b: b,
-        p: p,
-        i: i,
-    }
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game, stop)
+    searcher := newSimpleSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(4)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
     assert.Equal(t, 2, moveKey.YTo)
 
-    actualPrintedBoard := game.Print()
+    actualPrintedBoard := b.Print()
     expectedPrintedBoard := strings.Trim(`
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
@@ -136,23 +120,15 @@ func Test_Minimax_AvoidMateInOne(t *testing.T) {
     assert.Nil(t, err)
     p.setCurrent(black)
 
-    i, err := invokerFactoryInstance.newSimpleInvoker()
-    assert.Nil(t, err)
-
-    game := &SimpleGame{
-        b: b,
-        p: p,
-        i: i,
-    }
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game, stop)
+    searcher := newSimpleSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(3)
     assert.Nil(t, err)
     assert.Equal(t, 5, moveKey.XTo)
     assert.Equal(t, 2, moveKey.YTo)
 
-    actualPrintedBoard := game.Print()
+    actualPrintedBoard := b.Print()
     expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
@@ -246,23 +222,15 @@ func Test_Minimax_BotSacrifice1(t *testing.T) {
     assert.Nil(t, err)
     p.setCurrent(black)
 
-    i, err := invokerFactoryInstance.newSimpleInvoker()
-    assert.Nil(t, err)
-
-    game := &SimpleGame{
-        b: b,
-        p: p,
-        i: i,
-    }
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game, stop)
+    searcher := newSimpleSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
     assert.Equal(t, 4, moveKey.YTo)
 
-    actualPrintedBoard := game.Print()
+    actualPrintedBoard := b.Print()
     expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
@@ -320,23 +288,15 @@ func Test_Minimax_BotSacrifice2(t *testing.T) {
     assert.Nil(t, err)
     p.setCurrent(black)
 
-    i, err := invokerFactoryInstance.newSimpleInvoker()
-    assert.Nil(t, err)
-
-    game := &SimpleGame{
-        b: b,
-        p: p,
-        i: i,
-    }
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game, stop)
+    searcher := newSimpleSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 6, moveKey.XTo)
     assert.Equal(t, 0, moveKey.YTo)
 
-    actualPrintedBoard := game.Print()
+    actualPrintedBoard := b.Print()
     expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |
@@ -395,23 +355,15 @@ func Test_Minimax_LongestPathToDefeat(t *testing.T) {
     assert.Nil(t, err)
     p.setCurrent(white)
 
-    i, err := invokerFactoryInstance.newSimpleInvoker()
-    assert.Nil(t, err)
-
-    game := &SimpleGame{
-        b: b,
-        p: p,
-        i: i,
-    }
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game, stop)
+    searcher := newSimpleSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 1, moveKey.XTo)
     assert.Equal(t, 1, moveKey.YTo)
 
-    actualPrintedBoard := game.Print()
+    actualPrintedBoard := b.Print()
     expectedPrintedBoard := strings.Trim(`
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
@@ -452,23 +404,15 @@ func Test_Minimax_ShortestPathToVictory(t *testing.T) {
     assert.Nil(t, err)
     p.setCurrent(black)
 
-    i, err := invokerFactoryInstance.newSimpleInvoker()
-    assert.Nil(t, err)
-
-    game := &SimpleGame{
-        b: b,
-        p: p,
-        i: i,
-    }
     stop := make(chan bool)
 
-    searcher := newSimpleSearcher(game, stop)
+    searcher := newSimpleSearcher(b, p, stop)
     moveKey, err := searcher.searchWithMinimax(5)
     assert.Nil(t, err)
     assert.Equal(t, 0, moveKey.XTo)
     assert.Equal(t, 3, moveKey.YTo)
 
-    actualPrintedBoard := game.Print()
+    actualPrintedBoard := b.Print()
     expectedPrintedBoard := strings.Trim(`
 +---------------------------------------------------+
 |         0x |         1x |         2x |         3x |
@@ -550,21 +494,13 @@ func Benchmark_Minimax(t *testing.B) {
         p, err := newSimplePlayerCollection(2)
         assert.Nil(t, err)
 
-        i, err := invokerFactoryInstance.newSimpleInvoker()
-        assert.Nil(t, err)
-
-        game := &SimpleGame{
-            b: b,
-            p: p,
-            i: i,
-        }
         stop := make(chan bool)
 
-        searcher := newSimpleSearcher(game, stop)
+        searcher := newSimpleSearcher(b, p, stop)
         _, err = searcher.searchWithMinimax(4)
         assert.Nil(t, err)
 
-        actualPrintedBoard := game.Print()
+        actualPrintedBoard := b.Print()
         expectedPrintedBoard := strings.Trim(`
 +-------------------------------------------------------------------------------------------------------+
 |         0x |         1x |         2x |         3x |         4x |         5x |         6x |         7x |

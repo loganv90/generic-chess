@@ -2,6 +2,7 @@ package chess
 
 import (
     "math"
+    "fmt"
 )
 
 /*
@@ -20,22 +21,11 @@ q2k2q1/2nqn2b/1n1P1n1b/2rnr2Q/1NQ1QN1Q/3Q3B/2RQR2B/Q2K2Q1 w - - this position ca
 Responsible for:
 - searching for moves given the current state of the game
 */
-func newSimpleSearcher(g Game, stop chan bool) *SimpleSearcher {
-    board := g.getBoard()
-    playerCollection := g.getPlayerCollection()
-
+func newSimpleSearcher(b *SimpleBoard, p *SimplePlayerCollection, stop chan bool) *SimpleSearcher {
     return &SimpleSearcher{
-        b: board,
-        p: playerCollection,
-        e: newSimpleEvaluator(board, playerCollection),
-
-        players: playerCollection.getPlayers(),
-
-        scoreLevels: [][]int{},
-        transitionLevels: []PlayerTransition{},
-        moveLevels: []Array1000[FastMove]{},
-        captureMoveLevels: []Array1000[FastMove]{},
-        transpositionMapLevels: []map[uint64][]int{},
+        b: b,
+        p: p,
+        e: newSimpleEvaluator(b, p),
 
         stop: stop,
         stopReached: false,
@@ -56,14 +46,16 @@ type SimpleSearcher struct {
     transpositionMapLevels []map[uint64][]int
 
     maxDepth int
-    moveKey MoveKey
+    moveKey MoveKeyWithScore
 
     stop chan bool
     stopReached bool
 }
 
-func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
+func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKeyWithScore, error) {
+    s.players = s.p.getPlayers()
     s.maxDepth = maxDepth
+    s.moveKey = MoveKeyWithScore{-1, -1, -1, -1, "", math.MinInt}
 
     s.scoreLevels = make([][]int, maxDepth+1)
     s.transitionLevels = make([]PlayerTransition, maxDepth+1)
@@ -81,6 +73,9 @@ func (s *SimpleSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
     s.b.CalculateMoves()
     s.minimax(0)
 
+    if s.moveKey.XTo == -1 || s.moveKey.YTo == -1 || s.moveKey.XFrom == -1 || s.moveKey.YFrom == -1 {
+        return s.moveKey, fmt.Errorf("No move found")
+    }
     return s.moveKey, nil
 }
 
@@ -131,7 +126,7 @@ func (s *SimpleSearcher) minimax(depth int) {
 
     if !found1 && !found2 {
         if depth <= 0 {
-            panic("no moves in this position")
+            return
         }
 
         s.b.CalculateMoves()
@@ -204,6 +199,8 @@ func (s *SimpleSearcher) recurse(depth int, color int, moves *Array1000[FastMove
                 s.moveKey.YTo = move.toLocation.y
                 s.moveKey.XFrom = move.fromLocation.x
                 s.moveKey.YFrom = move.fromLocation.y
+                s.moveKey.Promotion = ""
+                s.moveKey.Score = s.scoreLevels[depth][color]
             }
         }
     }
@@ -219,5 +216,107 @@ func (s *SimpleSearcher) liftScore(score int) int {
     }
 
     return score
+}
+
+func newParallelSearcher(b *SimpleBoard, p *SimplePlayerCollection, stop chan bool) *ParallelSearcher {
+    return &ParallelSearcher{
+        b: b,
+        p: p,
+
+        stop: stop,
+        stopReached: false,
+    }
+}
+
+type ParallelSearcher struct {
+    b *SimpleBoard
+    p *SimplePlayerCollection
+
+    stops []chan bool
+    result chan *MoveKeyWithScore
+
+    maxDepth int
+    moveKey MoveKey
+
+    stop chan bool
+    stopReached bool
+}
+
+func (s *ParallelSearcher) searchWithMinimax(maxDepth int) (MoveKey, error) {
+    s.maxDepth = maxDepth
+    s.moveKey = MoveKey{-1, -1, -1, -1, ""}
+
+    s.b.CalculateMoves()
+    currentPlayer := s.p.getCurrent()
+    moveCount := 0
+    moveCount += s.b.captureMoves[currentPlayer].count
+    moveCount += s.b.moves[currentPlayer].count
+
+    s.result = make(chan *MoveKeyWithScore, moveCount)
+    s.stops = make([]chan bool, moveCount)
+    for i := 0; i < moveCount; i++ {
+        s.stops[i] = make(chan bool)
+    }
+
+    for i := 0; i < moveCount; i++ {
+        boardCopy, err := s.b.Copy()
+        if err != nil {
+            return s.moveKey, err
+        }
+
+        playerCollectionCopy, err := s.p.Copy()
+        if err != nil {
+            return s.moveKey, err
+        }
+
+        go minimaxWrapper(boardCopy, playerCollectionCopy, s.stops[i], s.result, s.maxDepth)
+    }
+
+    counter := 0
+    score := math.MinInt
+    loop := true
+    for loop {
+        select {
+        case <-s.stop:
+            for i := 0; i < moveCount; i++ {
+                s.stops[i] <- true
+            }
+
+            loop = false
+        case moveKeyWithScorePtr := <-s.result:
+            if moveKeyWithScorePtr != nil {
+                if moveKeyWithScorePtr.Score > score {
+                    score = moveKeyWithScorePtr.Score
+                    s.moveKey.XTo = moveKeyWithScorePtr.XTo
+                    s.moveKey.YTo = moveKeyWithScorePtr.YTo
+                    s.moveKey.XFrom = moveKeyWithScorePtr.XFrom
+                    s.moveKey.YFrom = moveKeyWithScorePtr.YFrom
+                    s.moveKey.Promotion = moveKeyWithScorePtr.Promotion
+                }
+            } else {
+                fmt.Println("No move found")
+            }
+
+            counter++
+            loop = counter < moveCount
+        }
+    }
+
+    if s.moveKey.XTo == -1 || s.moveKey.YTo == -1 || s.moveKey.XFrom == -1 || s.moveKey.YFrom == -1 {
+        return s.moveKey, fmt.Errorf("No move found")
+    }
+    return s.moveKey, nil
+}
+
+func minimaxWrapper(b *SimpleBoard, p *SimplePlayerCollection, stop chan bool, result chan *MoveKeyWithScore, maxDepth int) {
+    searcher := newSimpleSearcher(b, p, stop)
+
+    moveKeyWithScore, err := searcher.searchWithMinimax(maxDepth)
+    if err != nil {
+        result <- nil
+        return
+    }
+
+    result <- &moveKeyWithScore
 }
 

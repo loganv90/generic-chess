@@ -241,6 +241,15 @@ type MoveKey struct {
     Promotion string
 }
 
+type MoveKeyWithScore struct {
+    XFrom int
+    YFrom int
+    XTo int
+    YTo int
+    Promotion string
+    Score int
+}
+
 type Player struct {
     color int
     alive bool
