@@ -96,6 +96,38 @@ func newFourPlayerHubWithBot() *Hub {
     return hub
 }
 
+func newSmallFourPlayerHubWithBot() *Hub {
+    black := 1
+    red := 2
+    blue := 3
+
+    game, err := chess.NewSimpleSmallFourPlayerGame()
+    if err != nil {
+        panic(err)
+    }
+
+    hub := &Hub{
+        botColors:  []int{black, red, blue},
+        clients:    make(map[Client]bool),
+        register:   make(chan Client),
+        unregister: make(chan Client),
+        send:       make(chan *ClientMessage),
+        capacity:   4,
+        game:       game,
+    }
+
+    botClient, err := newBotClient(hub, game)
+    if err != nil {
+        panic(err)
+    }
+
+    hub.handleClientJoin(botClient)
+
+    go botClient.run()
+
+    return hub
+}
+
 func newTwoPlayerHub() *Hub {
     game, err := chess.NewSimpleGame()
     if err != nil {
@@ -115,6 +147,23 @@ func newTwoPlayerHub() *Hub {
 
 func newFourPlayerHub() *Hub {
     game, err := chess.NewSimpleFourPlayerGame()
+    if err != nil {
+        panic(err)
+    }
+
+    return &Hub{
+        botColors:  []int{},
+        clients:    make(map[Client]bool),
+        register:   make(chan Client),
+        unregister: make(chan Client),
+        send:       make(chan *ClientMessage),
+        capacity:   4,
+        game:       game,
+    }
+}
+
+func newSmallFourPlayerHub() *Hub {
+    game, err := chess.NewSimpleSmallFourPlayerGame()
     if err != nil {
         panic(err)
     }
