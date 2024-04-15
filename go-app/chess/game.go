@@ -44,6 +44,29 @@ func NewSimpleGame() (Game, error) {
 	}, nil
 }
 
+func NewSimpleSmallGame() (Game, error) {
+    b, err := createSimpleSmallBoardWithDefaultPieceLocations()
+	if err != nil {
+		return nil, err
+	}
+
+    p, err := createSimplePlayerCollectionWithDefaultPlayers()
+    if err != nil {
+        return nil, err
+    }
+
+	i, err := invokerFactoryInstance.newSimpleInvoker()
+	if err != nil {
+		return nil, err
+	}
+
+	return &SimpleGame{
+		b: b,
+        p: p,
+		i: i,
+	}, nil
+}
+
 func NewSimpleFourPlayerGame() (Game, error) {
     b, err := createSimpleFourPlayerBoardWithDefaultPieceLocations()
     if err != nil {

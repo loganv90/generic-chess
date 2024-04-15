@@ -51,6 +51,45 @@ func createSimpleBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
     return simpleBoard, nil
 }
 
+func createSimpleSmallBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
+    black := 1
+    white := 0
+
+    simpleBoard, err := newSimpleBoard(5, 5, 2)
+    if err != nil {
+        return nil, err
+    }
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 0), simpleBoard.getAllPiece(black, ROOK))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 0), simpleBoard.getAllPiece(black, KNIGHT))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 0), simpleBoard.getAllPiece(black, BISHOP))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 0), simpleBoard.getAllPiece(black, QUEEN))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 0), simpleBoard.getAllPiece(black, KING_D))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 1), simpleBoard.getAllPiece(black, PAWN_D))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 1), simpleBoard.getAllPiece(black, PAWN_D))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 3), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 3), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 3), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 3), simpleBoard.getAllPiece(white, PAWN_U))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 3), simpleBoard.getAllPiece(white, PAWN_U))
+
+    simpleBoard.setPiece(simpleBoard.getIndex(0, 4), simpleBoard.getAllPiece(white, ROOK))
+    simpleBoard.setPiece(simpleBoard.getIndex(1, 4), simpleBoard.getAllPiece(white, KNIGHT))
+    simpleBoard.setPiece(simpleBoard.getIndex(2, 4), simpleBoard.getAllPiece(white, BISHOP))
+    simpleBoard.setPiece(simpleBoard.getIndex(3, 4), simpleBoard.getAllPiece(white, QUEEN))
+    simpleBoard.setPiece(simpleBoard.getIndex(4, 4), simpleBoard.getAllPiece(white, KING_U))
+
+    simpleBoard.populatePieceSquareTables()
+    simpleBoard.CalculateMoves()
+    
+    return simpleBoard, nil
+}
+
 func createSimpleFourPlayerBoardWithDefaultPieceLocations() (*SimpleBoard, error) {
     black := 2
     white := 0

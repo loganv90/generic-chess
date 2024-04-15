@@ -64,6 +64,36 @@ func newTwoPlayerHubWithBot() *Hub {
     return hub
 }
 
+func newSmallTwoPlayerHubWithBot() *Hub {
+    black := 1
+
+    game, err := chess.NewSimpleSmallGame()
+    if err != nil {
+        panic(err)
+    }
+
+    hub := &Hub{
+        botColors:  []int{black},
+        clients:    make(map[Client]bool),
+        register:   make(chan Client),
+        unregister: make(chan Client),
+        send:       make(chan *ClientMessage),
+        capacity:   2,
+        game:       game,
+    }
+
+    botClient, err := newBotClient(hub, game)
+    if err != nil {
+        panic(err)
+    }
+
+    hub.handleClientJoin(botClient)
+
+    go botClient.run()
+
+    return hub
+}
+
 func newFourPlayerHubWithBot() *Hub {
     black := 1
     red := 2
@@ -130,6 +160,23 @@ func newSmallFourPlayerHubWithBot() *Hub {
 
 func newTwoPlayerHub() *Hub {
     game, err := chess.NewSimpleGame()
+    if err != nil {
+        panic(err)
+    }
+
+    return &Hub{
+        botColors:  []int{},
+        clients:    make(map[Client]bool),
+        register:   make(chan Client),
+        unregister: make(chan Client),
+        send:       make(chan *ClientMessage),
+        capacity:   2,
+        game:       game,
+    }
+}
+
+func newSmallTwoPlayerHub() *Hub {
+    game, err := chess.NewSimpleSmallGame()
     if err != nil {
         panic(err)
     }
