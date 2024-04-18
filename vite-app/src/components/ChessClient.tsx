@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import useWebSocket from 'react-use-websocket'
-import ChessBoard from './components/ChessBoard'
+import ChessBoard from './ChessBoard'
 
 type Message = {
     Type: string,
@@ -64,7 +64,7 @@ const createRedoMessage = () : Message => {
 }
 
 const baseUrl = '/ws'
-const ClientTest = () => {
+const ChessClient = () => {
     const [urlExtension, setUrlExtension] = useState('')
     const [currentUrlExtension, setCurrentUrlExtension] = useState('')
 
@@ -205,5 +205,5 @@ const ChessGame = ({ urlExtension }: { urlExtension: string }): JSX.Element => {
     )
 }
 
-export default ClientTest
+export default ChessClient
 export type { BoardData, MoveData }
