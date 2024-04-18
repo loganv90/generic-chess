@@ -1,4 +1,5 @@
 # Generic Chess
+<img src="https://github.com/loganv90/generic-chess/blob/main/art/rp_scaled.png" width="80rem"/>
 
 ## Description
 Written in Go, this is a simple chess engine that can be used to play chess on any size board and with any number of players.
