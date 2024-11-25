@@ -14,4 +14,9 @@ Written in Go, this is a simple chess engine that can be used to play chess on a
 2. Click one of the buttons to start a game
 
 ## Running Tests
-- cd go-app && go test ./...
+- go test ./...
+- go test ./... -coverprofile cover.out
+- go test -v -run \<test_name\> ./...
+- go tool cover -func cover.out
+- go clean -testcache
+
